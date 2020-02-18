@@ -3,17 +3,21 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
+import de.tuebingen.sfs.eie.components.cognacy.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
-import de.tuebingen.sfs.eie.components.soundlaws.SoundlawProblem;
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
+import de.tuebingen.sfs.eie.components.lexdata.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
+import de.tuebingen.sfs.eie.io.LoadUtils;
+import de.tuebingen.sfs.iwsa.corrmodel.CorrespondenceModel;
 import de.tuebingen.sfs.iwsa.tokenize.IPATokenizer;
-import de.tuebingen.sfs.psl.engine.core.RuleAtomGraph;
-import de.tuebingen.sfs.psl.engine.filter.RagFilter;
+import de.tuebingen.sfs.psl.engine.InferenceResult;
+import de.tuebingen.sfs.psl.engine.ProblemManager;
+import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.util.InferenceLogger;
+import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyInferenceTest {
 
@@ -48,28 +52,26 @@ public class EtymologyInferenceTest {
 		// testConcepts.add("ZungeN");
 
 		IPATokenizer tokenizer = new IPATokenizer();
-		SoundlawProblem model = SoundlawProblem.fromCLDFPath(dbDir, tokenizer, languageStrings);
 
 		String[] langs = new String[] { "eng", "deu", "isl", "swe", "nor", "dan", "fra", "spa", "por", "cat", "fra",
 				"ita", "ron", "lat", "lit", "lav", "rus", "bel", "ukr", "pol", "ces", "slv", "slk", "hrv", "nld" };
 		LevelBasedPhylogeny phylogeny = new LevelBasedPhylogeny(4, treeFile, langs);
-
-		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
-		EtymologyProblem psl = new EtymologyProblem(model.getDatabase(), model.getCorrModel(), net, phylogeny);
+		
+		InferenceLogger logger = new InferenceLogger();
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
+		
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);		
+		EtymologyProblem psl = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", wordListDb, phonSimHelper, net, phylogeny);
 		psl.generateDataAtoms(testConcepts);
-		psl.getAtoms().printToConsoleWithValue();
-		psl.addInteractionRules();
 		// psl.atoms.fixateAtoms("Wsim", "?", "?");
 		// psl.atoms.fixateAtoms("Semsim", "?", "?");
-		psl.runInference();
-		psl.printResult();
-
-		Map<String, Double> etymResult = psl.extractResult(false);
-		RuleAtomGraph.GROUNDING_OUTPUT = true;
-		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-		RuleAtomGraph rag = new RuleAtomGraph(psl, new RagFilter(etymResult));
+		InferenceResult result = problemManager.registerAndRunProblem(psl);
+		RuleAtomGraph rag = result.getRag();
 		rag.printToStream(System.out);
-		StandaloneFactViewer.launchWithData(psl, rag, etymResult);
-
+		result.printInferenceValues();
+		StandaloneFactViewer.launchWithData(psl, result);
 	}
 }
