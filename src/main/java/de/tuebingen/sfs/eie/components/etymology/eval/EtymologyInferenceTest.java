@@ -5,18 +5,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import de.tuebingen.sfs.eie.components.cognacy.PhoneticSimilarityHelper;
+import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
+import de.jdellert.iwsa.tokenize.IPATokenizer;
+import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
-import de.tuebingen.sfs.eie.components.lexdata.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
-import de.tuebingen.sfs.eie.io.LoadUtils;
-import de.tuebingen.sfs.iwsa.corrmodel.CorrespondenceModel;
-import de.tuebingen.sfs.iwsa.tokenize.IPATokenizer;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.util.InferenceLogger;
+import de.tuebingen.sfs.util.LoadUtils;
 import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyInferenceTest {

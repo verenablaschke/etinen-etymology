@@ -1,6 +1,5 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
-//TODO currently, this only infers 1.0 everywhere (vbl)
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -9,13 +8,13 @@ import java.util.Set;
 
 import org.linqs.psl.model.rule.GroundRule;
 
-import de.tuebingen.sfs.eie.components.cognacy.PhoneticSimilarityHelper;
+import de.jdellert.iwsa.sequence.PhoneticString;
+import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.cldfjava.data.CLDFForm;
+import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
+import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
+import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
-import de.tuebingen.sfs.eie.components.lexdata.CLDFForm;
-import de.tuebingen.sfs.eie.components.lexdata.CLDFLanguage;
-import de.tuebingen.sfs.eie.components.lexdata.CLDFParameter;
-import de.tuebingen.sfs.eie.components.lexdata.CLDFWordlistDatabase;
-import de.tuebingen.sfs.iwsa.sequence.PhoneticString;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
