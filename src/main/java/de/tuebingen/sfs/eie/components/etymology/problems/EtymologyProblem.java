@@ -52,24 +52,24 @@ public class EtymologyProblem extends PslProblem {
 	public void declarePredicates() {
 		// Information about the forms
 		// Flng(ID, language)
-		declarePredicate("Flng", 2);
-		declarePredicate("Fufo", 2);
-		declarePredicate("Fsem", 2);
+		declareOpenPredicate("Flng", 2);
+		declareOpenPredicate("Fufo", 2);
+		declareOpenPredicate("Fsem", 2);
 
 		// Similarity measures
-		declarePredicate("Fsim", 2);
-		declarePredicate("Ssim", 2);
+		declareOpenPredicate("Fsim", 2);
+		declareOpenPredicate("Ssim", 2);
 
 		// Etymological information
 		// Eety(ID1, ID2) -- ID1 comes from ID2
-		declarePredicate("Eety", 2);
-		declarePredicate("Einh", 2);
-		declarePredicate("Eloa", 2);
-		declarePredicate("Eunk", 1);
+		declareOpenPredicate("Eety", 2);
+		declareOpenPredicate("Einh", 2);
+		declareOpenPredicate("Eloa", 2);
+		declareOpenPredicate("Eunk", 1);
 
 		// Phylogenetic information.
-		declarePredicate("Tanc", 2);
-		declarePredicate("Tcnt", 2);
+		declareOpenPredicate("Tanc", 2);
+		declareOpenPredicate("Tcnt", 2);
 	}
 
 	@Override
