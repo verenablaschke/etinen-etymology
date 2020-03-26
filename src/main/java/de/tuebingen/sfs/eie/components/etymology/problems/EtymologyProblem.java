@@ -14,6 +14,8 @@ import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyOrEunkRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.DatabaseManager;
@@ -52,13 +54,13 @@ public class EtymologyProblem extends PslProblem {
 	public void declarePredicates() {
 		// Information about the forms
 		// Flng(ID, language)
-		declareOpenPredicate("Flng", 2);
-		declareOpenPredicate("Fufo", 2);
-		declareOpenPredicate("Fsem", 2);
+		declareClosedPredicate("Flng", 2);
+		declareClosedPredicate("Fufo", 2);
+		declareClosedPredicate("Fsem", 2);
 
 		// Similarity measures
-		declareOpenPredicate("Fsim", 2);
-		declareOpenPredicate("Ssim", 2);
+		declareClosedPredicate("Fsim", 2);
+		declareClosedPredicate("Ssim", 2);
 
 		// Etymological information
 		// Eety(ID1, ID2) -- ID1 comes from ID2
@@ -68,8 +70,8 @@ public class EtymologyProblem extends PslProblem {
 		declareOpenPredicate("Eunk", 1);
 
 		// Phylogenetic information.
-		declareOpenPredicate("Tanc", 2);
-		declareOpenPredicate("Tcnt", 2);
+		declareClosedPredicate("Tanc", 2);
+		declareClosedPredicate("Tcnt", 2);
 	}
 
 	@Override
@@ -79,19 +81,18 @@ public class EtymologyProblem extends PslProblem {
 	@Override
 	public void addInteractionRules() {
 		// Setting up Eety/Einh/Eloa/Eunk.
-		addRule(new TalkingArithmeticRule("EetyOrEunk", "Eety(X, +Y) + Eunk(X) = 1 .", this,
-				"The possible explanations for a word's origin follow a probability distribution."));
+		addRule(new EetyOrEunkRule(this));
 		addRule(new TalkingArithmeticRule("EinhOrEloa", "Eety(X, Y) = Einh(X, Y) + Eloa(X, Y) .", this,
 				"A word is either inherited or loaned."));
 		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
 				"By default, we do not assume that words are of unknown origin."));
 		addRule(new TalkingLogicalRule("EloaPrior", "2: ~Eloa(X, Y)", this,
-				"By default, we do not assume that word is a loanword."));
+				"By default, we do not assume that a word is a loanword."));
 
-		addRule(new TalkingLogicalRule("TancToEinh",
-				"2: Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y)", this));
+		addRule(new TancToEinhRule(this));
 		addRule(new TalkingLogicalRule("TcntToEloa",
-				"1: Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)", this));
+				"1: Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)", this,
+				"A word can be loaned from a contact language."));
 
 		// Only the first two arguments of the antecedent can have a value other
 		// than 0 or 1.
@@ -102,22 +103,22 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new TalkingLogicalRule("EetyToFsim",
 				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
 				"Words derived from the same source should be phonetically similar."));
-		addRule(new TalkingLogicalRule("EetyToSsim",
-				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)", this,
-				"Words derived from the same source should be semantically similar."));
+//		addRule(new TalkingLogicalRule("EetyToSsim",
+//				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)", this,
+//				"Words derived from the same source should be semantically similar."));
 
 		// TODO add restriction that ~Eety(X,Y), ~Eety(Y,X) ?
 		// TODO somehow this rule disables the Eety=Einh+Eloa rule
-//		addRule(new TalkingLogicalRule("WsimAndSemsimToCety",
-//				// phonetic similarity
-//				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
-//						// semantic similarity
-//						+ "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
-//						// -> same source
-//						+ "Eety(X, Z) & (Y != Z)" + "-> Eety(Y, Z)",
-//				// + "-> Einh(Y, Z) | Eloa(Y, Z)", // doesn't make a difference?
-//				this, "If two words are phonetically and semantically similar, "
-//						+ "they are probably derived from the same source."));
+		addRule(new TalkingLogicalRule("WsimAndSemsimToCety",
+				// phonetic similarity
+				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
+						// semantic similarity
+						+ "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
+						// -> same source
+						+ "Eety(X, Z) & (Y != Z)" + "-> Eety(Y, Z)",
+				// + "-> Einh(Y, Z) | Eloa(Y, Z)", // doesn't make a difference?
+				this, "If two words are phonetically and semantically similar, "
+						+ "they are probably derived from the same source."));
 	}
 
 	// TODO make concepts a constructor arg (vbl)
@@ -199,6 +200,7 @@ public class EtymologyProblem extends PslProblem {
 		}
 
 		double sim = phonSimHelper.similarity(form1, form2);
+		// TODO Fsim for ancestor langs!
 		addObservation("Fsim", sim, id1, id2);
 		System.out.println("Fsim(" + id1 + "/" + form1 + "," + id2 + "/" + form2 + ") " + sim);
 
