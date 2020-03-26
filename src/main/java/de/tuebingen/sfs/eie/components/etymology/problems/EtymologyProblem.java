@@ -15,7 +15,10 @@ import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyOrEunkRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.DatabaseManager;
@@ -89,36 +92,18 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new TalkingLogicalRule("EloaPrior", "2: ~Eloa(X, Y)", this,
 				"By default, we do not assume that a word is a loanword."));
 
-		addRule(new TancToEinhRule(this));
-		addRule(new TalkingLogicalRule("TcntToEloa",
-				"1: Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)", this,
-				"A word can be loaned from a contact language."));
+		addRule(new TancToEinhRule(this, 1.0));
+		addRule(new TcntToEloaRule(this, 1.0));
 
-		// Only the first two arguments of the antecedent can have a value other
-		// than 0 or 1.
-		// TODO had to temporarily change this rule to make the grounding work again. investigate in detail (vbl)
-//		addRule(new TalkingLogicalRule("EetyToFsim",
-//				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)", this,
-//				"Words derived from the same source should be phonetically similar."));
-		addRule(new TalkingLogicalRule("EetyToFsim",
-				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
-				"Words derived from the same source should be phonetically similar."));
+		addRule(new EetyToFsimRule(this, 2.0));		
+		// Add when starting to work with several concepts
 //		addRule(new TalkingLogicalRule("EetyToSsim",
 //				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)", this,
 //				"Words derived from the same source should be semantically similar."));
 
 		// TODO add restriction that ~Eety(X,Y), ~Eety(Y,X) ?
 		// TODO somehow this rule disables the Eety=Einh+Eloa rule
-		addRule(new TalkingLogicalRule("WsimAndSemsimToCety",
-				// phonetic similarity
-				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
-						// semantic similarity
-						+ "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
-						// -> same source
-						+ "Eety(X, Z) & (Y != Z)" + "-> Eety(Y, Z)",
-				// + "-> Einh(Y, Z) | Eloa(Y, Z)", // doesn't make a difference?
-				this, "If two words are phonetically and semantically similar, "
-						+ "they are probably derived from the same source."));
+		addRule(new FsimAndSsimToEetyRule(this, 5.0));
 	}
 
 	// TODO make concepts a constructor arg (vbl)
@@ -174,14 +159,14 @@ public class EtymologyProblem extends PslProblem {
 					for (CLDFForm lang1Form : lang1Forms) {
 						PhoneticString form1 = phonSimHelper.extractSegments(lang1Form);
 						String id1 = getPrintForm(lang1Form, lang1);
-						addFormAtoms(id1, lang1, paramID, form1.toString());
+						addFormAtoms(id1, lang1, paramID, lang1Form);
 						addTarget("Eunk", id1);
 
 						for (CLDFForm lang2Form : lang2Forms) {
 							if (!testConcepts.contains(lang2Form.getParamID())) {
 								continue;
 							}
-							addAtoms(form1, id1, lang1, lang2, concept, lang2Form);
+							addAtoms(form1, id1, lang1, lang2, concept, lang1Form, lang2Form);
 						}
 
 					}
@@ -191,7 +176,7 @@ public class EtymologyProblem extends PslProblem {
 	}
 
 	private void addAtoms(PhoneticString form1, String id1, String lang1, String lang2, CLDFParameter concept,
-			CLDFForm lang2Form) {
+			CLDFForm lang1Form, CLDFForm lang2Form) {
 		PhoneticString form2 = phonSimHelper.extractSegments(lang2Form);
 		String id2 = getPrintForm(lang2Form, lang2);
 
@@ -201,7 +186,8 @@ public class EtymologyProblem extends PslProblem {
 
 		double sim = phonSimHelper.similarity(form1, form2);
 		// TODO Fsim for ancestor langs!
-		addObservation("Fsim", sim, id1, id2);
+//		addObservation("Fsim", sim, id1, id2);
+		addObservation("Fsim", sim, getOrthography(lang1Form), getOrthography(lang2Form));
 		System.out.println("Fsim(" + id1 + "/" + form1 + "," + id2 + "/" + form2 + ") " + sim);
 
 		double ssim = semanticNet.getSimilarity(concept.getParamID(), lang2Form.getParamID());
@@ -220,18 +206,29 @@ public class EtymologyProblem extends PslProblem {
 		} else if (phylogeny.getLevel(lang1) == phylogeny.getLevel(lang2)) {
 			addTarget("Eloa", id1, id2);
 			addTarget("Eety", id1, id2);
+		} else {
+			addObservation("Eety", 0.0, id1, id2);
 		}
 
 	}
 
-	private void addFormAtoms(String id, String doculect, String concept, String form) {
+	private void addFormAtoms(String id, String doculect, String concept, CLDFForm cldfForm) {
 		addObservation("Flng", 1.0, id, doculect);
 		addObservation("Fsem", 1.0, id, concept);
-		addObservation("Fufo", 1.0, id, form);
+		addObservation("Fufo", 1.0, id, getOrthography(cldfForm));
 	}
 
 	private String getPrintForm(CLDFForm form, String lang) {
 		return lang + ":" + form.getProperties().get("Orthography") + ":" + form.getParamID();
+	}
+	
+	// TODO change this to IPA
+	private String getOrthography(CLDFForm form) {
+		String orth = form.getProperties().get("Orthography");
+		if (orth == null){
+			orth = "N/A";
+		}
+		return orth;
 	}
 
 	@Override

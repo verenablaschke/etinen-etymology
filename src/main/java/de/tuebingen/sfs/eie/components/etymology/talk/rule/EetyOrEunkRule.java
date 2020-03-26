@@ -6,29 +6,32 @@ import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 
 public class EetyOrEunkRule extends TalkingArithmeticRule {
 
-	private static String name = "EetyOrEunk";
-	private static String rule = "Eety(X, +Y) + Eunk(X) = 1 .";
-	private static String verbalization = "The possible explanations for a word's origin follow a probability distribution.";
+	private static final String NAME = "EetyOrEunk";
+	private static final String RULE = "Eety(X, +Y) + Eunk(X) = 1 .";
+	private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 	private boolean debuggingMode = false;
 
 	public EetyOrEunkRule(PslProblem pslProblem, boolean debuggingMode) {
-		super(name, rule, pslProblem, verbalization);
+		super(NAME, RULE, pslProblem, VERBALIZATION);
 		this.debuggingMode = debuggingMode;
 	}
 
 	public EetyOrEunkRule(PslProblem pslProblem) {
-		super(name, rule, pslProblem, verbalization);
+		super(NAME, RULE, pslProblem, VERBALIZATION);
 	}
 
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
 		if (!debuggingMode) {
-			return super.getDefaultExplanation(groundingName, contextAtom, rag, whyExplanation);
+			return getDefaultExplanation(groundingName, contextAtom, rag, whyExplanation);
 		}
-		String expl = super.getDefaultExplanation(groundingName, contextAtom, rag, whyExplanation);
-		// TODO
-		return expl;
+		StringBuilder sb = new StringBuilder();
+		sb.append(getDefaultExplanation(groundingName, contextAtom, rag, whyExplanation));
+		
+		
+		
+		return sb.toString();
 	}
 
 }
