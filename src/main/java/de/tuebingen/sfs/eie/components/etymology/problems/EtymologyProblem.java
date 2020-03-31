@@ -89,13 +89,21 @@ public class EtymologyProblem extends PslProblem {
 				"A word is either inherited or loaned."));
 		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
 				"By default, we do not assume that words are of unknown origin."));
-		addRule(new TalkingLogicalRule("EloaPrior", "2: ~Eloa(X, Y)", this,
+		addRule(new TalkingLogicalRule("EloaPrior", "0.5: ~Eloa(X, Y)", this,
 				"By default, we do not assume that a word is a loanword."));
 
 		addRule(new TancToEinhRule(this, 1.0));
 		addRule(new TcntToEloaRule(this, 1.0));
 
-		addRule(new EetyToFsimRule(this, 2.0));		
+		// TODO This rule practically de-activates EinhOrEloa... Investigate this further. This rule also doesn't seem to be applied properly
+//		addRule(new EetyToFsimRule(this, 5.0));
+		addRule(new TalkingLogicalRule("EinhToFsim",
+				"8: Einh(X, Z) & Einh(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
+				"Words derived from the same source should be phonetically similar."));
+		addRule(new TalkingLogicalRule("EloaToFsim",
+				"8: Eloa(X, Z) & Eloa(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
+				"Words derived from the same source should be phonetically similar."));
+		
 		// Add when starting to work with several concepts
 //		addRule(new TalkingLogicalRule("EetyToSsim",
 //				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)", this,
@@ -103,7 +111,7 @@ public class EtymologyProblem extends PslProblem {
 
 		// TODO add restriction that ~Eety(X,Y), ~Eety(Y,X) ?
 		// TODO somehow this rule disables the Eety=Einh+Eloa rule
-		addRule(new FsimAndSsimToEetyRule(this, 5.0));
+		addRule(new FsimAndSsimToEetyRule(this, 2.0));
 	}
 
 	// TODO make concepts a constructor arg (vbl)
@@ -243,8 +251,7 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-//		Map<String, Double> valueMap = extractResult();
-		Map<String, Double> valueMap = extractResult(false);
+		Map<String, Double> valueMap = extractResult();
 		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
