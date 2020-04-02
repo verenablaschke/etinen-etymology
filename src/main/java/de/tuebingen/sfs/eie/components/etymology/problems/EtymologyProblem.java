@@ -16,6 +16,7 @@ import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyOrEunkRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
@@ -38,9 +39,8 @@ public class EtymologyProblem extends PslProblem {
 	LevelBasedPhylogeny phylogeny;
 	Map<String, String> ISO2LangID;
 
-	public EtymologyProblem(DatabaseManager dbManager, String name, CLDFWordlistDatabase wordListDb, 
-			PhoneticSimilarityHelper phonSimHelper, SemanticNetwork semanticNet,
-			LevelBasedPhylogeny phylogeny) {
+	public EtymologyProblem(DatabaseManager dbManager, String name, CLDFWordlistDatabase wordListDb,
+			PhoneticSimilarityHelper phonSimHelper, SemanticNetwork semanticNet, LevelBasedPhylogeny phylogeny) {
 		super(dbManager, name);
 		this.wordListDb = wordListDb;
 		this.phonSimHelper = phonSimHelper;
@@ -89,29 +89,39 @@ public class EtymologyProblem extends PslProblem {
 				"A word is either inherited or loaned."));
 		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
 				"By default, we do not assume that words are of unknown origin."));
-		addRule(new TalkingLogicalRule("EloaPrior", "0.5: ~Eloa(X, Y)", this,
-				"By default, we do not assume that a word is a loanword."));
+		addRule(new EloaPriorRule(this, 2.0));
 
 		addRule(new TancToEinhRule(this, 1.0));
 		addRule(new TcntToEloaRule(this, 1.0));
 
-		// TODO This rule practically de-activates EinhOrEloa... Investigate this further. This rule also doesn't seem to be applied properly
-//		addRule(new EetyToFsimRule(this, 5.0));
-		addRule(new TalkingLogicalRule("EinhToFsim",
-				"8: Einh(X, Z) & Einh(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
-				"Words derived from the same source should be phonetically similar."));
-		addRule(new TalkingLogicalRule("EloaToFsim",
-				"8: Eloa(X, Z) & Eloa(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(X, Y)", this,
-				"Words derived from the same source should be phonetically similar."));
-		
-		// Add when starting to work with several concepts
-//		addRule(new TalkingLogicalRule("EetyToSsim",
-//				"8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)", this,
-//				"Words derived from the same source should be semantically similar."));
+		// TODO This rule practically de-activates EinhOrEloa... Investigate
+		// this further. This rule also doesn't seem to be applied properly
+		// Problem: Fsim/Ssim for reconstructed languages
+		// addRule(new EetyToFsimRule(this, 5.0));
+		// addRule(new TalkingLogicalRule("EinhToFsim",
+		// "8: Einh(X, Z) & Einh(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) ->
+		// Fsim(X, Y)", this,
+		// "Words derived from the same source should be phonetically
+		// similar."));
+		// addRule(new TalkingLogicalRule("EloaToFsim",
+		// "8: Eloa(X, Z) & Eloa(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) ->
+		// Fsim(X, Y)", this,
+		// "Words derived from the same source should be phonetically
+		// similar."));
 
-		// TODO add restriction that ~Eety(X,Y), ~Eety(Y,X) ?
+		// Add when starting to work with several concepts
+		// addRule(new TalkingLogicalRule("EetyToSsim",
+		// "8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) ->
+		// Ssim(C1, C2)", this,
+		// "Words derived from the same source should be semantically
+		// similar."));
+
 		// TODO somehow this rule disables the Eety=Einh+Eloa rule
-		addRule(new FsimAndSsimToEetyRule(this, 2.0));
+		addRule(new FsimAndSsimToEetyRule(this, 8.0));
+		// TODO add not Fsim to not Eety, not Ssim to not Eety ?
+		addRule(new TalkingLogicalRule("NotFsimToNotEety",
+				"3: Fufo(X, F1) & Fufo(Y, F2) & ~Fsim(F1, F2) -> ~Eety(X, Y)", this,
+				"Dissimilar forms are probably derived from different sources."));
 	}
 
 	// TODO make concepts a constructor arg (vbl)
@@ -192,11 +202,16 @@ public class EtymologyProblem extends PslProblem {
 			return;
 		}
 
-		double sim = phonSimHelper.similarity(form1, form2);
-		// TODO Fsim for ancestor langs!
-//		addObservation("Fsim", sim, id1, id2);
-		addObservation("Fsim", sim, getOrthography(lang1Form), getOrthography(lang2Form));
-		System.out.println("Fsim(" + id1 + "/" + form1 + "," + id2 + "/" + form2 + ") " + sim);
+		String ipa1 = getIpa(lang1Form);
+		if (!ipa1.equals("N/A")) {
+			String ipa2 = getIpa(lang2Form);
+			if (!ipa2.equals("N/A")) {
+				double sim = phonSimHelper.similarity(form1, form2);
+				addObservation("Fsim", sim, ipa1, ipa2);
+				System.out.println(
+						"Fsim(" + id1 + "/" + ipa1 + "/" + form1 + "," + id2 + "/" + ipa2 + "/" + form2 + ") " + sim);
+			}
+		}
 
 		double ssim = semanticNet.getSimilarity(concept.getParamID(), lang2Form.getParamID());
 		if (ssim < 0.01) {
@@ -223,20 +238,19 @@ public class EtymologyProblem extends PslProblem {
 	private void addFormAtoms(String id, String doculect, String concept, CLDFForm cldfForm) {
 		addObservation("Flng", 1.0, id, doculect);
 		addObservation("Fsem", 1.0, id, concept);
-		addObservation("Fufo", 1.0, id, getOrthography(cldfForm));
+		addObservation("Fufo", 1.0, id, getIpa(cldfForm));
 	}
 
 	private String getPrintForm(CLDFForm form, String lang) {
-		return lang + ":" + form.getProperties().get("Orthography") + ":" + form.getParamID();
+		return lang + ":" + form.getProperties().get("Orthography") + ":" + getIpa(form) + ":" + form.getParamID();
 	}
-	
-	// TODO change this to IPA
-	private String getOrthography(CLDFForm form) {
-		String orth = form.getProperties().get("Orthography");
-		if (orth == null){
-			orth = "N/A";
+
+	private String getIpa(CLDFForm form) {
+		String ipa = String.join("", form.getSegments());
+		if (ipa.isEmpty()) {
+			ipa = "N/A";
 		}
-		return orth;
+		return ipa;
 	}
 
 	@Override
@@ -251,10 +265,10 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-		Map<String, Double> valueMap = extractResult();
+		 Map<String, Double> valueMap = extractResult();
+//		Map<String, Double> valueMap = extractResult(false);
 		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
 
-	
 }
