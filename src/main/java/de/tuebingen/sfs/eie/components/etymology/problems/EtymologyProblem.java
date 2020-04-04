@@ -16,6 +16,7 @@ import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyOrEunkRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
@@ -39,6 +40,8 @@ public class EtymologyProblem extends PslProblem {
 	LevelBasedPhylogeny phylogeny;
 	Map<String, String> ISO2LangID;
 
+	private static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
+
 	public EtymologyProblem(DatabaseManager dbManager, String name, CLDFWordlistDatabase wordListDb,
 			PhoneticSimilarityHelper phonSimHelper, SemanticNetwork semanticNet, LevelBasedPhylogeny phylogeny) {
 		super(dbManager, name);
@@ -60,6 +63,7 @@ public class EtymologyProblem extends PslProblem {
 		declareClosedPredicate("Flng", 2);
 		declareClosedPredicate("Fufo", 2);
 		declareClosedPredicate("Fsem", 2);
+		declareClosedPredicate(F_UFO_EX, 1);
 
 		// Similarity measures
 		declareClosedPredicate("Fsim", 2);
@@ -85,8 +89,7 @@ public class EtymologyProblem extends PslProblem {
 	public void addInteractionRules() {
 		// Setting up Eety/Einh/Eloa/Eunk.
 		addRule(new EetyOrEunkRule(this));
-		addRule(new TalkingArithmeticRule("EinhOrEloa", "Eety(X, Y) = Einh(X, Y) + Eloa(X, Y) .", this,
-				"A word is either inherited or loaned."));
+		addRule(new EinhOrEloaRule(this));
 		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
 				"By default, we do not assume that words are of unknown origin."));
 		addRule(new EloaPriorRule(this, 2.0));
@@ -97,7 +100,7 @@ public class EtymologyProblem extends PslProblem {
 		// TODO This rule practically de-activates EinhOrEloa... Investigate
 		// this further. This rule also doesn't seem to be applied properly
 		// Problem: Fsim/Ssim for reconstructed languages
-		// addRule(new EetyToFsimRule(this, 5.0));
+		 addRule(new EetyToFsimRule(this, 5.0));
 		// addRule(new TalkingLogicalRule("EinhToFsim",
 		// "8: Einh(X, Z) & Einh(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) ->
 		// Fsim(X, Y)", this,
@@ -202,17 +205,6 @@ public class EtymologyProblem extends PslProblem {
 			return;
 		}
 
-		String ipa1 = getIpa(lang1Form);
-		if (!ipa1.equals("N/A")) {
-			String ipa2 = getIpa(lang2Form);
-			if (!ipa2.equals("N/A")) {
-				double sim = phonSimHelper.similarity(form1, form2);
-				addObservation("Fsim", sim, ipa1, ipa2);
-				System.out.println(
-						"Fsim(" + id1 + "/" + ipa1 + "/" + form1 + "," + id2 + "/" + ipa2 + "/" + form2 + ") " + sim);
-			}
-		}
-
 		double ssim = semanticNet.getSimilarity(concept.getParamID(), lang2Form.getParamID());
 		if (ssim < 0.01) {
 			// TODO check rules. can we get rid of these atoms?
@@ -226,31 +218,53 @@ public class EtymologyProblem extends PslProblem {
 		if (phylogeny.distanceToAncestor(lang1, lang2) == 1) {
 			addTarget("Einh", id1, id2);
 			addTarget("Eety", id1, id2);
+			addObservation("Eloa", 0.0, id1, id2);
 		} else if (phylogeny.getLevel(lang1) == phylogeny.getLevel(lang2)) {
 			addTarget("Eloa", id1, id2);
 			addTarget("Eety", id1, id2);
+			addObservation("Einh", 0.0, id1, id2);
 		} else {
 			addObservation("Eety", 0.0, id1, id2);
+			addObservation("Einh", 0.0, id1, id2);
+			addObservation("Eloa", 0.0, id1, id2);
 		}
+
+		String ipa1 = getIpa(lang1Form);
+		if (ipa1.isEmpty()) {
+			return;
+		}
+
+		String ipa2 = getIpa(lang2Form);
+		if (ipa2.isEmpty()) {
+			return;
+		}
+		double sim = phonSimHelper.similarity(form1, form2);
+		addObservation("Fsim", sim, ipa1, ipa2);
+		System.out
+				.println("Fsim(" + id1 + "/" + ipa1 + "/" + form1 + "," + id2 + "/" + ipa2 + "/" + form2 + ") " + sim);
 
 	}
 
 	private void addFormAtoms(String id, String doculect, String concept, CLDFForm cldfForm) {
 		addObservation("Flng", 1.0, id, doculect);
 		addObservation("Fsem", 1.0, id, concept);
-		addObservation("Fufo", 1.0, id, getIpa(cldfForm));
+		String ipa = getIpa(cldfForm);
+		if (!ipa.isEmpty()) {
+			addObservation(F_UFO_EX, 1.0, id);
+			addObservation("Fufo", 1.0, id, ipa);
+		}
 	}
 
 	private String getPrintForm(CLDFForm form, String lang) {
-		return lang + ":" + form.getProperties().get("Orthography") + ":" + getIpa(form) + ":" + form.getParamID();
-	}
-
-	private String getIpa(CLDFForm form) {
-		String ipa = String.join("", form.getSegments());
+		String ipa = getIpa(form);
 		if (ipa.isEmpty()) {
 			ipa = "N/A";
 		}
-		return ipa;
+		return lang + ":" + form.getProperties().get("Orthography") + ":" + ipa + ":" + form.getParamID();
+	}
+
+	private String getIpa(CLDFForm form) {
+		return String.join("", form.getSegments());
 	}
 
 	@Override
@@ -265,8 +279,8 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-		 Map<String, Double> valueMap = extractResult();
-//		Map<String, Double> valueMap = extractResult(false);
+		Map<String, Double> valueMap = extractResult();
+		// Map<String, Double> valueMap = extractResult(false);
 		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
