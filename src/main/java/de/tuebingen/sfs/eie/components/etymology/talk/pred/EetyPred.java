@@ -28,8 +28,16 @@ public class EetyPred extends TalkingPredicate {
 
 	@Override
 	public String verbalizeIdeaAsSentence(String... args) {
+		return verbalizeIdeaAsSentence(-1, args);
+	}
+
+	public String verbalizeIdeaAsSentence(double belief, String... args) {
+		boolean hasBelief = belief >= 0 && belief <= 1;
 		StringBuilder sb = new StringBuilder();
-		sb.append(args[0]).append(" is etymologically derived from ").append(args[1]);
+		sb.append(args[0]).append(" is ");
+		if (hasBelief)
+			sb.append(BeliefScale.verbalizeBeliefAsAdverb(belief));
+		sb.append(" etymologically derived from ").append(args[1]);
 		return sb.toString();
 	}
 

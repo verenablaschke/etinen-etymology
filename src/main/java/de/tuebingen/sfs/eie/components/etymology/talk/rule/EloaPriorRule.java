@@ -1,6 +1,7 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
 public class EloaPriorRule extends TalkingLogicalRule {
@@ -10,6 +11,12 @@ public class EloaPriorRule extends TalkingLogicalRule {
 
 	public EloaPriorRule(PslProblem pslProblem, double weight) {
 		super("EloaPrior", weight + ": " + RULE, pslProblem, VERBALIZATION);
+	}
+
+	@Override
+	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
+			boolean whyExplanation) {
+		return VERBALIZATION;
 	}
 
 }
