@@ -10,16 +10,12 @@ import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 import de.tuebingen.sfs.psl.talk.TalkingPredicate;
-import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class EinhOrEloaRule extends TalkingArithmeticRule {
 
 	public static final String VERBALIZATION = "A word is either inherited or loaned.";
-	public static final EetyPred E_ETY = new EetyPred();
-	public static final EloaPred E_LOA = new EloaPred();
-	public static final EinhPred E_INH = new EinhPred();
 
 	public EinhOrEloaRule(PslProblem pslProblem) {
 		super("EinhOrEloa", "Eety(X, Y) = Einh(X, Y) + Eloa(X, Y) .", pslProblem, VERBALIZATION);
@@ -32,10 +28,10 @@ public class EinhOrEloaRule extends TalkingArithmeticRule {
 		String[] eetyArgs = null;
 		double eetyBelief = -1.0;
 		String competitorName = "Eloa";
-		TalkingPredicate competitor = E_LOA;
+		TalkingPredicate competitor = new EloaPred();
 		if (contextAtom.startsWith("Eloa")) {
 			competitorName = "Einh";
-			competitor = E_INH;
+			competitor = new EinhPred();
 		}
 		String competitorAtom = "";
 		String[] competitorArgs = null;
@@ -57,7 +53,7 @@ public class EinhOrEloaRule extends TalkingArithmeticRule {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(" ");
-		sb.append(E_ETY.verbalizeIdeaAsSentence(eetyBelief, eetyArgs)).append(". ");
+		sb.append(new EetyPred().verbalizeIdeaAsSentence(eetyBelief, eetyArgs)).append(". ");
 		sb.append(contextAtom).append(" competes with the possibility of ");
 		sb.append("\\url[");
 		sb.append(escapeForURL(competitor.verbalizeIdeaAsNP(competitorArgs)));

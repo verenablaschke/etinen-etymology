@@ -279,8 +279,8 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-		Map<String, Double> valueMap = extractResult();
-		// Map<String, Double> valueMap = extractResult(false);
+//		Map<String, Double> valueMap = extractResult();
+		Map<String, Double> valueMap = extractResult(false);
 		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
