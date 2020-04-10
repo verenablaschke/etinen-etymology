@@ -14,11 +14,15 @@ import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyOrEunkRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhAndEinhToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhAndEloaToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaAndEinhToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaAndEloaToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimAndEinhToEinhOrEloaRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimAndEloaToEinhOrEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -71,7 +75,6 @@ public class EtymologyProblem extends PslProblem {
 
 		// Etymological information
 		// Eety(ID1, ID2) -- ID1 comes from ID2
-		declareOpenPredicate("Eety", 2);
 		declareOpenPredicate("Einh", 2);
 		declareOpenPredicate("Eloa", 2);
 		declareOpenPredicate("Eunk", 1);
@@ -87,9 +90,7 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void addInteractionRules() {
-		// Setting up Eety/Einh/Eloa/Eunk.
-		addRule(new EetyOrEunkRule(this));
-		addRule(new EinhOrEloaRule(this));
+		addRule(new EinhOrEloaOrEunkRule(this));
 		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
 				"By default, we do not assume that words are of unknown origin."));
 		addRule(new EloaPriorRule(this, 2.0));
@@ -97,34 +98,17 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new TancToEinhRule(this, 1.0));
 		addRule(new TcntToEloaRule(this, 1.0));
 
-		// TODO This rule practically de-activates EinhOrEloa... Investigate
-		// this further. This rule also doesn't seem to be applied properly
-		// Problem: Fsim/Ssim for reconstructed languages
-		 addRule(new EetyToFsimRule(this, 5.0));
-		// addRule(new TalkingLogicalRule("EinhToFsim",
-		// "8: Einh(X, Z) & Einh(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) ->
-		// Fsim(X, Y)", this,
-		// "Words derived from the same source should be phonetically
-		// similar."));
-		// addRule(new TalkingLogicalRule("EloaToFsim",
-		// "8: Eloa(X, Z) & Eloa(Y, Z) & (X != Y) & Fufo(X, F1) & Fufo(Y, F2) ->
-		// Fsim(X, Y)", this,
-		// "Words derived from the same source should be phonetically
-		// similar."));
+		addRule(new EinhAndEinhToFsimRule(this, 5.0));
+		addRule(new EinhAndEloaToFsimRule(this, 5.0));
+		addRule(new EloaAndEinhToFsimRule(this, 5.0));
+		addRule(new EloaAndEloaToFsimRule(this, 5.0));
 
-		// Add when starting to work with several concepts
-		// addRule(new TalkingLogicalRule("EetyToSsim",
-		// "8: Eety(X, Z) & Eety(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) ->
-		// Ssim(C1, C2)", this,
-		// "Words derived from the same source should be semantically
-		// similar."));
+		addRule(new FsimAndSsimAndEinhToEinhOrEloaRule(this, 8.0));
+		addRule(new FsimAndSsimAndEloaToEinhOrEloaRule(this, 8.0));
 
-		// TODO somehow this rule disables the Eety=Einh+Eloa rule
-		addRule(new FsimAndSsimToEetyRule(this, 8.0));
-		// TODO add not Fsim to not Eety, not Ssim to not Eety ?
-		addRule(new TalkingLogicalRule("NotFsimToNotEety",
-				"3: Fufo(X, F1) & Fufo(Y, F2) & ~Fsim(F1, F2) -> ~Eety(X, Y)", this,
-				"Dissimilar forms are probably derived from different sources."));
+		// addRule(new TalkingLogicalRule("NotFsimToNotEety",
+		// "3: Fufo(X, F1) & Fufo(Y, F2) & ~Fsim(F1, F2) -> ~Eety(X, Y)", this,
+		// "Dissimilar forms are probably derived from different sources."));
 	}
 
 	// TODO make concepts a constructor arg (vbl)
@@ -211,20 +195,16 @@ public class EtymologyProblem extends PslProblem {
 			// e.g. SsimToEinh
 			addObservation("Einh", 0.0, id1, id2);
 			addObservation("Eloa", 0.0, id1, id2);
-			addObservation("Eety", 0.0, id1, id2);
 			return;
 		}
 
 		if (phylogeny.distanceToAncestor(lang1, lang2) == 1) {
 			addTarget("Einh", id1, id2);
-			addTarget("Eety", id1, id2);
 			addObservation("Eloa", 0.0, id1, id2);
 		} else if (phylogeny.getLevel(lang1) == phylogeny.getLevel(lang2)) {
 			addTarget("Eloa", id1, id2);
-			addTarget("Eety", id1, id2);
 			addObservation("Einh", 0.0, id1, id2);
 		} else {
-			addObservation("Eety", 0.0, id1, id2);
 			addObservation("Einh", 0.0, id1, id2);
 			addObservation("Eloa", 0.0, id1, id2);
 		}
