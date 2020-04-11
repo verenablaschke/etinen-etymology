@@ -14,15 +14,10 @@ import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhAndEinhToFsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhAndEloaToFsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaAndEinhToFsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaAndEloaToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimAndEinhToEinhOrEloaRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimAndEloaToEinhOrEloaRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -32,7 +27,6 @@ import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RagFilter;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 import de.tuebingen.sfs.util.SemanticNetwork;
 
@@ -98,13 +92,13 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new TancToEinhRule(this, 1.0));
 		addRule(new TcntToEloaRule(this, 1.0));
 
-		addRule(new EinhAndEinhToFsimRule(this, 5.0));
-		addRule(new EinhAndEloaToFsimRule(this, 5.0));
-		addRule(new EloaAndEinhToFsimRule(this, 5.0));
-		addRule(new EloaAndEloaToFsimRule(this, 5.0));
+		addRule(new EetyToFsimRule("Einh", "Einh", this, 5.0));
+		addRule(new EetyToFsimRule("Einh", "Eloa", this, 5.0));
+		addRule(new EetyToFsimRule("Eloa", "Einh", this, 5.0));
+		addRule(new EetyToFsimRule("Eloa", "Eloa", this, 5.0));
 
-		addRule(new FsimAndSsimAndEinhToEinhOrEloaRule(this, 8.0));
-		addRule(new FsimAndSsimAndEloaToEinhOrEloaRule(this, 8.0));
+		addRule(new FsimAndSsimToEetyRule("Einh", this, 8.0));
+		addRule(new FsimAndSsimToEetyRule("Eloa", this, 8.0));
 
 		// addRule(new TalkingLogicalRule("NotFsimToNotEety",
 		// "3: Fufo(X, F1) & Fufo(Y, F2) & ~Fsim(F1, F2) -> ~Eety(X, Y)", this,
@@ -259,8 +253,8 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-		Map<String, Double> valueMap = extractResult();
-		// Map<String, Double> valueMap = extractResult(false);
+//		Map<String, Double> valueMap = extractResult();
+		 Map<String, Double> valueMap = extractResult(false);
 		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
