@@ -14,6 +14,7 @@ import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
+import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
@@ -255,7 +256,7 @@ public class EtymologyProblem extends PslProblem {
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
 //		Map<String, Double> valueMap = extractResult();
 		Map<String, Double> valueMap = extractResult(false);
-		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
+		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
 
