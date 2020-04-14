@@ -41,8 +41,6 @@ public class TancToEinhRule extends TalkingLogicalRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(", in this case ");
 		sb.append(ancestor).append(".");
-		// TODO rephrase/remove:
-		sb.append(" (").append(tanc).append(" = ").append(tancBelief).append(")");
 		sb.append(atomToStatus);
 		return sb.toString();
 	}
