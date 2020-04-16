@@ -3,8 +3,6 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.List;
 import java.util.Locale;
 
-import de.tuebingen.sfs.eie.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
@@ -19,19 +17,12 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 	// Eety is the only open predicate.
 	private static final String RULE = "%f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
 	private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar";
-	private String rule = null;
-	private String eetyType1 = null;
-	private String eetyType2 = null;
 
 	public EetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
 		super(String.format("%sAnd%sToFsim", eetyType1, eetyType2),
 				String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);
-		this.rule = String.format(RULE, weight, eetyType1, eetyType2);
-		this.eetyType1 = eetyType1;
-		this.eetyType2 = eetyType2;
 	}
 
-	// TODO nicer generation when both eety types are identical (vbl)
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
@@ -65,7 +56,15 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		sb.append("It ").append(BeliefScale.verbalizeBeliefAsPredicate(eetyBelief));
 		sb.append(" that ");
 		sb.append("\\url[");
-		sb.append(escapeForURL(eetyArgs[0] + " is also derived from " + eetyArgs[1]));
+		sb.append(escapeForURL(eetyArgs[0])).append(" is also ");
+		if (contextAtom.startsWith("Einh") && eetyAtom.startsWith("Einh")){
+			sb.append("inherited");
+		} else if (contextAtom.startsWith("Eloa") && eetyAtom.startsWith("Eloa")){
+			sb.append("borrowed");
+		} else {
+			sb.append("derived");
+		}
+		sb.append(" from ").append(escapeForURL(eetyArgs[1]));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(", and ");
 		sb.append(new FsimPred().verbalizeIdeaAsSentence(fufoBelief, fufoArgs));

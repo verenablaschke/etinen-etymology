@@ -110,7 +110,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb);
 	}
 
-	public void generateDataAtoms() {
+	public void generateAtoms() {
 		// 1. Determine and retrieve/generate the relevant F-atoms.
 
 		// TODO

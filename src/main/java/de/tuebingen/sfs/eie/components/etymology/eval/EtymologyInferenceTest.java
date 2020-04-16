@@ -13,7 +13,7 @@ public class EtymologyInferenceTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorForTesting(problem, false, false);
-		ideaGen.generateDataAtoms();
+		ideaGen.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		rag.printToStream(System.out);
