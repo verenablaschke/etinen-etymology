@@ -216,6 +216,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		pslProblem.addObservation("Fsem", 1.0, id, concept);
 		String ipa = getIpa(cldfForm);
 		if (!ipa.isEmpty()) {
+			// TODO add XFufo also for imported Fufo atoms!!
 			pslProblem.addObservation(F_UFO_EX, 1.0, id);
 			pslProblem.addObservation("Fufo", 1.0, id, ipa);
 		}
