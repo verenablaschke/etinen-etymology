@@ -42,11 +42,14 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		double fufoBelief = -1.0;
 		for (Tuple atomToStatus : atomsToStatuses) {
 			String atom = atomToStatus.get(0);
+			if (atom.equals(contextAtom)){
+				continue;
+			}
 			String[] predDetails = StringUtils.split(atom, '(');
 			String predName = predDetails[0];
 			String[] args = StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", ");
 			double belief = rag.getValue(atom);
-			if (!atom.equals(contextAtom) && (predName.equals("Einh") || predName.equals("Eloa"))) {
+			if (predName.equals("Einh") || predName.equals("Eloa")) {
 				eetyArgs = args;
 				eetyAtom = atom;
 				eetyBelief = belief;
@@ -64,6 +67,9 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		sb.append(escapeForURL(eetyArgs[0] + " is also derived from " + eetyArgs[1]));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(", and ");
+		// TODO del
+		System.out.println(sb);
+		System.out.println(atomsToStatuses);
 		sb.append(new FsimPred().verbalizeIdeaAsSentence(fufoBelief, fufoArgs));
 		sb.append(". ");
 		return sb.toString();

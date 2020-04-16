@@ -25,6 +25,18 @@ public class LevelBasedPhylogeny {
 		tree.collectLeaves("ROOT", languages);
 		init();
 	}
+	
+	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, List<String> languages) {
+		try {
+			tree = LanguageTree.fromNewickFile(pathToNwkFile);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		tree.reduceToLangs(languages.toArray(new String[0]));
+		this.numAncestors = numAncestors;
+		this.languages = languages;
+		init();
+	}
 
 	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, String[] languages) {
 		try {
