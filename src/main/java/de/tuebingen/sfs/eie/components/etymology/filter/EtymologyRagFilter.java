@@ -6,6 +6,8 @@ import de.tuebingen.sfs.psl.engine.RagFilter;
 
 public class EtymologyRagFilter extends RagFilter {
 	
+	// TODO fix. the ignore list should only apply to the rendering, not to the grounding
+	
 	public EtymologyRagFilter(Map<String, Double> transparencyMap) {
 		super(transparencyMap);
 //		ignoreList.add("Flng");

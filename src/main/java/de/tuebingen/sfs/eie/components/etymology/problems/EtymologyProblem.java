@@ -18,6 +18,7 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.engine.RagFilter;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
@@ -99,7 +100,7 @@ public class EtymologyProblem extends PslProblem {
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
 //		Map<String, Double> valueMap = extractResult();
 		Map<String, Double> valueMap = extractResult(false);
-		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap), groundRules);
+		RuleAtomGraph rag = new RuleAtomGraph(this, new RagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);
 	}
 

@@ -31,6 +31,7 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		this.eetyType2 = eetyType2;
 	}
 
+	// TODO nicer generation when both eety types are identical (vbl)
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
@@ -67,9 +68,6 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		sb.append(escapeForURL(eetyArgs[0] + " is also derived from " + eetyArgs[1]));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(", and ");
-		// TODO del
-		System.out.println(sb);
-		System.out.println(atomsToStatuses);
 		sb.append(new FsimPred().verbalizeIdeaAsSentence(fufoBelief, fufoArgs));
 		sb.append(". ");
 		return sb.toString();
