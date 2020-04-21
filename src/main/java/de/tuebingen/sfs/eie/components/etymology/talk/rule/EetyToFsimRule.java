@@ -16,7 +16,7 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 	// Only Eety and Fsim can have a value other than 0 or 1.
 	// Eety is the only open predicate.
 	private static final String RULE = "%f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
-	private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar";
+	private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar.";
 
 	public EetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
 		super(String.format("%sAnd%sToFsim", eetyType1, eetyType2),
@@ -30,8 +30,8 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		String[] eetyArgs = null;
 		String eetyAtom = null;
 		double eetyBelief = -1.0;
-		String[] fufoArgs = null;
-		double fufoBelief = -1.0;
+		String[] fsimArgs = null;
+		double fsimBelief = -1.0;
 		for (Tuple atomToStatus : atomsToStatuses) {
 			String atom = atomToStatus.get(0);
 			if (atom.equals(contextAtom)){
@@ -45,15 +45,15 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 				eetyArgs = args;
 				eetyAtom = atom;
 				eetyBelief = belief;
-			} else if (predName.equals("Fufo")) {
-				fufoArgs = args;
-				fufoBelief = belief;
+			} else if (predName.equals("Fsim")) {
+				fsimArgs = args;
+				fsimBelief = belief;
 			}
 		}
 
 		StringBuilder sb = new StringBuilder();
-		sb.append(VERBALIZATION).append(". ");
-		sb.append("It ").append(BeliefScale.verbalizeBeliefAsPredicate(eetyBelief));
+		sb.append(VERBALIZATION);
+		sb.append(" It ").append(BeliefScale.verbalizeBeliefAsPredicate(eetyBelief));
 		sb.append(" that ");
 		sb.append("\\url[");
 		sb.append(escapeForURL(eetyArgs[0])).append(" is also ");
@@ -66,8 +66,8 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 		}
 		sb.append(" from ").append(escapeForURL(eetyArgs[1]));
 		sb.append("]{").append(eetyAtom).append("}");
-		sb.append(", and ");
-		sb.append(new FsimPred().verbalizeIdeaAsSentence(fufoBelief, fufoArgs));
+		sb.append(", but ");
+		sb.append(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs));
 		sb.append(". ");
 		return sb.toString();
 	}

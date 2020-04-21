@@ -23,17 +23,12 @@ public class TancToEinhRule extends TalkingLogicalRule {
 		String[] args = getArgs();
 		List<Tuple> atomToStatus = rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName);
 		
-		String tanc = null;
 		String ancestor = null;
-		Double tancBelief = null;
-
 		for (int i = 0; i < args.length; i++) {
 			String groundAtom = atomToStatus.get(i).get(0);
 			if (groundAtom.startsWith("Tanc")) {
-				tanc = groundAtom;
 				String[] predDetails = StringUtils.split(groundAtom, '(');
 				ancestor = StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", ")[1];
-				tancBelief = rag.getValue(groundAtom);
 				break;
 			}
 		}
@@ -41,7 +36,6 @@ public class TancToEinhRule extends TalkingLogicalRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(", in this case ");
 		sb.append(ancestor).append(".");
-		sb.append(atomToStatus);
 		return sb.toString();
 	}
 

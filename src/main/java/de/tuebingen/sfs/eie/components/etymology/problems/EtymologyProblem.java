@@ -72,10 +72,6 @@ public class EtymologyProblem extends PslProblem {
 
 		addRule(new FsimAndSsimToEetyRule("Einh", this, 8.0));
 		addRule(new FsimAndSsimToEetyRule("Eloa", this, 8.0));
-
-		// addRule(new TalkingLogicalRule("NotFsimToNotEety",
-		// "3: Fufo(X, F1) & Fufo(Y, F2) & ~Fsim(F1, F2) -> ~Eety(X, Y)", this,
-		// "Dissimilar forms are probably derived from different sources."));
 	}	
 
 	@Override

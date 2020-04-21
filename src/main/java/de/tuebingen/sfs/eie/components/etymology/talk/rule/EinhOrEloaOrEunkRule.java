@@ -29,7 +29,7 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append(getDefaultExplanation(groundingName, contextAtom, rag, whyExplanation));
 		
-		
+		// TODO only include actual competitors (belief threshold?)
 		
 		return sb.toString();
 	}

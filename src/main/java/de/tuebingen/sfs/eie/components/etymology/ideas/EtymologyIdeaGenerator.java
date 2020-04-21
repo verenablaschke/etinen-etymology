@@ -117,7 +117,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// For the given concept and languages, retrieve Fufo, Flng, Fsem, Hmem
 		// Get the Hmem siblings for these atoms and retrieve their F-atoms
 		// (update `concepts`!)
-		
+
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
 			List<CLDFForm> cldfForms = wordListDb.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
@@ -153,9 +153,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		for (String lang1 : tree.getAllLanguages()) {
 			for (String lang2 : tree.getAllLanguages()) {
+				if (lang1.equals(lang2)) {
+					continue;
+				}
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if (!lang1.equals(lang2) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
+				} else if (tree.getLevel(lang1) == tree.getLevel(lang2)) {
 					// TODO: borrowing from e.g. Latin
 					// TODO: geographical distance etc.
 					// TODO: make this open instead? e.g.

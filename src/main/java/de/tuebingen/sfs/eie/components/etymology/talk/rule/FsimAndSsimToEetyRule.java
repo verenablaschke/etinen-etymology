@@ -14,23 +14,19 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 
-	private static final String RULE = "%f: Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" // phonetic
-																					// similarity
-			// + "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &" // semantic
-			// similarity
-			// TODO uncomment
-			+ "%s(X, Z) & (X != Y) & (Y != Z)" + "-> Einh(Y, Z) | Eloa(Y, Z)"; // ->
-																				// same
-																				// source
+	private static final String RULE = // phonetic similarity
+			"%f: Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
+					// semantic similarity
+					+ "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
+					// -> same source
+					+ "%s(X, Z) & (X != Y) & (Y != Z)" + "-> Einh(Y, Z) | Eloa(Y, Z)";
 	private static final String VERBALIZATION = "If two words are phonetically and semantically similar, "
 			+ "they are probably derived from the same source.";
 	private String eetyType = null;
-	private String rule = null;
 
 	public FsimAndSsimToEetyRule(String eetyType, PslProblem pslProblem, double weight) {
 		super(String.format("FsimAndSsimAnd%sToEety", eetyType), String.format(Locale.US, RULE, weight, eetyType),
 				pslProblem, VERBALIZATION);
-		this.rule = String.format(RULE, weight, eetyType);
 		this.eetyType = eetyType;
 	}
 
