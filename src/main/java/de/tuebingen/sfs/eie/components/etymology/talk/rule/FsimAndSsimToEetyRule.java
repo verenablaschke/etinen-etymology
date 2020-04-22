@@ -9,6 +9,7 @@ import de.tuebingen.sfs.eie.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
+import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
@@ -59,12 +60,8 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 		sb.append(VERBALIZATION).append(" ");
 		sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs)));
 		sb.append(" and \\url[");
-		if (eetyType.equals("Einh")) {
-			sb.append(escapeForURL(new EinhPred().verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));
-		} else {
-			sb.append(escapeForURL(new EloaPred().verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));
-
-		}
+		TalkingPredicate pred = eetyType.equals("Einh") ? new EinhPred() : new EloaPred();
+		sb.append(escapeForURL(pred.verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(". ");
 

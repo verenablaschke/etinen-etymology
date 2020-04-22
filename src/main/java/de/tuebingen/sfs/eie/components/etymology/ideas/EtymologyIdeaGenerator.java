@@ -186,7 +186,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		PhoneticString form1 = phonSimHelper.extractSegments(entry1.form);
 		PhoneticString form2 = phonSimHelper.extractSegments(entry2.form);
 
-		// TODO what if the language is identical? return;?
 		if (tree.distanceToAncestor(entry1.language, entry2.language) == 1) {
 			pslProblem.addTarget("Einh", entry1.id, entry2.id);
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
