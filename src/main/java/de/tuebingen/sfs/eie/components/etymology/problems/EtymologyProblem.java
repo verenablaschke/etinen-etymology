@@ -11,6 +11,7 @@ import org.linqs.psl.model.rule.GroundRule;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPlusEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
@@ -67,10 +68,11 @@ public class EtymologyProblem extends PslProblem {
 	@Override
 	public void addInteractionRules() {
 		addRule(new EinhOrEloaOrEunkRule(this));
+		addRule(new EloaPlusEloaRule(this));
 		
 		addRule(new EunkPriorRule(this, ruleWeights.getOrDefault(EunkPriorRule.NAME, 6.0)));
 		addRule(new EloaPriorRule(this, ruleWeights.getOrDefault(EloaPriorRule.NAME, 2.0)));
-
+		
 		addRule(new TancToEinhRule(this, ruleWeights.getOrDefault(TancToEinhRule.NAME, 1.0)));
 		addRule(new TcntToEloaRule(this, ruleWeights.getOrDefault(TcntToEloaRule.NAME, 1.0)));
 
