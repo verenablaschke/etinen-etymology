@@ -10,6 +10,7 @@ import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToSsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPlusEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
@@ -70,7 +71,7 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new EinhOrEloaOrEunkRule(this));
 		addRule(new EloaPlusEloaRule(this));
 		
-		addRule(new EunkPriorRule(this, ruleWeights.getOrDefault(EunkPriorRule.NAME, 6.0)));
+		addRule(new EunkPriorRule(this, ruleWeights.getOrDefault(EunkPriorRule.NAME, 2.5)));
 		addRule(new EloaPriorRule(this, ruleWeights.getOrDefault(EloaPriorRule.NAME, 2.0)));
 		
 		addRule(new TancToEinhRule(this, ruleWeights.getOrDefault(TancToEinhRule.NAME, 1.0)));
@@ -80,6 +81,11 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new EetyToFsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
 		addRule(new EetyToFsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
 		addRule(new EetyToFsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
+
+		addRule(new EetyToSsimRule("Einh", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 
 		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
