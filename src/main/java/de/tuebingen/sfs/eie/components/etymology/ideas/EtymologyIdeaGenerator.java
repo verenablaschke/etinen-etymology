@@ -52,22 +52,37 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, boolean largeConceptSet,
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
+			boolean largeLanguageSet) {
+		Set<String> concepts = new HashSet<>();
+		concepts.add("BergN");
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
+			boolean largeLanguageSet) {
+		Set<String> concepts = new HashSet<>();
+		concepts.add("KopfN");
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
+			boolean largeConceptSet, boolean largeLanguageSet) {
+		Set<String> concepts = new HashSet<>();
+		concepts.add("SpracheN");
+		if (largeConceptSet) {
+			concepts.add("ZungeN");
+		}
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+	}
+
+	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
 			boolean largeLanguageSet) {
 		String dbDir = "src/test/resources/northeuralex-0.9";
 		String networkEdgesFile = "src/test/resources/etymology/clics2-network-edges.txt";
 		String networkIdsFile = "src/test/resources/etymology/clics2-network-ids.txt";
 		String northeuralexConceptsFile = "src/test/resources/northeuralex-0.9/parameters.csv";
 		String treeFile = "src/test/resources/northeuralex-0.9/tree.nwk";
-
-		Set<String> concepts = new HashSet<>();
-		concepts.add("SpracheN");
-		if (largeConceptSet) {
-			concepts.add("ZungeN");
-			// concepts.add("BergN");
-			// concepts.add("KopfN");
-
-		}
 
 		IPATokenizer tokenizer = new IPATokenizer();
 

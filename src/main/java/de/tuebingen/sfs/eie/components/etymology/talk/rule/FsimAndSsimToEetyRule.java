@@ -17,7 +17,7 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 
 	public static final String NAME = "FsimAndSsimToEety";
 	private static final String RULE = // phonetic similarity
-			"%f: Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
+			"%.1f: Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
 					// semantic similarity
 					+ "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
 					// -> same source
