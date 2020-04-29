@@ -10,11 +10,12 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class TcntToEloaRule extends TalkingLogicalRule {
 
+	public static final String NAME = "TcntToEloa";
 	private static final String RULE = "Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)";
 	private static final String VERBALIZATION = "A word can be loaned from a contact language";
 
 	public TcntToEloaRule(PslProblem pslProblem, double weight) {
-		super("TcntToEloa", weight + ": " + RULE, pslProblem, VERBALIZATION + ".");
+		super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION + ".");
 	}
 
 	@Override

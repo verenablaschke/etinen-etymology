@@ -10,11 +10,12 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class TancToEinhRule extends TalkingLogicalRule {
 
+	public static final String NAME = "TancToEinh";
 	private static final String RULE = "Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y)";
 	private static final String VERBALIZATION = "A word can be inherited from its direct ancestor language";
 
 	public TancToEinhRule(PslProblem pslProblem, double weight) {
-		super("TancToEinh", weight + ": " + RULE, pslProblem, VERBALIZATION + ".");
+		super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION + ".");
 	}
 
 	@Override

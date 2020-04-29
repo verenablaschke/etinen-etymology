@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import org.linqs.psl.model.rule.GroundRule;
 
@@ -11,6 +12,7 @@ import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
@@ -19,12 +21,19 @@ import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
 public class EtymologyProblem extends PslProblem {
+	
+	private Map<String, Double> ruleWeights;
 
 	public EtymologyProblem(DatabaseManager dbManager, String name) {
 		super(dbManager, name);
+		this.ruleWeights = new TreeMap<>();
+	}
+	
+	public EtymologyProblem(DatabaseManager dbManager, String name, Map<String, Double> ruleWeights) {
+		super(dbManager, name);
+		this.ruleWeights = ruleWeights;
 	}
 
 	@Override
@@ -58,20 +67,20 @@ public class EtymologyProblem extends PslProblem {
 	@Override
 	public void addInteractionRules() {
 		addRule(new EinhOrEloaOrEunkRule(this));
-		addRule(new TalkingLogicalRule("EunkPrior", "6: ~Eunk(X)", this,
-				"By default, we do not assume that words are of unknown origin."));
-		addRule(new EloaPriorRule(this, 2.0));
+		
+		addRule(new EunkPriorRule(this, ruleWeights.getOrDefault(EunkPriorRule.NAME, 6.0)));
+		addRule(new EloaPriorRule(this, ruleWeights.getOrDefault(EloaPriorRule.NAME, 2.0)));
 
-		addRule(new TancToEinhRule(this, 1.0));
-		addRule(new TcntToEloaRule(this, 1.0));
+		addRule(new TancToEinhRule(this, ruleWeights.getOrDefault(TancToEinhRule.NAME, 1.0)));
+		addRule(new TcntToEloaRule(this, ruleWeights.getOrDefault(TcntToEloaRule.NAME, 1.0)));
 
-		addRule(new EetyToFsimRule("Einh", "Einh", this, 5.0));
-		addRule(new EetyToFsimRule("Einh", "Eloa", this, 5.0));
-		addRule(new EetyToFsimRule("Eloa", "Einh", this, 5.0));
-		addRule(new EetyToFsimRule("Eloa", "Eloa", this, 5.0));
+		addRule(new EetyToFsimRule("Einh", "Einh", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
 
-		addRule(new FsimAndSsimToEetyRule("Einh", this, 8.0));
-		addRule(new FsimAndSsimToEetyRule("Eloa", this, 8.0));
+		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 	}	
 
 	@Override
@@ -93,7 +102,6 @@ public class EtymologyProblem extends PslProblem {
 		List<List<GroundRule>> groundRules = runInference(true);
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
-//		Map<String, Double> valueMap = extractResult();
 		Map<String, Double> valueMap = extractResult(false);
 		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap), groundRules);
 		return new InferenceResult(rag, valueMap);

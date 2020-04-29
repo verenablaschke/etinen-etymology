@@ -15,6 +15,7 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 
+	public static final String NAME = "FsimAndSsimToEety";
 	private static final String RULE = // phonetic similarity
 			"%f: Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &"
 					// semantic similarity
@@ -59,7 +60,7 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(" ");
 		sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs)));
-		sb.append(" and \\url[");
+		sb.append(", and \\url[");
 		TalkingPredicate pred = eetyType.equals("Einh") ? new EinhPred() : new EloaPred();
 		sb.append(escapeForURL(pred.verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));
 		sb.append("]{").append(eetyAtom).append("}");
