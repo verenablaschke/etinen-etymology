@@ -60,6 +60,7 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(" ");
 		sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs)));
+		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(", and \\url[");
 		TalkingPredicate pred = eetyType.equals("Einh") ? new EinhPred() : new EloaPred();
 		sb.append(escapeForURL(pred.verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));

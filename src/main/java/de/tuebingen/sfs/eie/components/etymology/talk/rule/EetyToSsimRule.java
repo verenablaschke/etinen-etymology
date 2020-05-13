@@ -70,6 +70,7 @@ public class EetyToSsimRule extends TalkingLogicalRule {
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(", but ");
 		sb.append(new SsimPred().verbalizeIdeaAsSentence(ssimBelief, ssimArgs));
+		sb.append(" (" + (int) (100 * ssimBelief) + "%)");
 		sb.append(". ");
 		return sb.toString();
 	}

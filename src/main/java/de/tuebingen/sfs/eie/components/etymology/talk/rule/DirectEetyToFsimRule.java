@@ -11,26 +11,21 @@ import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EetyToFsimRule extends TalkingLogicalRule {
+public class DirectEetyToFsimRule extends TalkingLogicalRule {
 
 	public static final String NAME = "EetyToFsim";
-	// Only Eety and Fsim can have a value other than 0 or 1.
-	// Eety is the only open predicate.
-	private static final String RULE = "%.1f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
-	private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar.";
+	private static final String RULE = "%.1f: %s(X, Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
+	private static final String VERBALIZATION = "A word should be phonetically similar to its source form.";
 
-	public EetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
-		super(String.format("%sAnd%sToFsim", eetyType1, eetyType2),
-				String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);
+	public DirectEetyToFsimRule(String eetyType1, PslProblem pslProblem, double weight) {
+		super(String.format("%sToFsim", eetyType1),
+				String.format(Locale.US, RULE, weight, eetyType1), pslProblem, VERBALIZATION);
 	}
 
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
 		List<Tuple> atomsToStatuses = rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName);
-		String[] eetyArgs = null;
-		String eetyAtom = null;
-		double eetyBelief = -1.0;
 		String[] fsimArgs = null;
 		double fsimBelief = -1.0;
 		for (Tuple atomToStatus : atomsToStatuses) {
@@ -42,32 +37,15 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 			String predName = predDetails[0];
 			String[] args = StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", ");
 			double belief = rag.getValue(atom);
-			if (predName.equals("Einh") || predName.equals("Eloa")) {
-				eetyArgs = args;
-				eetyAtom = atom;
-				eetyBelief = belief;
-			} else if (predName.equals("Fsim")) {
+			if (predName.equals("Fsim")) {
 				fsimArgs = args;
 				fsimBelief = belief;
+				break;
 			}
 		}
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION);
-		sb.append(" It ").append(BeliefScale.verbalizeBeliefAsPredicate(eetyBelief));
-		sb.append(" that ");
-		sb.append("\\url[");
-		sb.append(escapeForURL(eetyArgs[0])).append(" is also ");
-		if (contextAtom.startsWith("Einh") && eetyAtom.startsWith("Einh")){
-			sb.append("inherited");
-		} else if (contextAtom.startsWith("Eloa") && eetyAtom.startsWith("Eloa")){
-			sb.append("borrowed");
-		} else {
-			sb.append("derived");
-		}
-		sb.append(" from ").append(escapeForURL(eetyArgs[1]));
-		sb.append("]{").append(eetyAtom).append("}");
-		sb.append(", but ");
 		sb.append(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs));
 		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(". ");

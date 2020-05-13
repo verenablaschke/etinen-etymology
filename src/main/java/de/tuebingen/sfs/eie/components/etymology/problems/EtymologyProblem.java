@@ -9,6 +9,7 @@ import java.util.TreeMap;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.DirectEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToSsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
@@ -35,6 +36,9 @@ public class EtymologyProblem extends PslProblem {
 	
 	public EtymologyProblem(DatabaseManager dbManager, String name, Map<String, Double> ruleWeights) {
 		super(dbManager, name);
+		if (ruleWeights == null){
+			ruleWeights = new TreeMap<>();
+		}
 		this.ruleWeights = ruleWeights;
 	}
 
@@ -88,7 +92,12 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new EetyToSsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 
 		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+		
+		addRule(new DirectEetyToFsimRule("Eloa", this, 2.0));
+		
+		// TODO Is this rule necessary? If yes: how to prevent this rule from being essentially grounded twice?
+		// e.g. A,B + B,A <= 1 and B,A + A,B <= 1
+//		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 	}	
 
 	@Override
