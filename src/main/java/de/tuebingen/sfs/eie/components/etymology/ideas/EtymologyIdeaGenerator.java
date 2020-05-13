@@ -180,6 +180,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					// pslProblem.addTarget
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
+				// TODO delete? modify?
+				else if (tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
+					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
+				}
 			}
 		}
 

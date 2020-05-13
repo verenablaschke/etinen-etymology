@@ -24,6 +24,7 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 		super(NAME, RULE, pslProblem, VERBALIZATION);
 	}
 
+	// TODO remove last comma, sort competitors by belief value
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {

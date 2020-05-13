@@ -93,7 +93,7 @@ public class EtymologyProblem extends PslProblem {
 
 		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 		
-		addRule(new DirectEetyToFsimRule("Eloa", this, 2.0));
+		addRule(new DirectEetyToFsimRule("Eloa", this, 5.0));
 		
 		// TODO Is this rule necessary? If yes: how to prevent this rule from being essentially grounded twice?
 		// e.g. A,B + B,A <= 1 and B,A + A,B <= 1
