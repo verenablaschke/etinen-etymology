@@ -226,6 +226,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			return;
 		}
 		double sim = phonSimHelper.similarity(form1, form2);
+//		pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
+		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
 		System.out.println("Fsim(" + entry1.id + "/" + ipa1 + "/" + form1 + "," + entry2.id + "/" + ipa2 + "/" + form2
 				+ ") " + sim);
@@ -253,6 +255,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private String getIpa(CLDFForm form) {
 		return String.join("", form.getSegments());
+	}
+	
+	private double logistic(double input){
+		double growthRate = 8.0;
+		double midpoint = 0.42;
+		return Math.pow(1 + Math.pow(Math.E, (-growthRate * (input - midpoint))), -1);
 	}
 
 }

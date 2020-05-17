@@ -44,6 +44,8 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void declarePredicates() {
+		// TODO use predicate classes here
+		
 		// Information about the forms
 		// Flng(ID, language)
 		declareClosedPredicate("Flng", 2);
@@ -64,6 +66,8 @@ public class EtymologyProblem extends PslProblem {
 		// Phylogenetic information.
 		declareClosedPredicate("Tanc", 2);
 		declareClosedPredicate("Tcnt", 2);
+		
+//		declareClosedPredicate("Fsimorig", 2);
 	}
 
 	@Override
