@@ -83,16 +83,29 @@ public class EtymologyInferenceTest {
 	public static void main(String[] args) {
 //		gridSearch();
 		
-
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, false);
-		ideaGen.generateAtoms();
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, false).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
-		RuleAtomGraph rag = result.getRag();
-		rag.printToStream(System.out);
-		result.printInferenceValues();
-		problem.printRules(System.out);
-		EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter) result.getRag().getRagFilter());
+		RuleAtomGraph ragMountain = result.getRag();
+//		ragMountain.printToStream(System.out);
+//		result.printInferenceValues();
+//		problem.printRules(System.out);
+		
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragLanguage = result.getRag();
+		
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem, false).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragHead = result.getRag();
+
+		EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter) ragMountain.getRagFilter());
+		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage.getRagFilter());
+		EtymologyResultChecker.checkHeadAnalysis((EtymologyRagFilter) ragHead.getRagFilter());
 	}
 }

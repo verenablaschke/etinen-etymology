@@ -25,7 +25,6 @@ public class EtymologyResultChecker {
 	}
 
 	public static void checkMountainAnalysis(EtymologyRagFilter filter) {
-//		EtymologyRagFilter filter = (EtymologyRagFilter) rag.getRagFilter();
 		Map<String, Double> specialCases = new HashMap<String, Double>();
 		specialCases.put("eng:mountain:ˈmaʊntɪn:BergN", 0.06);
 		checkAnalysis(filter, specialCases);
@@ -33,7 +32,13 @@ public class EtymologyResultChecker {
 	
 	public static void checkLanguageAnalysis(EtymologyRagFilter filter) {
 		Map<String, Double> specialCases = new HashMap<String, Double>();
-//		specialCases.put("eng:mountain:", 0.06);
+		specialCases.put("eng:language:ˈlæŋɡwɪd͡ʒ:SpracheN", 0.06);
+		checkAnalysis(filter, specialCases);
+	}
+	
+	public static void checkHeadAnalysis(EtymologyRagFilter filter) {
+		Map<String, Double> specialCases = new HashMap<String, Double>();
+		specialCases.put("deu:Kopf:kɔp͡f:KopfN", 0.06);
 		checkAnalysis(filter, specialCases);
 	}
 	

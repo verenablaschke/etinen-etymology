@@ -13,7 +13,6 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.DirectEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToSsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EinhOrEloaOrEunkRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaAndEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPlusEloaRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
@@ -91,18 +90,18 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new EetyToSsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 		addRule(new EetyToSsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 		addRule(new EetyToSsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
-
-		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 		
-//		addRule(new DirectEetyToFsimRule("Eloa", this, 5.0));
-		addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 5.0));
-		addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 5.0));
-		addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 5.0));
-		addRule(new EloaAndEetyToFsimRule("Eloa", "Eloa", this, 5.0));
+		addRule(new DirectEetyToFsimRule("Eloa", this, 8.0));
+//		
+//		addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
+//		addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
+//		addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 3.0));
+//		addRule(new EloaAndEetyToFsimRule("Eloa", "Eloa", this, 3.0));
 		
 		// TODO Is this rule necessary? If yes: how to prevent this rule from being essentially grounded twice?
 		// e.g. A,B + B,A <= 1 and B,A + A,B <= 1
-//		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 	}	
 
 	@Override
