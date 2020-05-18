@@ -95,7 +95,8 @@ public class EtymologyProblem extends PslProblem {
 		addRule(new EetyToSsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 		addRule(new EetyToSsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
 		
-		addRule(new DirectEetyToFsimRule("Eloa", this, 8.0));
+		addRule(new DirectEetyToFsimRule("Eloa", this, ruleWeights.getOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+		addRule(new DirectEetyToFsimRule("Einh", this, ruleWeights.getOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
 //		
 //		addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
 //		addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));

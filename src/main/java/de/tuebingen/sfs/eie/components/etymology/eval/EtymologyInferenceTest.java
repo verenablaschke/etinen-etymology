@@ -14,6 +14,7 @@ import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
@@ -37,83 +38,87 @@ public class EtymologyInferenceTest {
 	}
 
 	private static void gridSearch() {
-		Map<String, Double> ruleWeights = new HashMap<String, Double>();
-		ruleWeights.put(EetyToFsimRule.NAME, 5.0);
-		ruleWeights.put(FsimAndSsimToEetyRule.NAME, 5.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf1.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		ruleWeights.put(EetyToFsimRule.NAME, 5.0);
-		ruleWeights.put(FsimAndSsimToEetyRule.NAME, 8.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf2.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		ruleWeights.put(EetyToFsimRule.NAME, 1.0);
-		ruleWeights.put(FsimAndSsimToEetyRule.NAME, 1.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf3.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-
-		ruleWeights = new HashMap<String, Double>();
-		ruleWeights.put(EloaPriorRule.NAME, 1.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf4.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		ruleWeights = new HashMap<String, Double>();
-		ruleWeights.put(EetyToFsimRule.NAME, 8.0);
-		ruleWeights.put(FsimAndSsimToEetyRule.NAME, 5.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf5.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		ruleWeights = new HashMap<String, Double>();
-		ruleWeights.put(EetyToFsimRule.NAME, 8.0);
-		ruleWeights.put(FsimAndSsimToEetyRule.NAME, 8.0);
-		try {
-			run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf6.log"));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+		Map<String, Double> ruleWeights;
+		
+		int i = 0;
+		Double[] eetyToFsimValues = new Double[]{3.0, 5.0, 8.0};
+		Double[] fsimAndSsimToEetyValues = new Double[]{3.0, 5.0, 8.0};
+		Double[] eunkPriors = new Double[]{1.0, 2.5, 4.0};
+		Double[] eloaPriors = new Double[]{1.0, 2.0, 3.0};
+		for (double eetyToFsim : eetyToFsimValues){
+			for (double fsimAndSsimToEety : fsimAndSsimToEetyValues){
+				for (double eunkPrior: eunkPriors){
+					for (double eloaPrior: eloaPriors){
+						ruleWeights = new HashMap<String, Double>();
+						ruleWeights.put(EetyToFsimRule.NAME, eetyToFsim);
+						ruleWeights.put(FsimAndSsimToEetyRule.NAME, fsimAndSsimToEety);
+						ruleWeights.put(EunkPriorRule.NAME, eunkPrior);
+						ruleWeights.put(EloaPriorRule.NAME, eloaPrior);
+						try {
+							run(ruleWeights, new PrintStream("C:/Users/vbl/Documents/NorthEuraLex/conf" + i++ + ".log"));
+						} catch (FileNotFoundException e) {
+							e.printStackTrace();
+						}
+					}
+				}
+			}
+		}	
 	}
 
 	public static void main(String[] args) {
 		// gridSearch();
 
-		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
-		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, false).generateAtoms();
-		InferenceResult result = problemManager.registerAndRunProblem(problem);
-		RuleAtomGraph ragMountain = result.getRag();
+		ProblemManager problemManager;
+		EtymologyProblem problem;
+		InferenceResult result;
+		
+//		problemManager = ProblemManager.defaultProblemManager();
+//		problem = new EtymologyProblem(problemManager.getDbManager(), "MountainEtymologyProblem");
+//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, false).generateAtoms();
+//		result = problemManager.registerAndRunProblem(problem);
+//		RuleAtomGraph ragMountain = result.getRag();
 		// ragMountain.printToStream(System.out);
 		// result.printInferenceValues();
 		// problem.printRules(System.out);
 
-		// problemManager = ProblemManager.defaultProblemManager();
-		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
-		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
-		result = problemManager.registerAndRunProblem(problem);
-		RuleAtomGraph ragLanguage = result.getRag();
-
-		// problemManager = ProblemManager.defaultProblemManager();
-		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
+//		 problemManager = ProblemManager.defaultProblemManager();
+//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem");
+//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
+//		result = problemManager.registerAndRunProblem(problem);
+//		RuleAtomGraph ragLanguage = result.getRag();
+//
+//		 problemManager = ProblemManager.defaultProblemManager();
+//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem2");
+//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, true, false).generateAtoms();
+//		result = problemManager.registerAndRunProblem(problem);
+//		RuleAtomGraph ragLanguage2 = result.getRag();
+//		
+//
+//		 problemManager = ProblemManager.defaultProblemManager();
+//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem3");
+//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, true).generateAtoms();
+//		result = problemManager.registerAndRunProblem(problem);
+//		RuleAtomGraph ragLanguage3 = result.getRag();
+		
+		 problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "HeadEtymologyProblem");
 		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem, false).generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph ragHead = result.getRag();
+		
 
-		EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter) ragMountain.getRagFilter());
-		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage.getRagFilter());
+		 problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "HeadEtymologyProblem2");
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem, true).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragHead2 = result.getRag();
+//
+//		EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter) ragMountain.getRagFilter());
+//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage.getRagFilter());
+//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage2.getRagFilter());
+//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage3.getRagFilter());
 		EtymologyResultChecker.checkHeadAnalysis((EtymologyRagFilter) ragHead.getRagFilter());
+		EtymologyResultChecker.checkHeadAnalysis((EtymologyRagFilter) ragHead2.getRagFilter());
 
 //		Set<String> preds = new HashSet<>();
 //		preds.add("Fsim");

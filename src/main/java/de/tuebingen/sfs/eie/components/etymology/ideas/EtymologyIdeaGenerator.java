@@ -94,13 +94,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		languages.add("dan");
 		languages.add("fra");
 		languages.add("spa");
+		languages.add("ita");
+		languages.add("cat");
 		if (largeLanguageSet) {
 			languages.add("isl");
 			languages.add("nld");
 
 			languages.add("por");
 			languages.add("cat");
-			languages.add("ita");
 			languages.add("ron");
 			languages.add("lat");
 
