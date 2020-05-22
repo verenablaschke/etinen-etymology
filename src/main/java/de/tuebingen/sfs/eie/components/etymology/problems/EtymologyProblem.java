@@ -24,28 +24,29 @@ import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
 public class EtymologyProblem extends PslProblem {
-	
-	private Map<String, Double> ruleWeights;
+
+	private EtymologyConfig config;
 
 	public EtymologyProblem(DatabaseManager dbManager, String name) {
 		super(dbManager, name);
-		this.ruleWeights = new TreeMap<>();
+		this.config = new EtymologyConfig();
 	}
-	
-	public EtymologyProblem(DatabaseManager dbManager, String name, Map<String, Double> ruleWeights) {
+
+	public EtymologyProblem(DatabaseManager dbManager, String name, EtymologyConfig config) {
 		super(dbManager, name);
-		if (ruleWeights == null){
-			ruleWeights = new TreeMap<>();
+		if (config == null) {
+			config = new EtymologyConfig();
 		}
-		this.ruleWeights = ruleWeights;
+		this.config = config;
 	}
 
 	@Override
 	public void declarePredicates() {
 		// TODO use predicate classes here
-		
+
 		// Information about the forms
 		// Flng(ID, language)
 		declareClosedPredicate("Flng", 2);
@@ -66,8 +67,8 @@ public class EtymologyProblem extends PslProblem {
 		// Phylogenetic information.
 		declareClosedPredicate("Tanc", 2);
 		declareClosedPredicate("Tcnt", 2);
-		
-//		declareClosedPredicate("Fsimorig", 2);
+
+		// declareClosedPredicate("Fsimorig", 2);
 	}
 
 	@Override
@@ -78,41 +79,55 @@ public class EtymologyProblem extends PslProblem {
 	public void addInteractionRules() {
 		addRule(new EinhOrEloaOrEunkRule(this));
 		addRule(new EloaPlusEloaRule(this));
-		
-		addRule(new EunkPriorRule(this, ruleWeights.getOrDefault(EunkPriorRule.NAME, 2.5)));
-		addRule(new EloaPriorRule(this, ruleWeights.getOrDefault(EloaPriorRule.NAME, 2.0)));
-		
-		addRule(new TancToEinhRule(this, ruleWeights.getOrDefault(TancToEinhRule.NAME, 1.0)));
-		addRule(new TcntToEloaRule(this, ruleWeights.getOrDefault(TcntToEloaRule.NAME, 1.0)));
 
-		addRule(new EetyToFsimRule("Einh", "Einh", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
+		addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
 
-		addRule(new EetyToSsimRule("Einh", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Einh", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Eloa", "Einh", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Eloa", "Eloa", this, ruleWeights.getOrDefault(EetyToSsimRule.NAME, 5.0)));
-		
-		addRule(new DirectEetyToFsimRule("Eloa", this, ruleWeights.getOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-		addRule(new DirectEetyToFsimRule("Einh", this, ruleWeights.getOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-//		
-//		addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
-//		addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
-//		addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 3.0));
-//		addRule(new EloaAndEetyToFsimRule("Eloa", "Eloa", this, 3.0));
-		
-		// TODO Is this rule necessary? If yes: how to prevent this rule from being essentially grounded twice?
+		addRule(new TancToEinhRule(this, config.getRuleWeightOrDefault(TancToEinhRule.NAME, 1.0)));
+		addRule(new TcntToEloaRule(this, config.getRuleWeightOrDefault(TcntToEloaRule.NAME, 1.0)));
+
+		addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+
+		addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+		addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+
+		addRule(new DirectEetyToFsimRule("Eloa", this, config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+		addRule(new DirectEetyToFsimRule("Einh", this, config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+		//
+		// addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
+		// addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
+		// addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 3.0));
+		// addRule(new EloaAndEetyToFsimRule("Eloa", "Eloa", this, 3.0));
+
+		// TODO Is this rule necessary? If yes: how to prevent this rule from
+		// being essentially grounded twice?
 		// e.g. A,B + B,A <= 1 and B,A + A,B <= 1
-		addRule(new FsimAndSsimToEetyRule("Eloa", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-		addRule(new FsimAndSsimToEetyRule("Einh", this, ruleWeights.getOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-	}	
+		// addRule(new FsimAndSsimToEetyRule("Eloa", this,
+		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+		// addRule(new FsimAndSsimToEetyRule("Einh", this,
+		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
+//		addRule(new TalkingLogicalRule("FsimAndSsimToEety1",
+//				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
+//						+ "Einh(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
+//						+ "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
+//				this));
+//		addRule(new TalkingLogicalRule("FsimAndSsimToEety2",
+//				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
+//						+ "Eloa(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
+//						+ "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
+//				this));
+	}
 
 	@Override
 	public Set<AtomTemplate> declareAtomsForCleanUp() {
 		// TODO (outside this class)
-		// - delete F-atoms for proto languages if they don't correspond to high-belief E-atoms
+		// - delete F-atoms for proto languages if they don't correspond to
+		// high-belief E-atoms
 		// - delete low-belief E-atoms
 		Set<AtomTemplate> atomsToDelete = new HashSet<>();
 		atomsToDelete.add(new AtomTemplate("Tanc", "?", "?"));
