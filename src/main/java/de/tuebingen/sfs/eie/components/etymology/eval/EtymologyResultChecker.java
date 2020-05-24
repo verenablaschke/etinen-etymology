@@ -1,55 +1,69 @@
 package de.tuebingen.sfs.eie.components.etymology.eval;
 
+import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
+import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyResultChecker {
 
-	public static void checkAnalysis(EtymologyRagFilter filter, Map<String, Double> specialCases) {
+	private static void checkAnalysis(EtymologyRagFilter filter, Map<String, Double> specialCases, PrintStream out) {
 		for (Entry<String, Double> argAndThreshold : specialCases.entrySet()) {
-			System.out.println("--------\n");
-			for (Entry<String, Double> entry : filter.getEetyForArgument(argAndThreshold.getKey())) {
-				if (entry.getValue() < argAndThreshold.getValue()) {
+			out.println("--------\n");
+			for (RankingEntry<String> entry : filter.getEetyForArgument(argAndThreshold.getKey())) {
+				if (entry.value < argAndThreshold.getValue()) {
 					break;
 				}
-				printEntry(entry);
+				printEntry(entry, out);
 			}
 		}
-		System.out.println("\n----MOST LIKELY EXPLANATION PER WORD----\n");
-		for (Entry<String, Double> entry : filter.getHighestEetyPerArgument()) {
-			printEntry(entry);
+		out.println("\n----MOST LIKELY EXPLANATION PER WORD----\n");
+		for (RankingEntry<String> entry : filter.getHighestEetyPerArgument()) {
+			printEntry(entry, out);
 		}
 	}
 
-	public static void checkMountainAnalysis(EtymologyRagFilter filter) {
+	public static void checkMountainAnalysis(EtymologyRagFilter filter, PrintStream out) {
 		Map<String, Double> specialCases = new HashMap<String, Double>();
-		specialCases.put("eng:mountain:ˈmaʊntɪn:BergN", 0.06);
-		checkAnalysis(filter, specialCases);
+		specialCases.put("eng:mountain:ˈmaʊntɪn:BergN", 0.05);
+		checkAnalysis(filter, specialCases, out);
+	}	
+	
+	public static void checkMountainAnalysis(EtymologyRagFilter filter) {
+		checkMountainAnalysis(filter, System.out);
+	}
+	
+	public static void checkLanguageAnalysis(EtymologyRagFilter filter, PrintStream out) {
+		Map<String, Double> specialCases = new HashMap<String, Double>();
+		specialCases.put("eng:language:ˈlæŋɡwɪd͡ʒ:SpracheN", 0.05);
+		checkAnalysis(filter, specialCases, out);
 	}
 	
 	public static void checkLanguageAnalysis(EtymologyRagFilter filter) {
+		checkLanguageAnalysis(filter, System.out);
+	}
+	
+	public static void checkHeadAnalysis(EtymologyRagFilter filter, PrintStream out) {
 		Map<String, Double> specialCases = new HashMap<String, Double>();
-		specialCases.put("eng:language:ˈlæŋɡwɪd͡ʒ:SpracheN", 0.06);
-		checkAnalysis(filter, specialCases);
+		specialCases.put("deu:Kopf:kɔp͡f:KopfN", 0.05);
+		checkAnalysis(filter, specialCases, out);
 	}
 	
 	public static void checkHeadAnalysis(EtymologyRagFilter filter) {
-		Map<String, Double> specialCases = new HashMap<String, Double>();
-		specialCases.put("deu:Kopf:kɔp͡f:KopfN", 0.06);
-		checkAnalysis(filter, specialCases);
+		checkHeadAnalysis(filter, System.out);
 	}
 	
-	private static void printEntry(Entry<String, Double> entry){
-		String[] predAndArgs = entry.getKey().replace(")", "").split("\\(");
+	private static void printEntry(RankingEntry<String> entry, PrintStream out){
+		String[] predAndArgs = entry.key.replace(")", "").split("\\(");
 		String[] args = predAndArgs[1].split(",");
-		System.out.print(args[0] + "\t\t< " + predAndArgs[0]);
+		out.print(args[0] + "\t\t< " + predAndArgs[0]);
 		if (args.length > 1){
-			System.out.print("\t" + args[1]);
+			out.print("\t" + args[1]);
 		}
-		System.out.println("\t\t" + (int) (100 * entry.getValue()) + "%");
+		out.println("\t\t" + (int) (100 * entry.value) + "%");
 	}
 
 }

@@ -26,7 +26,7 @@ public class EtymologyConfig {
 		} else {
 			this.ruleWeights = ruleWeights;
 		}
-		if (ruleWeights == null) {
+		if (ignoreRules == null) {
 			this.ignoreRules = new TreeSet<>();
 		} else {
 			this.ignoreRules = ignoreRules;

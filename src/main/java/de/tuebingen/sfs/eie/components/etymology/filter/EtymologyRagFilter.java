@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.AbstractMap;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -13,6 +14,7 @@ import java.util.TreeSet;
 
 import de.tuebingen.sfs.psl.engine.RagFilter;
 import de.tuebingen.sfs.psl.util.color.HslColor;
+import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyRagFilter extends RagFilter {
 
@@ -51,33 +53,33 @@ public class EtymologyRagFilter extends RagFilter {
 		return BASECOLOR;
 	}
 
-	public List<SimpleEntry<String, Double>> getEetyForArgument(String argument) {
-		List<SimpleEntry<String, Double>> entries = new ArrayList<>();
+	public List<RankingEntry<String>> getEetyForArgument(String argument) {
+		List<RankingEntry<String>> entries = new ArrayList<>();
 		for (String atom : transparencyMap.keySet()) {
 			if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument) || atom.startsWith("Eunk(" + argument)) {
-				entries.add(new SimpleEntry<String, Double>(atom, transparencyMap.get(atom)));
+				entries.add(new RankingEntry<String>(atom, transparencyMap.get(atom)));
 			}
 		}
-		entries.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
+		Collections.sort(entries, Collections.reverseOrder());
 		return entries;
 	}
 
-	public SimpleEntry<String, Double> getHighestEetyForArgument(String argument) {
+	public RankingEntry<String> getHighestEetyForArgument(String argument) {
 		return getEetyForArgument(argument).get(0);
 	}
 
-	public List<SimpleEntry<String, Double>> getHighestEetyPerArgument() {
+	public List<RankingEntry<String>> getHighestEetyPerArgument() {
 		Set<String> arguments = new TreeSet<>();
 		for (String atom : transparencyMap.keySet()) {
 			if (atom.startsWith("Eloa(") || atom.startsWith("Einh(") || atom.startsWith("Eunk(")) {
 				arguments.add(atom.replace(")", "").split("\\(")[1].split(",")[0]);
 			}
 		}
-		List<SimpleEntry<String, Double>> atoms = new ArrayList<>();
+		List<RankingEntry<String>> atoms = new ArrayList<>();
 		for (String arg : arguments) {
 			atoms.add(getHighestEetyForArgument(arg));
 		}
-		atoms.sort((e1, e2) -> e2.getValue().compareTo(e1.getValue()));
+		Collections.sort(atoms, Collections.reverseOrder());
 		return atoms;
 	}
 
