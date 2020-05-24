@@ -30,6 +30,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
 	private Map<String, String> ISO2LangID;
+	private boolean branchwiseBorrowing;
 
 	private Set<Entry> entryPool;
 
@@ -37,12 +38,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, Set<String> concepts, List<String> languages,
 			String treeFile, SemanticNetwork semanticNet, PhoneticSimilarityHelper phonSimHelper,
-			CLDFWordlistDatabase wordListDb) {
+			CLDFWordlistDatabase wordListDb, boolean branchwiseBorrowing) {
 		super(problem);
 		this.concepts = concepts;
 		this.semanticNet = semanticNet;
 		this.phonSimHelper = phonSimHelper;
 		this.wordListDb = wordListDb;
+		this.branchwiseBorrowing = branchwiseBorrowing;
 		entryPool = new HashSet<>();
 		tree = new LevelBasedPhylogeny(4, treeFile, languages);
 
@@ -54,30 +56,45 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
 			boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingMountain(problem, largeLanguageSet, false);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
+			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		Set<String> concepts = new HashSet<>();
 		concepts.add("BergN");
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
 			boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingHead(problem, largeLanguageSet, false);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
+			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		Set<String> concepts = new HashSet<>();
 		concepts.add("KopfN");
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
 			boolean largeConceptSet, boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingLanguage(problem, largeConceptSet, largeLanguageSet, false);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
+			boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		Set<String> concepts = new HashSet<>();
 		concepts.add("SpracheN");
 		if (largeConceptSet) {
 			concepts.add("ZungeN");
 		}
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet);
+		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
 	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
-			boolean largeLanguageSet) {
+			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		String dbDir = "src/test/resources/northeuralex-0.9";
 		String networkEdgesFile = "src/test/resources/etymology/clics2-network-edges.txt";
 		String networkIdsFile = "src/test/resources/etymology/clics2-network-ids.txt";
@@ -123,7 +140,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
 		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
 
-		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb);
+		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
+				branchwiseBorrowing);
 	}
 
 	public void generateAtoms() {
@@ -174,17 +192,15 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if (tree.getLevel(lang1) == tree.getLevel(lang2)) {
+				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
 					// TODO: borrowing from e.g. Latin
 					// TODO: geographical distance etc.
 					// TODO: make this open instead? e.g.
 					// pslProblem.addTarget
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
+				} else if (branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
+					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
-				// TODO delete? modify?
-//				else if (tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
-//					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-//				}
 			}
 		}
 
@@ -210,8 +226,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			pslProblem.addTarget("Einh", entry1.id, entry2.id);
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
 		} else if (tree.getLevel(entry1.language) == tree.getLevel(entry2.language)) {
-			pslProblem.addTarget("Eloa", entry1.id, entry2.id);
 			pslProblem.addObservation("Einh", 0.0, entry1.id, entry2.id);
+			if (!branchwiseBorrowing) {
+				pslProblem.addTarget("Eloa", entry1.id, entry2.id);
+			}
+		} else if (branchwiseBorrowing && tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
+			pslProblem.addTarget("Eloa", entry1.id, entry2.id);
 		} else {
 			pslProblem.addObservation("Einh", 0.0, entry1.id, entry2.id);
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
@@ -227,7 +247,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			return;
 		}
 		double sim = phonSimHelper.similarity(form1, form2);
-//		pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
+		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
 		System.out.println("Fsim(" + entry1.id + "/" + ipa1 + "/" + form1 + "," + entry2.id + "/" + ipa2 + "/" + form2
@@ -257,8 +277,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private String getIpa(CLDFForm form) {
 		return String.join("", form.getSegments());
 	}
-	
-	private double logistic(double input){
+
+	private double logistic(double input) {
 		double growthRate = 8.0;
 		double midpoint = 0.42;
 		return Math.pow(1 + Math.pow(Math.E, (-growthRate * (input - midpoint))), -1);

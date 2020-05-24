@@ -10,7 +10,7 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class EloaPlusEloaRule extends TalkingArithmeticRule {
 
-	private static final String NAME = "EloaPlusEloa";
+	public static final String NAME = "EloaPlusEloa";
 	private static final String RULE = "Eloa(X, Y) + Eloa(Y, X) <= 1 .";
 	private static final String VERBALIZATION = "Borrowing cannot happen in a circular fashion.";
 
