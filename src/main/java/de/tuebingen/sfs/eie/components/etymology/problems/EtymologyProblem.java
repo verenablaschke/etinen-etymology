@@ -4,7 +4,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import org.linqs.psl.model.rule.GroundRule;
 
@@ -31,8 +30,7 @@ public class EtymologyProblem extends PslProblem {
 	private EtymologyConfig config;
 
 	public EtymologyProblem(DatabaseManager dbManager, String name) {
-		super(dbManager, name);
-		this.config = new EtymologyConfig();
+		this(dbManager, name, null);
 	}
 
 	public EtymologyProblem(DatabaseManager dbManager, String name, EtymologyConfig config) {
@@ -77,28 +75,42 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void addInteractionRules() {
-		addRule(new EinhOrEloaOrEunkRule(this));
-		addRule(new EloaPlusEloaRule(this));
+		if (config.include(EunkPriorRule.NAME))
+			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
+		if (config.include(EloaPriorRule.NAME))
+			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
 
-		addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
-		addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
+		if (config.include(EinhOrEloaOrEunkRule.NAME))
+			addRule(new EinhOrEloaOrEunkRule(this));
+		if (config.include(EloaPlusEloaRule.NAME))
+			addRule(new EloaPlusEloaRule(this));
 
-		addRule(new TancToEinhRule(this, config.getRuleWeightOrDefault(TancToEinhRule.NAME, 1.0)));
-		addRule(new TcntToEloaRule(this, config.getRuleWeightOrDefault(TcntToEloaRule.NAME, 1.0)));
+		if (config.include(TancToEinhRule.NAME))
+			addRule(new TancToEinhRule(this, config.getRuleWeightOrDefault(TancToEinhRule.NAME, 1.0)));
+		if (config.include(TcntToEloaRule.NAME))
+			addRule(new TcntToEloaRule(this, config.getRuleWeightOrDefault(TcntToEloaRule.NAME, 1.0)));
 
-		addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-		addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		if (config.include(EetyToFsimRule.NAME)) {
+			addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		}
 
-		addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-		addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+		if (config.include(EetyToSsimRule.NAME)) {
+			addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+			addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+			addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+			addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+		}
 
-		addRule(new DirectEetyToFsimRule("Eloa", this, config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-		addRule(new DirectEetyToFsimRule("Einh", this, config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-		//
+		if (config.include(DirectEetyToFsimRule.NAME)) {
+			addRule(new DirectEetyToFsimRule("Eloa", this,
+					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+			addRule(new DirectEetyToFsimRule("Einh", this,
+					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+		}
+
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
 		// addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 3.0));
@@ -111,16 +123,18 @@ public class EtymologyProblem extends PslProblem {
 		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
 		// addRule(new FsimAndSsimToEetyRule("Einh", this,
 		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-//		addRule(new TalkingLogicalRule("FsimAndSsimToEety1",
-//				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
-//						+ "Einh(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
-//						+ "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
-//				this));
-//		addRule(new TalkingLogicalRule("FsimAndSsimToEety2",
-//				"Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y, C2) & Ssim(C1, C2) &"
-//						+ "Eloa(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
-//						+ "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
-//				this));
+		// addRule(new TalkingLogicalRule("FsimAndSsimToEety1",
+		// "Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y,
+		// C2) & Ssim(C1, C2) &"
+		// + "Einh(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
+		// + "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
+		// this));
+		// addRule(new TalkingLogicalRule("FsimAndSsimToEety2",
+		// "Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y,
+		// C2) & Ssim(C1, C2) &"
+		// + "Eloa(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
+		// + "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
+		// this));
 	}
 
 	@Override

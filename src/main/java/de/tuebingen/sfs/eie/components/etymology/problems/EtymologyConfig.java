@@ -1,6 +1,8 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
+import java.io.PrintStream;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -35,12 +37,37 @@ public class EtymologyConfig {
 		ignoreRules.add(rule);
 	}
 
+	public boolean include(String rule) {
+		return !ignoreRules.contains(rule);
+	}
+
 	public void addRuleWeight(String rule, double weight) {
 		ruleWeights.put(rule, weight);
 	}
 
 	public double getRuleWeightOrDefault(String rule, double defaultWeight) {
 		return ruleWeights.getOrDefault(rule, defaultWeight);
+	}
+
+	public void print(PrintStream out) {
+		out.println("Etymology config");
+		if (ignoreRules == null || ignoreRules.isEmpty()) {
+			out.println("No rules to ignore.");
+		} else {
+			out.println("Ignoring:");
+			for (String rule : ignoreRules) {
+				out.println("- " + rule);
+			}
+		}
+		if (ruleWeights == null || ruleWeights.isEmpty()) {
+			out.println("No rule weights changed.");
+		} else {
+			out.println("Updated rule weights:");
+			for (Entry<String, Double> entry : ruleWeights.entrySet()) {
+				out.println("- " + entry.getKey() + " : " + entry.getValue());
+			}
+		}
+
 	}
 
 }

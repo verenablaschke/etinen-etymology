@@ -16,7 +16,7 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 
-	private static final String NAME = "EinhOrEloaOrEunk";
+	public static final String NAME = "EinhOrEloaOrEunk";
 	private static final String RULE = "Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 .";
 	private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 
