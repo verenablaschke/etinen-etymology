@@ -6,7 +6,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 
 import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
@@ -14,7 +13,6 @@ import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
-import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -25,6 +23,11 @@ import de.tuebingen.sfs.util.LoadUtils;
 import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
+	private static final String DB_DIR = "src/test/resources/northeuralex-0.9";
+	private static final String NETWORK_EDGES_FILE = "src/test/resources/etymology/clics2-network-edges.txt";
+	private static final String NETWORK_IDS_FILE = "src/test/resources/etymology/clics2-network-ids.txt";
+	private static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
+	private static final String TREE_FILE = "src/test/resources/northeuralex-0.9/tree.nwk";
 
 	private Set<String> concepts;
 	private SemanticNetwork semanticNet;
@@ -97,12 +100,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
 			boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		String dbDir = "src/test/resources/northeuralex-0.9";
-		String networkEdgesFile = "src/test/resources/etymology/clics2-network-edges.txt";
-		String networkIdsFile = "src/test/resources/etymology/clics2-network-ids.txt";
-		String northeuralexConceptsFile = "src/test/resources/northeuralex-0.9/parameters.csv";
-		String treeFile = "src/test/resources/northeuralex-0.9/tree.nwk";
-
 		IPATokenizer tokenizer = new IPATokenizer();
 
 		List<String> languages = new ArrayList<>();
@@ -137,22 +134,19 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		InferenceLogger logger = new InferenceLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
-		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
+		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 4;
 
-		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
+		return new EtymologyIdeaGenerator(problem, concepts, languages, TREE_FILE, net, phonSimHelper, wordListDb,
 				treeDepth, branchwiseBorrowing);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem,
 			boolean branchwiseBorrowing) {
 		String dbDir = "etinen-etymology/src/test/resources/testdb";
-		String networkEdgesFile = "src/test/resources/etymology/clics2-network-edges.txt";
-		String networkIdsFile = "src/test/resources/etymology/clics2-network-ids.txt";
-		String northeuralexConceptsFile = "etinen-etymology/src/test/resources/testdb/parameters.csv";
 		String treeFile = "etinen-etymology/src/test/resources/testdb/tree.nwk";
 
 		IPATokenizer tokenizer = new IPATokenizer();
@@ -172,15 +166,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		concepts.add("SpracheN");
 
 		InferenceLogger logger = new InferenceLogger();
-		 CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir,
-		 logger);
-//		Map<String, CLDFForm> idToForm = new TreeMap<>();
-//		Map<String, CLDFLanguage> langIDToLang = new TreeMap<>();
-//		Map<String, CLDFParameter> paramIDToParam = new TreeMap<>();
-//		CLDFWordlistDatabase wordListDb = new CLDFWordlistDatabase(idToForm, langIDToLang, paramIDToParam, null, null);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
-		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
+		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 2;
 
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
