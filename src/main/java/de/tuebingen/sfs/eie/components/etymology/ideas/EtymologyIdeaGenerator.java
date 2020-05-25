@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
@@ -13,6 +14,7 @@ import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
+import de.tuebingen.sfs.cldfjava.data.CLDFParameter;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -38,7 +40,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, Set<String> concepts, List<String> languages,
 			String treeFile, SemanticNetwork semanticNet, PhoneticSimilarityHelper phonSimHelper,
-			CLDFWordlistDatabase wordListDb, boolean branchwiseBorrowing) {
+			CLDFWordlistDatabase wordListDb, int treeDepth, boolean branchwiseBorrowing) {
 		super(problem);
 		this.concepts = concepts;
 		this.semanticNet = semanticNet;
@@ -46,7 +48,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.wordListDb = wordListDb;
 		this.branchwiseBorrowing = branchwiseBorrowing;
 		entryPool = new HashSet<>();
-		tree = new LevelBasedPhylogeny(4, treeFile, languages);
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 
 		ISO2LangID = new HashMap<>();
 		for (CLDFLanguage lang : wordListDb.getAllLanguages()) {
@@ -139,9 +141,50 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
 		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
+		int treeDepth = 4;
 
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
-				branchwiseBorrowing);
+				treeDepth, branchwiseBorrowing);
+	}
+
+	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem,
+			boolean branchwiseBorrowing) {
+		String dbDir = "etinen-etymology/src/test/resources/testdb";
+		String networkEdgesFile = "src/test/resources/etymology/clics2-network-edges.txt";
+		String networkIdsFile = "src/test/resources/etymology/clics2-network-ids.txt";
+		String northeuralexConceptsFile = "etinen-etymology/src/test/resources/testdb/parameters.csv";
+		String treeFile = "etinen-etymology/src/test/resources/testdb/tree.nwk";
+
+		IPATokenizer tokenizer = new IPATokenizer();
+
+		List<String> languages = new ArrayList<>();
+		languages.add("a1");
+		languages.add("a2");
+		languages.add("a3");
+		languages.add("b1");
+		languages.add("b2");
+		languages.add("b3");
+		languages.add("c1");
+		languages.add("c2");
+		languages.add("c3");
+
+		Set<String> concepts = new HashSet<>();
+		concepts.add("SpracheN");
+
+		InferenceLogger logger = new InferenceLogger();
+		 CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir,
+		 logger);
+//		Map<String, CLDFForm> idToForm = new TreeMap<>();
+//		Map<String, CLDFLanguage> langIDToLang = new TreeMap<>();
+//		Map<String, CLDFParameter> paramIDToParam = new TreeMap<>();
+//		CLDFWordlistDatabase wordListDb = new CLDFWordlistDatabase(idToForm, langIDToLang, paramIDToParam, null, null);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
+		SemanticNetwork net = new SemanticNetwork(networkEdgesFile, networkIdsFile, northeuralexConceptsFile, 2);
+		int treeDepth = 2;
+
+		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
+				treeDepth, branchwiseBorrowing);
 	}
 
 	public void generateAtoms() {

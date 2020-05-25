@@ -1,0 +1,10 @@
+ID,Local_ID,Language_ID,Parameter_ID,Value,Form,Segments,Comment,Source,Cognacy,Loan,Orthography
+1,,a1,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang1
+2,,a2,SpracheN,læŋg,læŋɡ,l æ ŋ g,,,,,lang2
+3,,a3,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang3
+4,,b1,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang4Borrowed
+5,,b2,SpracheN,sproːk,sproːk,s p r oː k,,,,,sprok1
+6,,b3,SpracheN,sproːk,sproːk,s p r oː k,,,,,sprok2
+7,,c1,SpracheN,dil,dil,d i l,,,,,dil1
+8,,c2,SpracheN,dil,dil,d i l,,,,,dil2
+9,,c3,SpracheN,dil,dil,d i l,,,,,dil3
