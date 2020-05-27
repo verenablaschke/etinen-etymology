@@ -56,6 +56,16 @@ public class EtymologyResultChecker {
 		checkHeadAnalysis(filter, System.out);
 	}
 	
+	public static void checkTestAnalysis(EtymologyRagFilter filter) {
+		checkTestAnalysis(filter, System.out);
+	}
+	
+	public static void checkTestAnalysis(EtymologyRagFilter filter, PrintStream out) {
+		Map<String, Double> specialCases = new HashMap<String, Double>();
+		specialCases.put("b1:langBorrowed:læŋ:SpracheN", 0.05);
+		checkAnalysis(filter, specialCases, out);
+	}
+	
 	private static void printEntry(RankingEntry<String> entry, PrintStream out){
 		String[] predAndArgs = entry.key.replace(")", "").split("\\(");
 		String[] args = predAndArgs[1].split(",");

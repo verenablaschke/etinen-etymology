@@ -2,9 +2,17 @@ ID,Local_ID,Language_ID,Parameter_ID,Value,Form,Segments,Comment,Source,Cognacy,
 1,,a1,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang1
 2,,a2,SpracheN,læŋg,læŋɡ,l æ ŋ g,,,,,lang2
 3,,a3,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang3
-4,,b1,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang4Borrowed
+10,,a4,SpracheN,læŋ,læŋ,l æ ŋ,,,,,lang4
+11,,a4,SpracheN,isu,isu,i s u,,,,,isu
+16,,a5,SpracheN,lɑ̃ːɡ,lɑ̃ːɡ,l ɑ̃ː ɡ,,,,,lang5
+17,,a6,SpracheN,liŋɡua,liŋɡua,l i ŋɡ u a,,,,,lang6
+4,,b1,SpracheN,læŋ,læŋ,l æ ŋ,,,,,langBorrowed
 5,,b2,SpracheN,sproːk,sproːk,s p r oː k,,,,,sprok1
 6,,b3,SpracheN,sproːk,sproːk,s p r oː k,,,,,sprok2
 7,,c1,SpracheN,dil,dil,d i l,,,,,dil1
 8,,c2,SpracheN,dil,dil,d i l,,,,,dil2
 9,,c3,SpracheN,dil,dil,d i l,,,,,dil3
+12,,d1,SpracheN,mɔwɑ,mɔwɑ,m ɔ w ɑ,,,,,mova1
+13,,d2,SpracheN,mɔvɑ,mɔvɑ,m ɔ v ɑ,,,,,mova2
+14,,d3,SpracheN,mɔv,mɔv,m ɔ v,,,,,mova3
+15,,d4,SpracheN,mɔwɑ,mɔwɑ,m ɔ w ɑ,,,,,mova4

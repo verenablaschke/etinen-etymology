@@ -101,10 +101,35 @@ public class EtymologyInferenceTest {
 		
 		problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, true).generateAtoms();
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true).generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
-		RuleAtomGraph ragLanguage = result.getRag();
+		RuleAtomGraph ragTest = result.getRag();
 
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, true, false, false, true).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragTest2 = result.getRag();
+		
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, true, false, true).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragTest3 = result.getRag();
+		
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, true, true).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragTest4 = result.getRag();
+		
+		problemManager = ProblemManager.defaultProblemManager();
+		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, true, true, true, true).generateAtoms();
+		result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph ragTest5 = result.getRag();
+		
+		
 //		problemManager = ProblemManager.defaultProblemManager();
 //		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem", config);
 //		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
@@ -141,6 +166,20 @@ public class EtymologyInferenceTest {
 		// result = problemManager.registerAndRunProblem(problem);
 		// RuleAtomGraph ragHead2 = result.getRag();
 		//
+		
+		problem.printRules(System.out);
+		System.out.println("\nTEST 1");
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest.getRagFilter());
+		System.out.println("\nTEST 2 --- synonyms");
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest2.getRagFilter());
+		System.out.println("\nTEST 3 --- more languages per branch");
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest3.getRagFilter());
+		System.out.println("\nTEST 4 --- additional branch");
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest4.getRagFilter());
+		System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest5.getRagFilter());
+		
+		
 		// EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter)
 		// ragMountain.getRagFilter());
 //		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage.getRagFilter());

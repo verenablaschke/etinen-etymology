@@ -144,8 +144,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				treeDepth, branchwiseBorrowing);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem,
-			boolean branchwiseBorrowing) {
+	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
+			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing) {
 		String dbDir = "etinen-etymology/src/test/resources/testdb";
 		String treeFile = "etinen-etymology/src/test/resources/testdb/tree.nwk";
 
@@ -161,6 +161,24 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		languages.add("c1");
 		languages.add("c2");
 		languages.add("c3");
+
+		// Languages with several entries for one concept
+		if (synonyms) {
+			languages.add("a4");
+		}
+
+		if (moreLangsPerBranch) {
+			languages.add("a5");
+			languages.add("a6");
+			languages.add("b4");
+		}
+		
+		if (moreBranches) {
+			languages.add("d1");
+			languages.add("d2");
+			languages.add("d3");
+			languages.add("d4");
+		}
 
 		Set<String> concepts = new HashSet<>();
 		concepts.add("SpracheN");
