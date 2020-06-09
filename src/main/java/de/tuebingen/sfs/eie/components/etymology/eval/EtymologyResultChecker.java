@@ -63,6 +63,7 @@ public class EtymologyResultChecker {
 	public static void checkTestAnalysis(EtymologyRagFilter filter, PrintStream out) {
 		Map<String, Double> specialCases = new HashMap<String, Double>();
 		specialCases.put("b1:langBorrowed:læŋ:SpracheN", 0.05);
+		specialCases.put("a4:isu:isu:SpracheN", 0.05);
 		checkAnalysis(filter, specialCases, out);
 	}
 	

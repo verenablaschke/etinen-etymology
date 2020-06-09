@@ -1,0 +1,7 @@
+{
+  "concepts" : [ "SpracheN" ],
+  "languages" : [ "a1", "a2", "a3", "b1", "b2", "b3", "c1", "c2", "c3" ],
+  "treeDepth" : 2,
+  "branchwiseBorrowing" : true,
+  "treeFile" : "etinen-etymology/src/test/resources/testdb/tree.nwk"
+}

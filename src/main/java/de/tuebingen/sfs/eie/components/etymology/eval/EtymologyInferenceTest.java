@@ -1,5 +1,6 @@
 package de.tuebingen.sfs.eie.components.etymology.eval;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
 import java.util.Collections;
@@ -8,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
@@ -98,10 +101,15 @@ public class EtymologyInferenceTest {
 		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
 		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
+//		config.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
+//		config = EtymologyConfig.fromJson(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
 		
 		problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true).generateAtoms();
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
+		ideaGen.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
+		int stop = 1/0;
+		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph ragTest = result.getRag();
 

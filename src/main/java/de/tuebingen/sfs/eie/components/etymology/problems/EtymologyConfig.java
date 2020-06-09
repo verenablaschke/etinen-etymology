@@ -1,11 +1,18 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
+import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 public class EtymologyConfig {
 
@@ -31,6 +38,20 @@ public class EtymologyConfig {
 		} else {
 			this.ignoreRules = ignoreRules;
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static EtymologyConfig fromJson(ObjectMapper mapper, File path) {
+		Map<String, Double> ruleWeights = null;
+		Set<String> ignoreRules = null;
+		try {
+			JsonNode rootNode = mapper.readTree(path);
+			ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), TreeMap.class);
+			ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), TreeSet.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new EtymologyConfig(ruleWeights, ignoreRules);
 	}
 
 	public void addRuleToIgnoreList(String rule) {
@@ -68,6 +89,19 @@ public class EtymologyConfig {
 			}
 		}
 
+	}
+
+	public void export(ObjectMapper mapper, File path) {
+		try {
+			JsonNode rootNode = mapper.createObjectNode();
+			((ObjectNode) rootNode).set("ruleWeights",
+					(ObjectNode) mapper.readTree(mapper.writeValueAsString(ruleWeights)));
+			((ObjectNode) rootNode).set("ignoreRules",
+					(ArrayNode) mapper.readTree(mapper.writeValueAsString(ignoreRules)));
+			mapper.writerWithDefaultPrettyPrinter().writeValue(path, rootNode);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

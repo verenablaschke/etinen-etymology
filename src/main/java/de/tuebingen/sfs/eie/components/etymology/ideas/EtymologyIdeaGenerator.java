@@ -1,11 +1,21 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 
 import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
@@ -35,6 +45,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
 	private Map<String, String> ISO2LangID;
+	private List<String> languages;
+	private int treeDepth;
+	private String treeFile;
 	private boolean branchwiseBorrowing;
 
 	private Set<Entry> entryPool;
@@ -50,6 +63,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.phonSimHelper = phonSimHelper;
 		this.wordListDb = wordListDb;
 		this.branchwiseBorrowing = branchwiseBorrowing;
+		this.languages = languages;
+		this.treeDepth = treeDepth;
+		this.treeFile = treeFile;
 		entryPool = new HashSet<>();
 		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 
@@ -57,6 +73,29 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (CLDFLanguage lang : wordListDb.getAllLanguages()) {
 			ISO2LangID.put(lang.getIso639P3code(), lang.getLangID());
 		}
+	}
+
+	@SuppressWarnings("unchecked")
+	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, SemanticNetwork semanticNet,
+			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, ObjectMapper mapper, File path) {
+		// TODO (vbl) how are semanticNet/phonSimHelper/wordListDb serialized?
+		Set<String> concepts = null;
+		List<String> languages = null;
+		Integer treeDepth = null;
+		Boolean branchwiseBorrowing = null;
+		String treeFile = null;
+		try {
+			JsonNode rootNode = mapper.readTree(path);
+			concepts = mapper.treeToValue(rootNode.path("concepts"), HashSet.class);
+			languages = mapper.treeToValue(rootNode.path("languages"), ArrayList.class);
+			treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
+			branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
+			treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, semanticNet, phonSimHelper,
+				wordListDb, treeDepth, branchwiseBorrowing);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
@@ -172,7 +211,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			languages.add("a6");
 			languages.add("b4");
 		}
-		
+
 		if (moreBranches) {
 			languages.add("d1");
 			languages.add("d2");
@@ -332,6 +371,21 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		double growthRate = 8.0;
 		double midpoint = 0.42;
 		return Math.pow(1 + Math.pow(Math.E, (-growthRate * (input - midpoint))), -1);
+	}
+
+	public void export(ObjectMapper mapper, File path) {
+		try {
+			JsonNode rootNode = mapper.createObjectNode();
+			((ObjectNode) rootNode).set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
+			((ObjectNode) rootNode).set("languages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(languages)));
+			((ObjectNode) rootNode).set("treeDepth", new IntNode(treeDepth));
+			((ObjectNode) rootNode).set("branchwiseBorrowing",
+					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
+			((ObjectNode) rootNode).set("treeFile", new TextNode(treeFile));
+			mapper.writerWithDefaultPrettyPrinter().writeValue(path, rootNode);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }
