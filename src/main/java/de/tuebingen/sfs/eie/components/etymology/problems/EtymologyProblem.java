@@ -97,11 +97,11 @@ public class EtymologyProblem extends PslProblem {
 //			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
 //			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
 		
-			addRule(new TalkingArithmeticRule("EetyFsimArith", 
-					"Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
-					+ "{Y: XFufo(Y) & XFufo(X) & Fufo(X, F1)} & (X != Y)", //  
-//					+ "{F2: Fufo(Y, F2)}", 
-					this));
+//			addRule(new TalkingArithmeticRule("EetyFsimArith", 
+//					"Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
+//					+ "{Y: XFufo(Y) & XFufo(X) & Fufo(X, F1)} & (X != Y)", //  
+////					+ "{F2: Fufo(Y, F2)}", 
+//					this));
 		}
 
 		if (config.include(EetyToSsimRule.NAME)) {

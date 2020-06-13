@@ -57,6 +57,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public EtymologyIdeaGenerator(EtymologyProblem problem, Set<String> concepts, List<String> languages,
 			String treeFile, SemanticNetwork semanticNet, PhoneticSimilarityHelper phonSimHelper,
 			CLDFWordlistDatabase wordListDb, int treeDepth, boolean branchwiseBorrowing) {
+		// For proper serializatin, the wordListDb and the phonSimHelper need to
+		// be default versions of these objects,
+		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
+		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
+		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
 		this.concepts = concepts;
 		this.semanticNet = semanticNet;
@@ -76,24 +81,37 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, SemanticNetwork semanticNet,
-			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, ObjectMapper mapper, File path) {
-		// TODO (vbl) how are semanticNet/phonSimHelper/wordListDb serialized?
+	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, ObjectMapper mapper, File path) {
 		Set<String> concepts = null;
 		List<String> languages = null;
 		Integer treeDepth = null;
 		Boolean branchwiseBorrowing = null;
 		String treeFile = null;
+		SemanticNetwork semanticNet = null;
+		String dbDir = null;
 		try {
-			JsonNode rootNode = mapper.readTree(path);
+			JsonNode rootNode = mapper.readTree(path); // TODO (vbl) check if
+														// JAR compatible
+														// (stream)
 			concepts = mapper.treeToValue(rootNode.path("concepts"), HashSet.class);
 			languages = mapper.treeToValue(rootNode.path("languages"), ArrayList.class);
 			treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
 			branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
 			treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
+			Map<String, Object> semanticNetConfig = mapper.treeToValue(rootNode.path("semanticNet"), HashMap.class);
+			semanticNet = new SemanticNetwork((String) semanticNetConfig.get("edges"),
+					(String) semanticNetConfig.get("ids"), (String) semanticNetConfig.get("nelexConcepts"),
+					(Integer) semanticNetConfig.get("maxDist"));
+			dbDir = mapper.treeToValue(rootNode.path("wordListDb"), String.class);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		InferenceLogger logger = new InferenceLogger();
+		IPATokenizer tokenizer = new IPATokenizer();
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
+				LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger));
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, semanticNet, phonSimHelper,
 				wordListDb, treeDepth, branchwiseBorrowing);
 	}
@@ -139,8 +157,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
 			boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		IPATokenizer tokenizer = new IPATokenizer();
-
 		List<String> languages = new ArrayList<>();
 		languages.add("eng");
 		languages.add("deu");
@@ -174,8 +190,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		InferenceLogger logger = new InferenceLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
+		IPATokenizer tokenizer = new IPATokenizer();
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
+				LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 4;
 
@@ -375,13 +392,22 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public void export(ObjectMapper mapper, File path) {
 		try {
-			JsonNode rootNode = mapper.createObjectNode();
-			((ObjectNode) rootNode).set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
-			((ObjectNode) rootNode).set("languages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(languages)));
-			((ObjectNode) rootNode).set("treeDepth", new IntNode(treeDepth));
-			((ObjectNode) rootNode).set("branchwiseBorrowing",
+			ObjectNode rootNode = mapper.createObjectNode();
+			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
+			rootNode.set("languages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(languages)));
+			rootNode.set("treeDepth", new IntNode(treeDepth));
+			rootNode.set("branchwiseBorrowing",
 					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
-			((ObjectNode) rootNode).set("treeFile", new TextNode(treeFile));
+			rootNode.set("treeFile", new TextNode(treeFile));
+			rootNode.set("wordListDb", new TextNode(DB_DIR));
+
+			Map<String, Object> semanticNetConfig = new HashMap<>();
+			semanticNetConfig.put("edges", semanticNet.getNetworkEdgesFile());
+			semanticNetConfig.put("ids", semanticNet.getNetworkIdsFile());
+			semanticNetConfig.put("nelexConcepts", semanticNet.getNelexConceptsFile());
+			semanticNetConfig.put("maxDist", semanticNet.getMaxDist());
+			rootNode.set("semanticNet", (ObjectNode) mapper.readTree(mapper.writeValueAsString(semanticNetConfig)));
+
 			mapper.writerWithDefaultPrettyPrinter().writeValue(path, rootNode);
 		} catch (IOException e) {
 			e.printStackTrace();
