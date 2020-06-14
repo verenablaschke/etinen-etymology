@@ -26,6 +26,7 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.io.RuleAtomGraphIo;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyInferenceTest {
@@ -95,25 +96,29 @@ public class EtymologyInferenceTest {
 		// result.printInferenceValues();
 		// problem.printRules(System.out);
 
-		EtymologyConfig config = new EtymologyConfig();
-		config.addRuleWeight(EloaPriorRule.NAME, 5.0);
-		config.addRuleWeight(EunkPriorRule.NAME, 6.0);
-		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
-		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
-		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
-//		config.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
-//		config = EtymologyConfig.fromJson(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
+		ObjectMapper mapper = new ObjectMapper();
+		EtymologyConfig config;
+//		config = new EtymologyConfig();
+//		config.addRuleWeight(EloaPriorRule.NAME, 5.0);
+//		config.addRuleWeight(EunkPriorRule.NAME, 6.0);
+//		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
+//		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
+//		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
+////		config.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
+		config = EtymologyConfig.fromJson(mapper, new File("etinen-etymology/src/test/resources/serialization/config.json"));
 		
 		problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
 //		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
 //		ideaGen.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, new ObjectMapper(), 
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
 				new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
 //		int stop = 1/0;
 		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph ragTest = result.getRag();
+		RuleAtomGraphIo.saveToFile(ragTest, mapper);
+		int stop = 1/0;
 
 //		problemManager = ProblemManager.defaultProblemManager();
 //		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);

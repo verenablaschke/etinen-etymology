@@ -1,15 +1,11 @@
 package de.tuebingen.sfs.eie.components.etymology.filter;
 
 import java.awt.Color;
-import java.util.AbstractMap;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import de.tuebingen.sfs.psl.engine.RagFilter;
@@ -18,8 +14,17 @@ import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyRagFilter extends RagFilter {
 
+	public EtymologyRagFilter() {
+		super();
+		initializeIgnoreInGui();
+	}
+
 	public EtymologyRagFilter(Map<String, Double> transparencyMap) {
 		super(transparencyMap);
+		initializeIgnoreInGui();
+	}
+
+	private void initializeIgnoreInGui() {
 		ignoreInGui.add("Flng");
 		ignoreInGui.add("Fsem");
 		ignoreInGui.add("Fufo");
@@ -56,7 +61,8 @@ public class EtymologyRagFilter extends RagFilter {
 	public List<RankingEntry<String>> getEetyForArgument(String argument) {
 		List<RankingEntry<String>> entries = new ArrayList<>();
 		for (String atom : transparencyMap.keySet()) {
-			if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument) || atom.startsWith("Eunk(" + argument)) {
+			if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument)
+					|| atom.startsWith("Eunk(" + argument)) {
 				entries.add(new RankingEntry<String>(atom, transparencyMap.get(atom)));
 			}
 		}
