@@ -79,7 +79,7 @@ public class EtymologyInferenceTest {
 
 	public static void main(String[] args) {
 		// gridSearch();
-		// int stop = 1/0;
+		 int stop;
 
 		ProblemManager problemManager;
 		EtymologyProblem problem;
@@ -113,12 +113,13 @@ public class EtymologyInferenceTest {
 //		ideaGen.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
 				new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
-//		int stop = 1/0;
+//		stop = 1/0;
 		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
+		problemManager.getDbManager().getAtoms("Eloa", new AtomTemplate("Eloa", "?", "?")));
 		RuleAtomGraph ragTest = result.getRag();
 		RuleAtomGraphIo.saveToFile(ragTest, mapper);
-		int stop = 1/0;
+		stop = 1/0;
 
 //		problemManager = ProblemManager.defaultProblemManager();
 //		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);

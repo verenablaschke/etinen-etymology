@@ -34,10 +34,10 @@ import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private static final String DB_DIR = "src/test/resources/northeuralex-0.9";
+	private static final String TEST_DB_DIR = "etinen-etymology/src/test/resources/testdb";
 	private static final String NETWORK_EDGES_FILE = "src/test/resources/etymology/clics2-network-edges.txt";
 	private static final String NETWORK_IDS_FILE = "src/test/resources/etymology/clics2-network-ids.txt";
 	private static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
-	private static final String TREE_FILE = "src/test/resources/northeuralex-0.9/tree.nwk";
 
 	private Set<String> concepts;
 	private SemanticNetwork semanticNet;
@@ -88,7 +88,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		Boolean branchwiseBorrowing = null;
 		String treeFile = null;
 		SemanticNetwork semanticNet = null;
-		String dbDir = null;
+		String wordListDbDir = null;
+		String correspondenceDbDir = null;
 		try {
 			JsonNode rootNode = mapper.readTree(path); // TODO (vbl) check if
 														// JAR compatible
@@ -102,16 +103,16 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			semanticNet = new SemanticNetwork((String) semanticNetConfig.get("edges"),
 					(String) semanticNetConfig.get("ids"), (String) semanticNetConfig.get("nelexConcepts"),
 					(Integer) semanticNetConfig.get("maxDist"));
-			dbDir = mapper.treeToValue(rootNode.path("wordListDb"), String.class);
-
+			wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
+			correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		InferenceLogger logger = new InferenceLogger();
 		IPATokenizer tokenizer = new IPATokenizer();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(wordListDbDir, logger);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(dbDir, false, tokenizer, logger));
+				LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger));
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, semanticNet, phonSimHelper,
 				wordListDb, treeDepth, branchwiseBorrowing);
 	}
@@ -196,15 +197,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 4;
 
-		return new EtymologyIdeaGenerator(problem, concepts, languages, TREE_FILE, net, phonSimHelper, wordListDb,
+		return new EtymologyIdeaGenerator(problem, concepts, languages, DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb,
 				treeDepth, branchwiseBorrowing);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
 			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing) {
-		String dbDir = "etinen-etymology/src/test/resources/testdb";
-		String treeFile = "etinen-etymology/src/test/resources/testdb/tree.nwk";
-
 		IPATokenizer tokenizer = new IPATokenizer();
 
 		List<String> languages = new ArrayList<>();
@@ -240,13 +238,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		concepts.add("SpracheN");
 
 		InferenceLogger logger = new InferenceLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(dbDir, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(TEST_DB_DIR, logger);
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 2;
 
-		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, net, phonSimHelper, wordListDb,
+		return new EtymologyIdeaGenerator(problem, concepts, languages, TEST_DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb,
 				treeDepth, branchwiseBorrowing);
 	}
 
@@ -399,7 +397,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			rootNode.set("branchwiseBorrowing",
 					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
 			rootNode.set("treeFile", new TextNode(treeFile));
-			rootNode.set("wordListDb", new TextNode(DB_DIR));
+			rootNode.set("wordListDbDir", new TextNode(wordListDb.currentPath));
+			rootNode.set("correspondenceDbDir", new TextNode(phonSimHelper.getCorrModel().getDbPath()));
 
 			Map<String, Object> semanticNetConfig = new HashMap<>();
 			semanticNetConfig.put("edges", semanticNet.getNetworkEdgesFile());
