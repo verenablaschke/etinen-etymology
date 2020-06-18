@@ -145,7 +145,6 @@ public class EtymologyInferenceTest {
 //		result = problemManager.registerAndRunProblem(problem);
 //		RuleAtomGraph ragTest5 = result.getRag();
 //		
-		
 //		problemManager = ProblemManager.defaultProblemManager();
 //		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem", config);
 //		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
