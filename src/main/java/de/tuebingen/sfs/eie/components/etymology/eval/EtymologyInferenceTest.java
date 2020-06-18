@@ -116,7 +116,7 @@ public class EtymologyInferenceTest {
 //		stop = 1/0;
 		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
-		problemManager.getDbManager().getAtoms("Eloa", new AtomTemplate("Eloa", "?", "?")));
+		problemManager.getDbManager().getAtoms("Eloa", new AtomTemplate("Eloa", "?", "?"));
 		RuleAtomGraph ragTest = result.getRag();
 		RuleAtomGraphIo.saveToFile(ragTest, mapper);
 		stop = 1/0;
