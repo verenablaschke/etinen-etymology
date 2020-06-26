@@ -60,10 +60,10 @@ public class EtymologyRagFilter extends RagFilter {
 
 	public List<RankingEntry<String>> getEetyForArgument(String argument) {
 		List<RankingEntry<String>> entries = new ArrayList<>();
-		for (String atom : transparencyMap.keySet()) {
+		for (String atom : beliefValues.keySet()) {
 			if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument)
 					|| atom.startsWith("Eunk(" + argument)) {
-				entries.add(new RankingEntry<String>(atom, transparencyMap.get(atom)));
+				entries.add(new RankingEntry<String>(atom, beliefValues.get(atom)));
 			}
 		}
 		Collections.sort(entries, Collections.reverseOrder());
@@ -76,7 +76,7 @@ public class EtymologyRagFilter extends RagFilter {
 
 	public List<RankingEntry<String>> getHighestEetyPerArgument() {
 		Set<String> arguments = new TreeSet<>();
-		for (String atom : transparencyMap.keySet()) {
+		for (String atom : beliefValues.keySet()) {
 			if (atom.startsWith("Eloa(") || atom.startsWith("Einh(") || atom.startsWith("Eunk(")) {
 				arguments.add(atom.replace(")", "").split("\\(")[1].split(",")[0]);
 			}
