@@ -104,15 +104,15 @@ public class EtymologyInferenceTest {
 //		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 //		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
 //		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
-////		config.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/config.json"));
-		config = EtymologyConfig.fromJson(mapper, new File("etinen-etymology/src/test/resources/serialization/config.json"));
+//		config.export(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
+		config = EtymologyConfig.fromJson(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
 		
 		problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
 //		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
-//		ideaGen.export(new ObjectMapper(), new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
+//		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
-				new File("etinen-etymology/src/test/resources/serialization/ideas.json"));
+				"etinen-etymology/src/test/resources/serialization/ideas.json");
 //		stop = 1/0;
 		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);

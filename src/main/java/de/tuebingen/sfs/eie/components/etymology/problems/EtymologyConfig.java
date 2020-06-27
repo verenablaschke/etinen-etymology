@@ -1,7 +1,11 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
-import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -40,14 +44,31 @@ public class EtymologyConfig {
 		}
 	}
 
+	public static EtymologyConfig fromJson(ObjectMapper mapper, String path) {
+//		if (! path.startsWith("/"))
+//			path = "/" + path;
+//		return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
+		try {
+			return fromJson(mapper, new FileInputStream(path));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	@SuppressWarnings("unchecked")
-	public static EtymologyConfig fromJson(ObjectMapper mapper, File path) {
+	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in) {
 		Map<String, Double> ruleWeights = null;
 		Set<String> ignoreRules = null;
 		try {
-			JsonNode rootNode = mapper.readTree(path);
+			JsonNode rootNode = mapper.readTree(in);
 			ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), TreeMap.class);
 			ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), TreeSet.class);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			in.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -91,14 +112,22 @@ public class EtymologyConfig {
 
 	}
 
-	public void export(ObjectMapper mapper, File path) {
+	public void export(ObjectMapper mapper, String path) {
+		try {
+			export(mapper, new FileOutputStream(path));
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void export(ObjectMapper mapper, OutputStream out) {
 		try {
 			JsonNode rootNode = mapper.createObjectNode();
 			((ObjectNode) rootNode).set("ruleWeights",
 					(ObjectNode) mapper.readTree(mapper.writeValueAsString(ruleWeights)));
 			((ObjectNode) rootNode).set("ignoreRules",
 					(ArrayNode) mapper.readTree(mapper.writeValueAsString(ignoreRules)));
-			mapper.writerWithDefaultPrettyPrinter().writeValue(path, rootNode);
+			mapper.writerWithDefaultPrettyPrinter().writeValue(out, rootNode);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
