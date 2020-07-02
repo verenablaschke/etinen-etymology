@@ -109,16 +109,16 @@ public class EtymologyInferenceTest {
 		
 		problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-//		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
-//		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
-				"etinen-etymology/src/test/resources/serialization/ideas.json");
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
+		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
+//		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
+//				"etinen-etymology/src/test/resources/serialization/ideas.json");
 //		stop = 1/0;
 		ideaGen.generateAtoms();
 		result = problemManager.registerAndRunProblem(problem);
 		problemManager.getDbManager().getAtoms("Eloa", new AtomTemplate("Eloa", "?", "?"));
 		RuleAtomGraph ragTest = result.getRag();
-		RuleAtomGraphIo.saveToFile(ragTest, mapper);
+		RuleAtomGraphIo.saveToFile(ragTest, problem, mapper);
 		stop = 1/0;
 
 //		problemManager = ProblemManager.defaultProblemManager();

@@ -17,6 +17,10 @@ public class DirectEetyToFsimRule extends TalkingLogicalRule {
 	private static final String RULE = "%.1f: %s(X, Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
 	private static final String VERBALIZATION = "A word should be phonetically similar to its source form.";
 
+	public DirectEetyToFsimRule(){
+		// For serialization.
+	}
+	
 	public DirectEetyToFsimRule(String eetyType1, PslProblem pslProblem, double weight) {
 		super(String.format("%sToFsim", eetyType1),
 				String.format(Locale.US, RULE, weight, eetyType1), pslProblem, VERBALIZATION);

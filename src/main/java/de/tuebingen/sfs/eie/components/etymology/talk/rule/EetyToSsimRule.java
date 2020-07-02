@@ -20,6 +20,10 @@ public class EetyToSsimRule extends TalkingLogicalRule {
 	private static final String RULE = "%.1f: %s(X, Z) & %s(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2)";
 	private static final String VERBALIZATION = "Words derived from the same source should be semantically similar.";
 
+	public EetyToSsimRule(){
+		// For serialization.
+	}
+	
 	public EetyToSsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
 		super(String.format("%sAnd%sToSsim", eetyType1, eetyType2),
 				String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);

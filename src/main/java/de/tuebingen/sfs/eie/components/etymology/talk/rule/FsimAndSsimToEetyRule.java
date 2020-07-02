@@ -25,6 +25,10 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 	private static final String VERBALIZATION = "If two words are phonetically and semantically similar, "
 			+ "they are probably derived from the same source.";
 	private String eetyType = null;
+	
+	public FsimAndSsimToEetyRule(){
+		// For serialization.
+	}
 
 	public FsimAndSsimToEetyRule(String eetyType, PslProblem pslProblem, double weight) {
 		super(String.format("FsimAndSsimAnd%sToEety", eetyType), String.format(Locale.US, RULE, weight, eetyType),
