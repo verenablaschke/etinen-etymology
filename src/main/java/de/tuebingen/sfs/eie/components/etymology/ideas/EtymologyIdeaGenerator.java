@@ -32,7 +32,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.engine.PslProblem;
-import de.tuebingen.sfs.util.InferenceLogger;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import de.tuebingen.sfs.util.LoadUtils;
 import de.tuebingen.sfs.util.SemanticNetwork;
 
@@ -80,7 +80,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		ISO2LangID = new HashMap<>();
 		for (CLDFLanguage lang : wordListDb.getAllLanguages()) {
-			ISO2LangID.put(lang.getIso639P3code(), lang.getLangID());
+			ISO2LangID.put(lang.getIso(), lang.getLangID());
 		}
 	}
 
