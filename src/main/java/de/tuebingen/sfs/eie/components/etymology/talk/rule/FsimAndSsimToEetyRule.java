@@ -26,8 +26,9 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 			+ "they are probably derived from the same source.";
 	private String eetyType = null;
 	
+	// For serialization.
 	public FsimAndSsimToEetyRule(){
-		// For serialization.
+		super(RULE);
 	}
 
 	public FsimAndSsimToEetyRule(String eetyType, PslProblem pslProblem, double weight) {

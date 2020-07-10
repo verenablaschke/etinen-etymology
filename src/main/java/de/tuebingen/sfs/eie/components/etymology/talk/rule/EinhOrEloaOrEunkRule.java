@@ -20,8 +20,9 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 	private static final String RULE = "Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 .";
 	private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 
+	// For serialization.
 	public EinhOrEloaOrEunkRule(){
-		// For serialization.
+		super(RULE);
 	}
 	
 	public EinhOrEloaOrEunkRule(PslProblem pslProblem) {

@@ -19,8 +19,9 @@ public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
 	private static final String RULE = "%.1f: Eloa(X, Y) & %s(Y, Z) & %s(W, Z) & (X != W)  & (X != Z) & XFufo(X) & XFufo(W) & Fufo(X, F1) & Fufo(W, F2) -> Fsim(F1, F2)";
 	private static final String VERBALIZATION = "A loanword should be similar to the word it is derived from and its relatives.";
 
+	// For serialization.
 	public EloaAndEetyToFsimRule(){
-		// For serialization.
+		super(RULE);
 	}
 	
 	public EloaAndEetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {

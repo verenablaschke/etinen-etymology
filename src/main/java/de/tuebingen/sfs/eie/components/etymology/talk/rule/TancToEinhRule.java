@@ -14,8 +14,9 @@ public class TancToEinhRule extends TalkingLogicalRule {
 	private static final String RULE = "Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y)";
 	private static final String VERBALIZATION = "A word can be inherited from its direct ancestor language";
 
+	// For serialization.
 	public TancToEinhRule(){
-		// For serialization.
+		super(RULE);
 	}
 	
 	public TancToEinhRule(PslProblem pslProblem, double weight) {

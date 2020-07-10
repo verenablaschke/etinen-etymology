@@ -14,8 +14,9 @@ public class TcntToEloaRule extends TalkingLogicalRule {
 	private static final String RULE = "Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)";
 	private static final String VERBALIZATION = "A word can be loaned from a contact language";
 
+	// For serialization.
 	public TcntToEloaRule(){
-		// For serialization.
+		super(RULE);
 	}
 	
 	public TcntToEloaRule(PslProblem pslProblem, double weight) {

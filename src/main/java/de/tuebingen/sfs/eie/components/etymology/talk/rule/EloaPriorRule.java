@@ -10,8 +10,9 @@ public class EloaPriorRule extends TalkingLogicalRule {
 	private static final String RULE = "~Eloa(X, Y)";
 	private static final String VERBALIZATION = "By default, we do not assume that a word is a loanword.";
 
+	// For serialization.
 	public EloaPriorRule(){
-		// For serialization.
+		super(RULE);
 	}
 	
 	public EloaPriorRule(PslProblem pslProblem, double weight) {
