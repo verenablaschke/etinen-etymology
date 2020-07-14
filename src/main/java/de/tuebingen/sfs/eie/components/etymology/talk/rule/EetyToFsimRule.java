@@ -21,7 +21,7 @@ public class EetyToFsimRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public EetyToFsimRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {

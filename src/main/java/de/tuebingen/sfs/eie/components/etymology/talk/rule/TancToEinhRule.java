@@ -16,7 +16,7 @@ public class TancToEinhRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public TancToEinhRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public TancToEinhRule(PslProblem pslProblem, double weight) {

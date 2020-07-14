@@ -16,7 +16,7 @@ public class EloaPlusEloaRule extends TalkingArithmeticRule {
 
 	// For serialization.
 	public EloaPlusEloaRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EloaPlusEloaRule(PslProblem pslProblem) {

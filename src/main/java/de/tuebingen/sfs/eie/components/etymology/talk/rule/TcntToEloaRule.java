@@ -16,7 +16,7 @@ public class TcntToEloaRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public TcntToEloaRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public TcntToEloaRule(PslProblem pslProblem, double weight) {

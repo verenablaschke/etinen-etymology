@@ -7,14 +7,15 @@ public class EunkPriorRule extends TalkingLogicalRule {
 	
 	public static final String NAME = "EunkPrior";
 	public static final String RULE = "~Eunk(X)";
+	public static final String VERBALIZATION = "By default, we do not assume that words are of unknown origin.";
 
 	// For serialization.
 	public EunkPriorRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EunkPriorRule(PslProblem pslProblem, double weight) {
-		super(NAME, weight + ": " + RULE, pslProblem, "By default, we do not assume that words are of unknown origin.");
+		super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION);
 	}
 
 }

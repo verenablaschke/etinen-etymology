@@ -12,7 +12,7 @@ public class EloaPriorRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public EloaPriorRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EloaPriorRule(PslProblem pslProblem, double weight) {

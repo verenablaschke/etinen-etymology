@@ -6,7 +6,6 @@ import java.util.Locale;
 import de.tuebingen.sfs.eie.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
@@ -19,7 +18,7 @@ public class DirectEetyToFsimRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public DirectEetyToFsimRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public DirectEetyToFsimRule(String eetyType1, PslProblem pslProblem, double weight) {

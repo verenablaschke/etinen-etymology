@@ -22,7 +22,7 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 
 	// For serialization.
 	public EinhOrEloaOrEunkRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EinhOrEloaOrEunkRule(PslProblem pslProblem) {

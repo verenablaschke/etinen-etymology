@@ -3,7 +3,6 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.List;
 import java.util.Locale;
 
-import de.tuebingen.sfs.eie.talk.pred.FsimPred;
 import de.tuebingen.sfs.eie.talk.pred.SsimPred;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
@@ -22,7 +21,7 @@ public class EetyToSsimRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public EetyToSsimRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EetyToSsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {

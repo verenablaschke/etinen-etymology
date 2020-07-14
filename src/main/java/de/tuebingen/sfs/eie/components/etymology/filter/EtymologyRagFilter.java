@@ -16,7 +16,6 @@ public class EtymologyRagFilter extends RagFilter {
 
 	public EtymologyRagFilter() {
 		super();
-		System.out.println("INIT ETYM FILTER"); // TODO del 
 		initializeIgnoreInGui();
 	}
 

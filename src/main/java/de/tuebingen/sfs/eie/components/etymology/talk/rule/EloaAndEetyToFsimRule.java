@@ -21,7 +21,7 @@ public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
 
 	// For serialization.
 	public EloaAndEetyToFsimRule(){
-		super(RULE);
+		super(NAME, RULE, VERBALIZATION);
 	}
 	
 	public EloaAndEetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
