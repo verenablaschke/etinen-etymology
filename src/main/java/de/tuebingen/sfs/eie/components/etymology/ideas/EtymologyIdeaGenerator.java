@@ -397,7 +397,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	private String getIpa(CLDFForm form) {
-		return String.join("", form.getSegments());
+		// TODO check if this makes a difference
+		return form.getForm();
+//		return String.join("", form.getSegments());
 	}
 
 	private double logistic(double input) {
