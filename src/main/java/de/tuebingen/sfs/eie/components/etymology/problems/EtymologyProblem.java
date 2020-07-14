@@ -18,6 +18,9 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.FsimAndSsimToEetyRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
+import de.tuebingen.sfs.eie.talk.pred.EinhPred;
+import de.tuebingen.sfs.eie.talk.pred.EloaPred;
+import de.tuebingen.sfs.eie.talk.pred.EunkPred;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
@@ -59,9 +62,9 @@ public class EtymologyProblem extends PslProblem {
 
 		// Etymological information
 		// Eety(ID1, ID2) -- ID1 comes from ID2
-		declareOpenPredicate("Einh", 2);
-		declareOpenPredicate("Eloa", 2);
-		declareOpenPredicate("Eunk", 1);
+		declareOpenPredicate(new EinhPred());
+		declareOpenPredicate(new EloaPred());
+		declareOpenPredicate(new EunkPred());
 
 		// Phylogenetic information.
 		declareClosedPredicate("Tanc", 2);
