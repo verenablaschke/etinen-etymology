@@ -77,8 +77,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 
 		ISO2LangID = new HashMap<>();
-		for (String langID : objectStore.getAllLanguages()) {
-			ISO2LangID.put(objectStore.getLangObjectForLangId(langID).getIso(), langID);
+		for (String langID : objectStore.getLanguageIds()) {
+			ISO2LangID.put(objectStore.getIsoForLang(langID), langID);
 		}
 	}
 
