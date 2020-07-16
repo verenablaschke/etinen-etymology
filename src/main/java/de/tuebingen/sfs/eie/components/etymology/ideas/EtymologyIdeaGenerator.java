@@ -6,12 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -30,6 +25,7 @@ import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
+import de.tuebingen.sfs.eie.core.IndexedObjectStore;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
@@ -48,6 +44,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private PhoneticSimilarityHelper phonSimHelper;
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
+	private IndexedObjectStore objectStore;
 	private Map<String, String> ISO2LangID;
 	private List<String> languages;
 	private int treeDepth;
@@ -71,6 +68,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.semanticNet = semanticNet;
 		this.phonSimHelper = phonSimHelper;
 		this.wordListDb = wordListDb;
+		this.objectStore = new IndexedObjectStore(wordListDb, null);
 		this.branchwiseBorrowing = branchwiseBorrowing;
 		this.languages = languages;
 		this.treeDepth = treeDepth;
@@ -79,8 +77,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 
 		ISO2LangID = new HashMap<>();
-		for (CLDFLanguage lang : wordListDb.getAllLanguages()) {
-			ISO2LangID.put(lang.getIso(), lang.getLangID());
+		for (String langID : objectStore.getAllLanguages()) {
+			ISO2LangID.put(objectStore.getLangObjectForLangId(langID).getIso(), langID);
 		}
 	}
 
@@ -276,17 +274,18 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			List<CLDFForm> cldfForms = wordListDb.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
+			List<Integer> cldfForms = objectStore.getFormsForLanguages(Collections.singletonList(ISO2LangID.getOrDefault(lang, lang)));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				cldfForms = new ArrayList<CLDFForm>();
+				cldfForms = new ArrayList<Integer>();
 				for (String concept : concepts) {
 					CLDFForm form = new CLDFForm();
 					form.setParamID(concept);
-					cldfForms.add(form);
+					cldfForms.add(form.getId());
 				}
 			}
-			for (CLDFForm cldfForm : cldfForms) {
+			for (Integer cldfFormID : cldfForms) {
+				CLDFForm cldfForm = objectStore.getFormObjectForFormId(cldfFormID);
 				if (concepts.contains(cldfForm.getParamID())) {
 					entryPool.add(new Entry(getPrintForm(cldfForm, lang), cldfForm, lang, cldfForm.getParamID()));
 					// TODO only add these for proto languages that don't have
