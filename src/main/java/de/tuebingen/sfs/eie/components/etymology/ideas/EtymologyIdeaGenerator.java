@@ -20,8 +20,6 @@ import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
 import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
-import de.tuebingen.sfs.cldfjava.data.CLDFForm;
-import de.tuebingen.sfs.cldfjava.data.CLDFLanguage;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -126,8 +124,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = new InferenceLogger();
 		IPATokenizer tokenizer = new IPATokenizer();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(wordListDbDir, logger);
+		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger));
+				LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger), objectStore);
 
 		return new EtymologyIdeaGenerator(problem, concepts, languages, treeFile, semanticNet, phonSimHelper,
 				wordListDb, treeDepth, branchwiseBorrowing);
@@ -208,8 +207,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = new InferenceLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
+		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
+				LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), objectStore);
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 4;
 
@@ -256,7 +256,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = new InferenceLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(TEST_DB_DIR, logger);
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres);
+		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres, objectStore);
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 2;
 
@@ -274,24 +275,19 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			List<Integer> cldfForms = objectStore.getFormsForLanguages(Collections.singletonList(ISO2LangID.getOrDefault(lang, lang)));
+			Set<Integer> cldfForms = objectStore.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				cldfForms = new ArrayList<Integer>();
-				for (String concept : concepts) {
-					CLDFForm form = new CLDFForm();
-					form.setParamID(concept);
-					cldfForms.add(form.getId());
-				}
+				//TODO: ? was the purpose to add forms for correponsing concepts?
+				cldfForms = objectStore.getFormsForConcepts(concepts);
 			}
 			for (Integer cldfFormID : cldfForms) {
-				CLDFForm cldfForm = objectStore.getFormObjectForFormId(cldfFormID);
-				if (concepts.contains(cldfForm.getParamID())) {
-					entryPool.add(new Entry(getPrintForm(cldfForm, lang), cldfForm, lang, cldfForm.getParamID()));
+				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
+					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
 					// TODO only add these for proto languages that don't have
 					// these yet
 					// retrieve existing F-atoms from db and pass them on
-					addFormAtoms(getPrintForm(cldfForm, lang), lang, cldfForm.getParamID(), cldfForm);
+					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID), cldfFormID);
 				}
 			}
 		}
@@ -358,12 +354,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
 		}
 
-		String ipa1 = getIpa(entry1.form);
+		String ipa1 = objectStore.getFormForFormId(entry1.form);
 		if (ipa1.isEmpty()) {
 			return;
 		}
 
-		String ipa2 = getIpa(entry2.form);
+		String ipa2 = objectStore.getFormForFormId(entry2.form);
 		if (ipa2.isEmpty()) {
 			return;
 		}
@@ -376,10 +372,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	}
 
-	private void addFormAtoms(String id, String doculect, String concept, CLDFForm cldfForm) {
+	private void addFormAtoms(String id, String doculect, String concept, int cldfForm) {
 		pslProblem.addObservation("Flng", 1.0, id, doculect);
 		pslProblem.addObservation("Fsem", 1.0, id, concept);
-		String ipa = getIpa(cldfForm);
+		String ipa = objectStore.getFormForFormId(cldfForm);
 		if (!ipa.isEmpty()) {
 			// TODO add XFufo also for imported Fufo atoms!!
 			pslProblem.addObservation(F_UFO_EX, 1.0, id);
@@ -387,18 +383,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	private String getPrintForm(CLDFForm form, String lang) {
-		String ipa = getIpa(form);
+	private String getPrintForm(int form, String lang) {
+		String ipa = objectStore.getFormForFormId(form);
 		if (ipa.isEmpty()) {
 			ipa = "N/A";
 		}
-		return lang + ":" + form.getProperties().get("Orthography") + ":" + ipa + ":" + form.getParamID();
-	}
-
-	private String getIpa(CLDFForm form) {
-		// TODO check if this makes a difference
-		return form.getForm();
-//		return String.join("", form.getSegments());
+		return lang + ":" + objectStore.getOrthoForForm(form) + ":" + ipa + ":" + objectStore.getConceptForForm(form);
 	}
 
 	private double logistic(double input) {
