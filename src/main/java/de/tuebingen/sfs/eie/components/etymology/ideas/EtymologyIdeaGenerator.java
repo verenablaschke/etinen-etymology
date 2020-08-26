@@ -7,6 +7,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+import java.util.stream.Collectors;
+
+import javax.print.attribute.standard.MediaSize.ISO;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,32 +59,80 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public EtymologyIdeaGenerator(EtymologyProblem problem, Set<String> concepts, List<String> languages,
 			String treeFile, SemanticNetwork semanticNet, PhoneticSimilarityHelper phonSimHelper,
 			CLDFWordlistDatabase wordListDb, int treeDepth, boolean branchwiseBorrowing) {
-		// For proper serializatin, the wordListDb and the phonSimHelper need to
-		// be default versions of these objects,
+		// For proper serialization, the wordListDb and the phonSimHelper need
+		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
 		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
 		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
-		this.concepts = concepts;
-		this.semanticNet = semanticNet;
-		this.phonSimHelper = phonSimHelper;
-		this.wordListDb = wordListDb;
-		this.objectStore = new IndexedObjectStore(wordListDb, null);
+		System.err.println("Creating EtymologyIdeaGenerator.");
+		if (concepts == null) {
+			System.err.println("...No concepts specified.");
+			this.concepts = new HashSet<>();
+		} else {
+			this.concepts = concepts;
+		}
+		if (semanticNet == null) {
+			System.err.println("...No semantic net given, using default network.");
+			this.semanticNet = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
+		} else {
+			this.semanticNet = semanticNet;
+		}
+		InferenceLogger logger = new InferenceLogger();
+		if (wordListDb == null) {
+			System.err.println("...No CLDF Wordlist Database given, loading default version.");
+			this.wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
+		} else {
+			this.wordListDb = wordListDb;
+		}
+		// TODO initialized properly? (vbl)
+		this.objectStore = new IndexedObjectStore(this.wordListDb, null);
+		if (phonSimHelper == null) {
+			System.err.println("...No Phonetic Similarity Helper given, using default version.");
+			IPATokenizer tokenizer = new IPATokenizer();
+			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
+					LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), objectStore);
+		} else {
+			this.phonSimHelper = phonSimHelper;
+		}
 		this.branchwiseBorrowing = branchwiseBorrowing;
-		this.languages = languages;
-		this.treeDepth = treeDepth;
-		this.treeFile = treeFile;
+		if (treeDepth < 1) {
+			this.treeDepth = 4;
+			System.err
+					.println("...No phylogenetic tree depth specified, using default value (" + this.treeDepth + ").");
+		} else {
+			this.treeDepth = treeDepth;
+		}
+		if (treeFile == null || treeFile.trim().isEmpty()) {
+			this.treeFile = DB_DIR + "/tree.nwk";
+			System.err.println("...No input file for the tree specified, using default: " + this.treeFile);
+		} else {
+			this.treeFile = treeFile;
+		}
+		if (languages == null) {
+			System.err.println(
+					"...No languages specified. Will only construct the phylogenetic tree once the languages are set via setLanguages().");
+			this.languages = new ArrayList<>();
+		} else {
+			this.languages = languages;
+			tree = new LevelBasedPhylogeny(this.treeDepth, this.treeFile, this.languages);
+		}
 		entryPool = new HashSet<>();
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 
 		ISO2LangID = new HashMap<>();
 		for (String langID : objectStore.getLanguageIds()) {
 			ISO2LangID.put(objectStore.getIsoForLang(langID), langID);
 		}
+		System.err.println("Set up Etymology Idea Generator.");
+	}
+
+	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem) {
+		return new EtymologyIdeaGenerator(problem, null, null, null, null, null, null, -1, true);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, ObjectMapper mapper, String path) {
-//		return fromJson(problem, mapper, EtymologyIdeaGenerator.class.getResourceAsStream(path));
+		// return fromJson(problem, mapper,
+		// EtymologyIdeaGenerator.class.getResourceAsStream(path));
 		try {
 			return fromJson(problem, mapper, new FileInputStream(path));
 		} catch (FileNotFoundException e) {
@@ -213,8 +264,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 4;
 
-		return new EtymologyIdeaGenerator(problem, concepts, languages, DB_DIR + "/tree.nwk", net, phonSimHelper,
-				wordListDb, treeDepth, branchwiseBorrowing);
+		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, concepts, languages, DB_DIR + "/tree.nwk", net,
+				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
+
+		eig.languages = languages.stream().map(lang -> eig.ISO2LangID.getOrDefault(lang, lang))
+				.collect(Collectors.toList());
+
+		return eig;
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
@@ -275,19 +331,30 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			Set<Integer> cldfForms = objectStore.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
+			// TODO retire ISO2LangID?
+			Set<Integer> cldfForms = null;
+			try {
+				cldfForms = objectStore
+						.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
+			} catch (NullPointerException e) {
+				// proto form
+			}
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				//TODO: ? was the purpose to add forms for correponsing concepts?
-				cldfForms = objectStore.getFormsForConcepts(concepts);
+				// TODO: ? was the purpose to add forms for correponding
+				// concepts?
+				// cldfForms = objectStore.getFormsForConcepts(concepts);
+				cldfForms = new HashSet<>();
 			}
 			for (Integer cldfFormID : cldfForms) {
 				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
+					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
+							objectStore.getConceptForForm(cldfFormID)));
 					// TODO only add these for proto languages that don't have
 					// these yet
 					// retrieve existing F-atoms from db and pass them on
-					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID), cldfFormID);
+					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
+							cldfFormID);
 				}
 			}
 		}
@@ -433,6 +500,16 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void setConcepts(Set<String> concepts) {
+		this.concepts = concepts;
+	}
+
+	public void setLanguages(List<String> languages) {
+		System.err.println("Adding languages to Etymology Idea Generator and updating the phylogenetic tree.");
+		this.languages = languages;
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
 	}
 
 }

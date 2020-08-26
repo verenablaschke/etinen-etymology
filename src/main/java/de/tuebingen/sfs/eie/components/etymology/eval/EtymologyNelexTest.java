@@ -4,11 +4,24 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
+import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.psl.engine.DatabaseManager;
+import de.tuebingen.sfs.psl.engine.InferenceResult;
+import de.tuebingen.sfs.psl.engine.ProblemManager;
+import de.tuebingen.sfs.util.SemanticNetwork;
+
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 
 public class EtymologyNelexTest {
 
@@ -16,7 +29,7 @@ public class EtymologyNelexTest {
 
 	private static String goldStandardFile = "src/test/resources/etymology/northeuralex-0.9-loanword-annotation-20200716.tsv";
 
-	private void run() {
+	private void setUp() {
 		conceptToLanguageToEtymology = new TreeMap<>();
 		Set<String> langs = new HashSet<>();
 
@@ -64,15 +77,39 @@ public class EtymologyNelexTest {
 			e.printStackTrace();
 		}
 
-		System.out.println(langs);
+//		System.out.println(langs);
+//
+//		for (Entry<String, Etymology> entry : conceptToLanguageToEtymology.get("Berg::N").entrySet()) {
+//			System.out.println(entry.getKey() + " - " + entry.getValue());
+//		}
+	}
 
-		for (Entry<String, Etymology> entry : conceptToLanguageToEtymology.get("Berg::N").entrySet()) {
-			System.out.println(entry.getKey() + " - " + entry.getValue());
+	private void run(Set<String> concepts) {
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
+		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem);
+		eig.setConcepts(concepts);
+		Set<String> languages = new HashSet<>();
+		for (String concept : concepts) {
+			for (String language : conceptToLanguageToEtymology.get(concept).keySet()) {
+				languages.add(language);
+			}
+		}
+		eig.setLanguages(languages.stream().collect(Collectors.toList()));
+		eig.generateAtoms();
+
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		for (Entry<String, Double> entry : result.getInferenceValues().entrySet()) {
+			System.out.println(entry);
 		}
 	}
 
 	public static void main(String[] args) {
-		new EtymologyNelexTest().run();
+		EtymologyNelexTest test = new EtymologyNelexTest();
+		test.setUp();
+		Set<String> concepts = new HashSet<>();
+		concepts.add("Berg::N");
+		test.run(concepts);
 	}
 
 	private enum LoanwordStatus {
