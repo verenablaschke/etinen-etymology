@@ -331,20 +331,26 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			// TODO retire ISO2LangID?
+			// TODO retire ISO2LangID here? (vbl)
 			Set<Integer> cldfForms = null;
-			try {
-				cldfForms = objectStore
-						.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
-			} catch (NullPointerException e) {
-				// proto form
-			}
+			cldfForms = objectStore.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				// TODO: ? was the purpose to add forms for correponding
-				// concepts?
-				// cldfForms = objectStore.getFormsForConcepts(concepts);
-				cldfForms = new HashSet<>();
+				cldfForms = new HashSet<Integer>();
+				// TODO create artificial CLDF forms that aren't committed to
+				// the IOS (yet) (vbl)
+				// The previous code (deprecated since update to internal IDs &
+				// IOS) is below.
+				// Maybe it's best to skip the objectStore calls in the
+				// following loop and call addFormAtoms & update entryPool in
+				// this section instead?
+				// Think handling of proto forms in/outside IOS through & maybe
+				// add note in Teams.
+
+				// for (String concept : concepts) {
+				// CLDFForm form = new CLDFForm();
+				// form.setParamID(concept);
+				// cldfForms.add(form.getId());
 			}
 			for (Integer cldfFormID : cldfForms) {
 				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
