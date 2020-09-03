@@ -23,6 +23,7 @@ import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
 import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.cldfjava.data.CLDFForm;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
@@ -332,35 +333,39 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
 			// TODO retire ISO2LangID here? (vbl)
-			Set<Integer> cldfForms = null;
-			cldfForms = objectStore.getFormsForLanguages(Collections.singleton(ISO2LangID.getOrDefault(lang, lang)));
+			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				cldfForms = new HashSet<Integer>();
 				// TODO create artificial CLDF forms that aren't committed to
 				// the IOS (yet) (vbl)
-				// The previous code (deprecated since update to internal IDs &
-				// IOS) is below.
 				// Maybe it's best to skip the objectStore calls in the
 				// following loop and call addFormAtoms & update entryPool in
 				// this section instead?
 				// Think handling of proto forms in/outside IOS through & maybe
 				// add note in Teams.
-
-				// for (String concept : concepts) {
-				// CLDFForm form = new CLDFForm();
-				// form.setParamID(concept);
-				// cldfForms.add(form.getId());
-			}
-			for (Integer cldfFormID : cldfForms) {
-				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
-							objectStore.getConceptForForm(cldfFormID)));
-					// TODO only add these for proto languages that don't have
-					// these yet
-					// retrieve existing F-atoms from db and pass them on
-					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
-							cldfFormID);
+				for (String concept : concepts) {
+					String id = lang + "-" + concept;
+					entryPool.add(new Entry(id, concept.toUpperCase(), lang, concept));
+					pslProblem.addObservation("Flng", 1.0, id, lang);
+					pslProblem.addObservation("Fsem", 1.0, id, concept);
+					// if (!ipa.isEmpty()) {
+					// // TODO add XFufo also for imported Fufo atoms!!
+					// pslProblem.addObservation(F_UFO_EX, 1.0, id);
+					// pslProblem.addObservation("Fufo", 1.0, id, ipa);
+					// }
+				}
+			} else {
+				for (Integer cldfFormID : cldfForms) {
+					if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
+						entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
+								objectStore.getConceptForForm(cldfFormID)));
+						// TODO only add these for proto languages that don't
+						// have
+						// these yet, retrieve existing F-atoms from db and pass
+						// them on
+						addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
+								cldfFormID);
+					}
 				}
 			}
 		}
@@ -409,9 +414,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			return;
 		}
 
-		PhoneticString form1 = phonSimHelper.extractSegments(entry1.form);
-		PhoneticString form2 = phonSimHelper.extractSegments(entry2.form);
-
 		if (tree.distanceToAncestor(entry1.language, entry2.language) == 1) {
 			pslProblem.addTarget("Einh", entry1.id, entry2.id);
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
@@ -427,16 +429,33 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
 		}
 
-		String ipa1 = objectStore.getFormForFormId(entry1.form);
+		String ipa1 = "";
+		String ipa2 = "";
+		try {
+			ipa1 = objectStore.getFormForFormId(entry1.formId);
 		if (ipa1.isEmpty()) {
 			return;
 		}
 
-		String ipa2 = objectStore.getFormForFormId(entry2.form);
+		ipa2 = objectStore.getFormForFormId(entry2.formId);
 		if (ipa2.isEmpty()) {
 			return;
 		}
-		double sim = phonSimHelper.similarity(form1, form2);
+		} catch (NullPointerException e){
+			// Proto form (no IPA)
+			return;
+		}
+
+		double sim = 0.0;
+		PhoneticString form1 = null;
+		PhoneticString form2 = null;
+//		try {
+			form1 = phonSimHelper.extractSegments(entry1.formId);
+			form2 = phonSimHelper.extractSegments(entry2.formId);
+			sim = phonSimHelper.similarity(form1, form2);
+//		} catch (NullPointerException e) {
+//			// proto form (unattested) -> similarity = 0
+//		}
 		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
