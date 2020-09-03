@@ -4,24 +4,17 @@ import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
-import de.jdellert.iwsa.util.phonsim.PhoneticSimilarityHelper;
-import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
-import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
-import de.tuebingen.sfs.psl.engine.DatabaseManager;
-import de.tuebingen.sfs.psl.engine.InferenceResult;
-import de.tuebingen.sfs.psl.engine.ProblemManager;
-import de.tuebingen.sfs.util.SemanticNetwork;
-
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
+
+import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.psl.engine.InferenceResult;
+import de.tuebingen.sfs.psl.engine.ProblemManager;
 
 public class EtymologyNelexTest {
 
