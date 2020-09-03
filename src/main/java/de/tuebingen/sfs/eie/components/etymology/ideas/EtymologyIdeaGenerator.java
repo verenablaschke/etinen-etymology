@@ -333,36 +333,29 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
-				// TODO create artificial CLDF forms that aren't committed to
-				// the IOS (yet) (vbl)
-				// Maybe it's best to skip the objectStore calls in the
-				// following loop and call addFormAtoms & update entryPool in
-				// this section instead?
-				// Think handling of proto forms in/outside IOS through & maybe
-				// add note in Teams.
+				cldfForms = new HashSet<>();
 				for (String concept : concepts) {
-					String id = lang + "-" + concept;
-					entryPool.add(new Entry(id, concept.toUpperCase(), lang, concept));
-					pslProblem.addObservation("Flng", 1.0, id, lang);
-					pslProblem.addObservation("Fsem", 1.0, id, concept);
-					// if (!ipa.isEmpty()) {
-					// // TODO add XFufo also for imported Fufo atoms!!
-					// pslProblem.addObservation(F_UFO_EX, 1.0, id);
-					// pslProblem.addObservation("Fufo", 1.0, id, ipa);
-					// }
+					// TODO get the most likely reconstructed form instead (if
+					// available)
+					// TODO note that is treated like a proper form, not like a
+					// distribution over reconstructed ones
+					int formId = objectStore.createFormId("");
+					objectStore.addFormIdWithForm(formId, "");
+					objectStore.addFormIdWithConcept(formId, concept);
+					objectStore.addFormIdWithLanguage(formId, lang);
+					cldfForms.add(formId);
 				}
-			} else {
-				for (Integer cldfFormID : cldfForms) {
-					if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-						entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
-								objectStore.getConceptForForm(cldfFormID)));
-						// TODO only add these for proto languages that don't
-						// have
-						// these yet, retrieve existing F-atoms from db and pass
-						// them on
-						addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
-								cldfFormID);
-					}
+			}
+			for (Integer cldfFormID : cldfForms) {
+				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
+					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
+							objectStore.getConceptForForm(cldfFormID)));
+					// TODO only add these for proto languages that don't
+					// have
+					// these yet, retrieve existing F-atoms from db and pass
+					// them on
+					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
+							cldfFormID);
 				}
 			}
 		}
@@ -428,8 +421,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		String ipa1 = "";
 		String ipa2 = "";
-		try {
-			ipa1 = objectStore.getFormForFormId(entry1.formId);
+		ipa1 = objectStore.getFormForFormId(entry1.formId);
 		if (ipa1.isEmpty()) {
 			return;
 		}
@@ -438,21 +430,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (ipa2.isEmpty()) {
 			return;
 		}
-		} catch (NullPointerException e){
-			// Proto form (no IPA)
-			return;
-		}
 
 		double sim = 0.0;
 		PhoneticString form1 = null;
 		PhoneticString form2 = null;
-//		try {
-			form1 = phonSimHelper.extractSegments(entry1.formId);
-			form2 = phonSimHelper.extractSegments(entry2.formId);
-			sim = phonSimHelper.similarity(form1, form2);
-//		} catch (NullPointerException e) {
-//			// proto form (unattested) -> similarity = 0
-//		}
+		form1 = phonSimHelper.extractSegments(entry1.formId);
+		form2 = phonSimHelper.extractSegments(entry2.formId);
+		sim = phonSimHelper.similarity(form1, form2);
 		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
