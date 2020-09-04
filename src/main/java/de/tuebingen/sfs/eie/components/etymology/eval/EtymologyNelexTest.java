@@ -80,7 +80,7 @@ public class EtymologyNelexTest {
 	private void run(Set<String> concepts) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem");
-		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem);
+		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, null);
 		eig.setConcepts(concepts);
 		Set<String> languages = new HashSet<>();
 		for (String concept : concepts) {

@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -27,6 +28,8 @@ import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.io.RuleAtomGraphIo;
+import de.tuebingen.sfs.psl.talk.TalkingPredicate;
+import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyInferenceTest {
@@ -77,134 +80,157 @@ public class EtymologyInferenceTest {
 		}
 	}
 
+	private static void runTestFictional(EtymologyConfig config, boolean synonyms, boolean moreLangsPerBranch,
+			boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem",
+				config);
+		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, synonyms, moreLangsPerBranch, moreBranches,
+				branchwiseBorrowing).generateAtoms();
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph rag = result.getRag();
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+		if (showAllEloa) {
+			for (RankingEntry<AtomTemplate> eloaResult : problemManager.getDbManager().getAtoms("Eloa",
+					new AtomTemplate("Eloa", "?", "?"))) {
+				System.out.println(eloaResult);
+			}
+		}
+	}
+
+	private static void runTestLanguage(EtymologyConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, largeConceptSet, largeLanguageSet)
+				.generateAtoms();
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph rag = result.getRag();
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+	}
+
+	private static void runTestHead(EtymologyConfig config, boolean largeLanguageSet) {
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem, largeLanguageSet).generateAtoms();
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph rag = result.getRag();
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+	}
+
+	private static void runTestMountain(EtymologyConfig config, boolean largeLanguageSet) {
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, largeLanguageSet).generateAtoms();
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph rag = result.getRag();
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+	}
+
+	private static void serialize(ObjectMapper mapper, EtymologyConfig config) {
+		config.export(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false,
+				false, true);
+		ideaGen.generateAtoms();
+		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		RuleAtomGraph rag = result.getRag();
+		RuleAtomGraphIo.saveToFile(rag, problem, mapper);
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+	}
+
+	private static void deserialize(ObjectMapper mapper) {
+		EtymologyConfig config = EtymologyConfig.fromJson(mapper,
+				"etinen-etymology/src/test/resources/serialization/config.json");
+		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, null, mapper,
+				"etinen-etymology/src/test/resources/serialization/ideas.json");
+		ideaGen.generateAtoms();
+		InferenceResult result = problemManager.registerAndRunProblem(problem);
+		System.out.println("(New) RAG from imported config and idea generator:");
+		RuleAtomGraph rag = result.getRag();
+		RuleAtomGraphIo.saveToFile(rag, problem, mapper);
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+		System.out.println("Deserialized version of the same RAG:");
+		Map<String, TalkingPredicate> talkingPreds = new TreeMap<>();
+		Map<String, TalkingRule> talkingRules = new TreeMap<>();
+		rag = RuleAtomGraphIo.ragFromFile(mapper, talkingPreds, talkingRules);
+		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
+		System.out.println("Talking predicates: " + talkingPreds);
+		System.out.println("Talking rules: " + talkingRules);
+	}
+
 	public static void main(String[] args) {
 		// gridSearch();
-		 int stop;
+		int stop;
 
-		ProblemManager problemManager;
-		EtymologyProblem problem;
-		InferenceResult result;
-
-		// problemManager = ProblemManager.defaultProblemManager();
-		// problem = new EtymologyProblem(problemManager.getDbManager(),
-		// "MountainEtymologyProblem");
-		// EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem,
-		// false).generateAtoms();
-		// result = problemManager.registerAndRunProblem(problem);
-		// RuleAtomGraph ragMountain = result.getRag();
-		// ragMountain.printToStream(System.out);
-		// result.printInferenceValues();
-		// problem.printRules(System.out);
-
+		boolean loadConfig = true;
+		boolean fictionalData = true;
+		boolean language = false;
+		boolean mountain = false;
+		boolean head = false;
 		ObjectMapper mapper = new ObjectMapper();
 		EtymologyConfig config;
-//		config = new EtymologyConfig();
-//		config.addRuleWeight(EloaPriorRule.NAME, 5.0);
-//		config.addRuleWeight(EunkPriorRule.NAME, 6.0);
-//		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
-//		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
-//		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
-//		config.export(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
-		config = EtymologyConfig.fromJson(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
-		
-		problemManager = ProblemManager.defaultProblemManager();
-		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, false, true);
-		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
-//		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, mapper, 
-//				"etinen-etymology/src/test/resources/serialization/ideas.json");
-//		stop = 1/0;
-		ideaGen.generateAtoms();
-		result = problemManager.registerAndRunProblem(problem);
-		problemManager.getDbManager().getAtoms("Eloa", new AtomTemplate("Eloa", "?", "?"));
-		RuleAtomGraph ragTest = result.getRag();
-		RuleAtomGraphIo.saveToFile(ragTest, problem, mapper);
-		stop = 1/0;
 
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, true, false, false, true).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragTest2 = result.getRag();
-//		
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, true, false, true).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragTest3 = result.getRag();
-//		
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false, true, true).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragTest4 = result.getRag();
-//		
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, true, true, true, true).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragTest5 = result.getRag();
-//		
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, false).generateAtoms();
-////		int stop = 1/0;
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragLanguage = result.getRag();
-//
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem2", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, true, false).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragLanguage2 = result.getRag();
-//
-//		problemManager = ProblemManager.defaultProblemManager();
-//		problem = new EtymologyProblem(problemManager.getDbManager(), "LanguageEtymologyProblem3", config);
-//		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false, true).generateAtoms();
-//		result = problemManager.registerAndRunProblem(problem);
-//		RuleAtomGraph ragLanguage3 = result.getRag();
+		if (loadConfig) {
+			config = EtymologyConfig.fromJson(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
+		} else {
+			config = new EtymologyConfig();
+			config.addRuleWeight(EloaPriorRule.NAME, 5.0);
+			config.addRuleWeight(EunkPriorRule.NAME, 6.0);
+			config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
+			config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
+			config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
+		}
 
-		// problemManager = ProblemManager.defaultProblemManager();
-		// problem = new EtymologyProblem(problemManager.getDbManager(),
-		// "HeadEtymologyProblem");
-		// EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem,
-		// false).generateAtoms();
-		// result = problemManager.registerAndRunProblem(problem);
-		// RuleAtomGraph ragHead = result.getRag();
-		//
-		//
-		// problemManager = ProblemManager.defaultProblemManager();
-		// problem = new EtymologyProblem(problemManager.getDbManager(),
-		// "HeadEtymologyProblem2");
-		// EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem,
-		// true).generateAtoms();
-		// result = problemManager.registerAndRunProblem(problem);
-		// RuleAtomGraph ragHead2 = result.getRag();
-		//
-		
-		problem.printRules(System.out);
-		System.out.println("\nTEST 1");
-		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest.getRagFilter());
-//		System.out.println("\nTEST 2 --- synonyms");
-//		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest2.getRagFilter());
-//		System.out.println("\nTEST 3 --- more languages per branch");
-//		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest3.getRagFilter());
-//		System.out.println("\nTEST 4 --- additional branch");
-//		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest4.getRagFilter());
-//		System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
-//		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) ragTest5.getRagFilter());
-		
-		
-		// EtymologyResultChecker.checkMountainAnalysis((EtymologyRagFilter)
-		// ragMountain.getRagFilter());
-//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage.getRagFilter());
-//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage2.getRagFilter());
-//		EtymologyResultChecker.checkLanguageAnalysis((EtymologyRagFilter) ragLanguage3.getRagFilter());
-		// EtymologyResultChecker.checkHeadAnalysis((EtymologyRagFilter)
-		// ragHead.getRagFilter());
-		// EtymologyResultChecker.checkHeadAnalysis((EtymologyRagFilter)
-		// ragHead2.getRagFilter());
+		// serialize(mapper, config);
+		// deserialize(mapper);
 
+		if (fictionalData) {
+			System.out.println("\nTEST 1");
+			runTestFictional(config, false, false, false, true, false);
+
+			System.out.println("\nTEST 2 --- synonyms");
+			runTestFictional(config, true, false, false, true, false);
+
+			System.out.println("\nTEST 3 --- more languages per branch");
+			runTestFictional(config, false, true, false, true, false);
+
+			System.out.println("\nTEST 4 --- additional branch");
+			runTestFictional(config, false, false, true, true, false);
+
+			System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
+			runTestFictional(config, true, true, true, true, false);
+		}
+
+		if (language) {
+			System.out.println("\n\"LANGUAGE\" 1 --- one concept, few languages");
+			runTestLanguage(config, false, false);
+
+			System.out.println("\n\"LANGUAGE\" 2 --- several concepts, few languages");
+			runTestLanguage(config, true, false);
+
+			System.out.println("\n\"LANGUAGE\" 3 --- one concept, many languages");
+			runTestLanguage(config, false, false);
+		}
+
+		if (head) {
+			System.out.println("\n\"HEAD\" 1 --- few languages");
+			runTestHead(config, false);
+
+			System.out.println("\n\"HEAD\" 2 --- many languages");
+			runTestHead(config, true);
+		}
+
+		if (mountain) {
+			System.out.println("\n\"MOUNTAIN\" 1 --- few languages");
+			runTestMountain(config, false);
+
+			System.out.println("\n\"MOUNTAIN\" 2 --- many languages");
+			runTestMountain(config, true);
+		}
 		// Set<String> preds = new HashSet<>();
 		// preds.add("Fsim");
 		// List<RankingEntry<AtomTemplate>> res = problemManager.getDbManager()
