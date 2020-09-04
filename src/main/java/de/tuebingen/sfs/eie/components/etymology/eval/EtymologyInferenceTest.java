@@ -80,7 +80,7 @@ public class EtymologyInferenceTest {
 		}
 	}
 
-	private static void runTestFictional(EtymologyConfig config, boolean synonyms, boolean moreLangsPerBranch,
+	private static EtymologyRagFilter runTestFictional(EtymologyConfig config, boolean synonyms, boolean moreLangsPerBranch,
 			boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem",
@@ -89,13 +89,13 @@ public class EtymologyInferenceTest {
 				branchwiseBorrowing).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
-		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 		if (showAllEloa) {
 			for (RankingEntry<AtomTemplate> eloaResult : problemManager.getDbManager().getAtoms("Eloa",
 					new AtomTemplate("Eloa", "?", "?"))) {
 				System.out.println(eloaResult);
 			}
 		}
+		return (EtymologyRagFilter) rag.getRagFilter();
 	}
 
 	private static void runTestLanguage(EtymologyConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
@@ -166,11 +166,16 @@ public class EtymologyInferenceTest {
 		// gridSearch();
 		int stop;
 
-		boolean loadConfig = true;
+		boolean loadConfig = false;
+		boolean branchwiseBorrowing = false;
+		boolean printAllEloaValues = false;
+
+		// Which tests should be run?
 		boolean fictionalData = true;
 		boolean language = false;
 		boolean mountain = false;
 		boolean head = false;
+
 		ObjectMapper mapper = new ObjectMapper();
 		EtymologyConfig config;
 
@@ -190,19 +195,27 @@ public class EtymologyInferenceTest {
 
 		if (fictionalData) {
 			System.out.println("\nTEST 1");
-			runTestFictional(config, false, false, false, true, false);
-
+			EtymologyRagFilter erf1 = runTestFictional(config, false, false, false, branchwiseBorrowing, printAllEloaValues);
 			System.out.println("\nTEST 2 --- synonyms");
-			runTestFictional(config, true, false, false, true, false);
-
+			EtymologyRagFilter erf2 = runTestFictional(config, true, false, false, branchwiseBorrowing, printAllEloaValues);
 			System.out.println("\nTEST 3 --- more languages per branch");
-			runTestFictional(config, false, true, false, true, false);
-
+			EtymologyRagFilter erf3 = runTestFictional(config, false, true, false, branchwiseBorrowing, printAllEloaValues);
 			System.out.println("\nTEST 4 --- additional branch");
-			runTestFictional(config, false, false, true, true, false);
-
+			EtymologyRagFilter erf4 = runTestFictional(config, false, false, true, branchwiseBorrowing, printAllEloaValues);
 			System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
-			runTestFictional(config, true, true, true, true, false);
+			EtymologyRagFilter erf5 = runTestFictional(config, true, true, true, branchwiseBorrowing, printAllEloaValues);
+			
+			// Print the results only now to skip the various status updates in the console:
+			System.out.println("\nTEST 1");
+			EtymologyResultChecker.checkTestAnalysis(erf1);
+			System.out.println("\nTEST 2 --- synonyms");
+			EtymologyResultChecker.checkTestAnalysis(erf2);
+			System.out.println("\nTEST 3 --- more languages per branch");
+			EtymologyResultChecker.checkTestAnalysis(erf3);
+			System.out.println("\nTEST 4 --- additional branch");
+			EtymologyResultChecker.checkTestAnalysis(erf4);
+			System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
+			EtymologyResultChecker.checkTestAnalysis(erf5);
 		}
 
 		if (language) {
