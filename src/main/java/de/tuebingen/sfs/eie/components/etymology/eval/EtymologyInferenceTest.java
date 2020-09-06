@@ -1,14 +1,9 @@
 package de.tuebingen.sfs.eie.components.etymology.eval;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,8 +75,8 @@ public class EtymologyInferenceTest {
 		}
 	}
 
-	private static EtymologyRagFilter runTestFictional(EtymologyConfig config, boolean synonyms, boolean moreLangsPerBranch,
-			boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
+	private static EtymologyRagFilter runTestFictional(EtymologyConfig config, boolean synonyms,
+			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem",
 				config);
@@ -164,13 +159,13 @@ public class EtymologyInferenceTest {
 
 	public static void main(String[] args) {
 		// gridSearch();
-		int stop;
 
 		boolean loadConfig = false;
 		boolean branchwiseBorrowing = false;
 		boolean printAllEloaValues = false;
 
 		// Which tests should be run?
+		boolean singleTest = true;
 		boolean fictionalData = true;
 		boolean language = false;
 		boolean mountain = false;
@@ -195,17 +190,27 @@ public class EtymologyInferenceTest {
 
 		if (fictionalData) {
 			System.out.println("\nTEST 1");
-			EtymologyRagFilter erf1 = runTestFictional(config, false, false, false, branchwiseBorrowing, printAllEloaValues);
+			EtymologyRagFilter erf1 = runTestFictional(config, false, false, false, branchwiseBorrowing,
+					printAllEloaValues);
+			if (singleTest) {
+				EtymologyResultChecker.checkTestAnalysis(erf1);
+				return;
+			}
 			System.out.println("\nTEST 2 --- synonyms");
-			EtymologyRagFilter erf2 = runTestFictional(config, true, false, false, branchwiseBorrowing, printAllEloaValues);
+			EtymologyRagFilter erf2 = runTestFictional(config, true, false, false, branchwiseBorrowing,
+					printAllEloaValues);
 			System.out.println("\nTEST 3 --- more languages per branch");
-			EtymologyRagFilter erf3 = runTestFictional(config, false, true, false, branchwiseBorrowing, printAllEloaValues);
+			EtymologyRagFilter erf3 = runTestFictional(config, false, true, false, branchwiseBorrowing,
+					printAllEloaValues);
 			System.out.println("\nTEST 4 --- additional branch");
-			EtymologyRagFilter erf4 = runTestFictional(config, false, false, true, branchwiseBorrowing, printAllEloaValues);
+			EtymologyRagFilter erf4 = runTestFictional(config, false, false, true, branchwiseBorrowing,
+					printAllEloaValues);
 			System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
-			EtymologyRagFilter erf5 = runTestFictional(config, true, true, true, branchwiseBorrowing, printAllEloaValues);
-			
-			// Print the results only now to skip the various status updates in the console:
+			EtymologyRagFilter erf5 = runTestFictional(config, true, true, true, branchwiseBorrowing,
+					printAllEloaValues);
+
+			// Print the results only now to skip the various status updates in
+			// the console:
 			System.out.println("\nTEST 1");
 			EtymologyResultChecker.checkTestAnalysis(erf1);
 			System.out.println("\nTEST 2 --- synonyms");
@@ -216,6 +221,7 @@ public class EtymologyInferenceTest {
 			EtymologyResultChecker.checkTestAnalysis(erf4);
 			System.out.println("\nTEST 5 --- synonyms, more languages, extra branch");
 			EtymologyResultChecker.checkTestAnalysis(erf5);
+
 		}
 
 		if (language) {

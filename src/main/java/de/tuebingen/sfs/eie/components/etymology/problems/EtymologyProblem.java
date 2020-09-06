@@ -43,6 +43,8 @@ public class EtymologyProblem extends PslProblem {
 			config = new EtymologyConfig();
 		}
 		this.config = config;
+		System.out.println("Using the following configuration:");
+		config.print(System.out);
 	}
 
 	@Override
@@ -95,16 +97,16 @@ public class EtymologyProblem extends PslProblem {
 			addRule(new TcntToEloaRule(this, config.getRuleWeightOrDefault(TcntToEloaRule.NAME, 1.0)));
 
 		if (config.include(EetyToFsimRule.NAME)) {
-//			addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-//			addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-//			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-//			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-		
-//			addRule(new TalkingArithmeticRule("EetyFsimArith", 
-//					"Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
-//					+ "{Y: XFufo(Y) & XFufo(X) & Fufo(X, F1)} & (X != Y)", //  
-////					+ "{F2: Fufo(Y, F2)}", 
-//					this));
+			addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+
+			// addRule(new TalkingArithmeticRule("EetyFsimArith",
+			// "Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
+			// + "{Y: XFufo(Y) & XFufo(X) & Fufo(X, F1)} & (X != Y)", //
+			//// + "{F2: Fufo(Y, F2)}",
+			// this));
 		}
 
 		if (config.include(EetyToSsimRule.NAME)) {
@@ -145,6 +147,8 @@ public class EtymologyProblem extends PslProblem {
 		// + "Eloa(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
 		// + "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
 		// this));
+		System.out.println("Rules added:");
+		super.printRules(System.out);
 	}
 
 	@Override
@@ -160,8 +164,8 @@ public class EtymologyProblem extends PslProblem {
 		atomsToDelete.add(new AtomTemplate("Fsim", "?", "?"));
 		return atomsToDelete;
 	}
-	
-	public EtymologyConfig getConfig(){
+
+	public EtymologyConfig getConfig() {
 		return config;
 	}
 

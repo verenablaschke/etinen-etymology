@@ -3,5 +3,5 @@
     "EloaPrior" : 5.0,
     "EunkPrior" : 6.0
   },
-  "ignoreRules" : [ "DirectEetyToFsim", "EloaPlusEloa", "FsimAndSsimToEety" ]
+  "ignoreRules" : [ "EloaPlusEloa", "FsimAndSsimToEety" ]
 }
