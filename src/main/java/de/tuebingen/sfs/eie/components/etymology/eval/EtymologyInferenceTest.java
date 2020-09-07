@@ -160,12 +160,15 @@ public class EtymologyInferenceTest {
 	public static void main(String[] args) {
 		// gridSearch();
 
-		boolean loadConfig = false;
-		boolean branchwiseBorrowing = false;
+//		String configPath = "";
+//		String configPath = "etinen-etymology/src/test/resources/serialization/config-languagelvl.json";
+		String configPath = "etinen-etymology/src/test/resources/serialization/config-branchlvl.json";
+		boolean branchwiseBorrowing = true;
+		
 		boolean printAllEloaValues = false;
 
 		// Which tests should be run?
-		boolean singleTest = true;
+		boolean singleTest = false;
 		boolean fictionalData = true;
 		boolean language = false;
 		boolean mountain = false;
@@ -174,8 +177,8 @@ public class EtymologyInferenceTest {
 		ObjectMapper mapper = new ObjectMapper();
 		EtymologyConfig config;
 
-		if (loadConfig) {
-			config = EtymologyConfig.fromJson(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
+		if (!configPath.isEmpty()) {
+			config = EtymologyConfig.fromJson(mapper, configPath);
 		} else {
 			config = new EtymologyConfig();
 			config.addRuleWeight(EloaPriorRule.NAME, 5.0);
