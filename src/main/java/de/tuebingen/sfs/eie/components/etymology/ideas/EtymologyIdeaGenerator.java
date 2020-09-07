@@ -94,7 +94,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			System.err.println("...No Phonetic Similarity Helper given, using default version.");
 			IPATokenizer tokenizer = new IPATokenizer();
 			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), objectStore);
+					LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), this.objectStore);
 		} else {
 			this.phonSimHelper = phonSimHelper;
 		}
@@ -337,7 +337,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			// TODO retire ISO2LangID here? (vbl)
+			// TODO check if this includes only the languages in `languages' + their ancestors (vbl)
+			
+			// ISO2LangID is useful for the NELex test, but *might* be unnecessary otherwise.
 			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
