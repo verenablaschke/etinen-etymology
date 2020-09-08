@@ -536,6 +536,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		tree.getTree().saveLayeredTreeToFile(System.out);
 	}
 	
+	public LevelBasedPhylogeny getTree(){
+		return tree;
+	}
+	
 	private class Entry {
 
 		Integer formId = null;
