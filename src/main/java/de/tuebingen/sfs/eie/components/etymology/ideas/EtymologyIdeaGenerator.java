@@ -326,7 +326,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, TEST_DB_DIR + "/tree.nwk", net,
 				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
 	}
-
+	
 	public void generateAtoms() {
 		// 1. Determine and retrieve/generate the relevant F-atoms.
 
@@ -338,7 +338,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
 			// TODO check if this includes only the languages in `languages' + their ancestors (vbl)
-			
+//			System.out.println(lang + " : " + ISO2LangID.getOrDefault(lang, lang));
 			// ISO2LangID is useful for the NELex test, but *might* be unnecessary otherwise.
 			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
 			if (cldfForms == null || cldfForms.isEmpty()) {

@@ -87,13 +87,14 @@ public class EtymologyInferenceTest {
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		if (showAllEloa) {
-			List<RankingEntry<AtomTemplate>> eloaResults = problemManager.getDbManager().getAtomsForProblem("Eloa",
-					problemId, new AtomTemplate("Eloa", "?", "?"));
+			List<RankingEntry<AtomTemplate>> eloaResults = problemManager.getDbManager().getAtoms("Eloa",
+					 new AtomTemplate("Eloa", "?", "?"));
 			Collections.sort(eloaResults, Collections.reverseOrder());
 			for (RankingEntry<AtomTemplate> eloaResult : eloaResults) {
 				System.out.println(eloaResult);
 			}
 		}
+		
 		return (EtymologyRagFilter) rag.getRagFilter();
 	}
 
