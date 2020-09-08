@@ -28,6 +28,8 @@ import de.tuebingen.sfs.util.LoadUtils;
 public class EtymologyNelexTest {
 
 	private Map<String, Map<String, Etymology>> conceptToLanguageToEtymology;
+	private IndexedObjectStore ios;
+	private Map<String, String> isoToLanguageId;
 
 	private static String goldStandardFile = "src/test/resources/etymology/northeuralex-0.9-loanword-annotation-20200716.tsv";
 
@@ -59,19 +61,15 @@ public class EtymologyNelexTest {
 					System.err.println("(Skipping this entry.)");
 					continue loop;
 				}
-
-				String concept = cells[1].trim().replaceAll(":", ""); // TODO
-																		// check:
-																		// other
-																		// conversion
-																		// necessary?
-				String language = cells[2].trim(); // TODO convert to ID
+				// TODO check: other conversion necessary? (vbl)
+				String concept = cells[1].trim().replaceAll(":", "");
+				String language = cells[2].trim();
+				language = isoToLanguageId.getOrDefault(language, language);
 				langs.add(language);
 				String source = cells[6].trim();
 				if (source.contains("{") && source.contains(",")) {
 					System.err.println("Entry contains several sources: " + line);
 					System.err.println("(Skipping this entry.)");
-					// TODO explore/handle
 				}
 
 				Map<String, Etymology> languageToEtymology = conceptToLanguageToEtymology.getOrDefault(concept,
@@ -95,8 +93,6 @@ public class EtymologyNelexTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		String problemId = "EtymologyNelexProblem";
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), problemId);
-		IndexedObjectStore ios = new IndexedObjectStore(
-				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
 		eig.setConcepts(concepts);
 		Set<String> languages = new HashSet<>();
@@ -120,11 +116,6 @@ public class EtymologyNelexTest {
 			}
 		}
 
-		Map<String, String> ISO2LangID = new HashMap<>();
-		for (String langID : ios.getLanguageIds()) {
-			ISO2LangID.put(ios.getIsoForLang(langID), langID);
-		}
-
 		EtymologyRagFilter erf = (EtymologyRagFilter) result.getRag().getRagFilter();
 
 		for (String concept : concepts) {
@@ -138,57 +129,50 @@ public class EtymologyNelexTest {
 					break;
 				case LOANED:
 					borrowedNelexGs.put(entry.getKey(), entry.getValue());
+					break;
 				case OUTSIDE_DB:
 					borrowedOutsideGs.put(entry.getKey(), entry.getValue());
+					break;
 				default:
 					break;
 				}
 			}
-
-			// TODO count (mis)matches (vbl)
-			
-			System.out.println("\n\nBORROWED WITHIN NELEX\n");
-			for (Entry<String, Etymology> entry : borrowedNelexGs.entrySet()) {
-				System.out.println("Actual: " + entry.getKey() + " / " + concept + " / " + entry.getValue());
-				for (Integer form : ios.getFormsForLangAndConcepts(ISO2LangID.get(entry.getKey()), concept)) {
-					// TODO work with the ID
-					System.out.println(form + " " + ios.getFormForFormId(form));
-					for (RankingEntry<String> atom : erf.getEetyForArgument(ios.getFormForFormId(form))) {
-						System.out.println(" - " + atom);
-					}
-				}
-				System.out.println();
-			}
-
-			System.out.println("\n\nBORROWED FROM OUTSIDE NELEX\n");
-			for (Entry<String, Etymology> entry : borrowedOutsideGs.entrySet()) {
-				System.out.println("Actual: " + entry.getKey() + " / " + concept + " / " + entry.getValue());
-				for (Integer form : ios.getFormsForLangAndConcepts(ISO2LangID.get(entry.getKey()), concept)) {
-					// TODO work with the ID
-					for (RankingEntry<String> atom : erf.getEetyForArgument(ios.getFormForFormId(form))) {
-						System.out.println(" - " + atom);
-					}
-				}
-				System.out.println();
-			}
-			
-			System.out.println("\n\nINHERITED\n");
-			for (Entry<String, Etymology> entry : inheritedGs.entrySet()) {
-				System.out.println("Actual: " + entry.getKey() + " / " + concept + " / " + entry.getValue());
-				for (Integer form : ios.getFormsForLangAndConcepts(ISO2LangID.get(entry.getKey()), concept)) {
-					// TODO work with the ID
-					for (RankingEntry<String> atom : erf.getEetyForArgument(ios.getFormForFormId(form))) {
-						System.out.println(" - " + atom);
-					}
-				}
-				System.out.println();
-			}
+			System.out.println("\nBORROWED WITHIN NELEX\n");
+			compare(concept, borrowedNelexGs, erf);
+			System.out.println("\nBORROWED OUTSIDE OF NELEX\n");
+			compare(concept, borrowedOutsideGs, erf);
+			System.out.println("\nINHERITED\n");
+			compare(concept, inheritedGs, erf);
 		}
+	}
 
+	private void compare(String concept, Map<String, Etymology> goldStandard, EtymologyRagFilter erf) {
+		// TODO count (mis)matches (vbl)
+		for (Entry<String, Etymology> entry : goldStandard.entrySet()) {
+			System.out.println("Actual: " + entry.getKey() + " / " + concept + " / " + entry.getValue());
+			for (Integer formId : ios.getFormsForLangAndConcepts(entry.getKey(), concept)) {
+				String form = ios.getFormForFormId(formId);
+				for (RankingEntry<String> atom : erf.getEetyForArgument(formId + "")) {
+					if (atom.value < 0.05){
+						break;
+					}
+					String pred = atom.key.substring(0, 4);
+					int otherFormId = Integer
+							.parseInt(atom.key.substring(5, atom.key.length() - 1).split(",")[1].trim());
+					System.out.println(" - " + pred + " " + form + " < " + ios.getFormForFormId(otherFormId) + " ("
+							+ ios.getLangForForm(otherFormId) + ") " + atom.value);
+				}
+			}
+			System.out.println();
+		}
+		System.out.println("\n==================================================\n");
 	}
 
 	public static void main(String[] args) {
 		EtymologyNelexTest test = new EtymologyNelexTest();
+		test.ios = new IndexedObjectStore(
+				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
+		test.isoToLanguageId = test.ios.getIsoToLanguageIdMap();
 		test.setUp();
 		Set<String> concepts = new HashSet<>();
 		concepts.add("BergN");

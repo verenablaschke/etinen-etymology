@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 
 import de.tuebingen.sfs.eie.components.phylogeny.LanguageTree;
@@ -25,7 +26,7 @@ public class LevelBasedPhylogeny {
 		tree.collectLeaves("ROOT", languages);
 		init();
 	}
-	
+
 	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, List<String> languages) {
 		try {
 			tree = LanguageTree.fromNewickFile(pathToNwkFile);
@@ -52,6 +53,16 @@ public class LevelBasedPhylogeny {
 
 	public LanguageTree getTree() {
 		return tree;
+	}
+
+	public void renameChildren(Map<String, String> names) {
+		List<String> leaves = new ArrayList<>();
+		tree.collectLeaves(tree.root, leaves);
+		for (String leaf : leaves) {
+			if (names.containsKey(leaf)) {
+				tree.renameNode(leaf, names.get(leaf));
+			}
+		}
 	}
 
 	// Level 0 = ROOT

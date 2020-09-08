@@ -44,7 +44,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
 	private IndexedObjectStore objectStore;
-	private Map<String, String> ISO2LangID;
 	private List<String> languages;
 	private int treeDepth;
 	private String treeFile;
@@ -118,14 +117,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			this.languages = new ArrayList<>();
 		} else {
 			this.languages = languages;
-			tree = new LevelBasedPhylogeny(this.treeDepth, this.treeFile, this.languages);
+			setTree();
 		}
 		entryPool = new HashSet<>();
 
-		ISO2LangID = new HashMap<>();
-		for (String langID : this.objectStore.getLanguageIds()) {
-			ISO2LangID.put(this.objectStore.getIsoForLang(langID), langID);
-		}
 		System.err.println("Finished setting up the Etymology Idea Generator.");
 	}
 
@@ -188,12 +183,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
-			 boolean largeLanguageSet) {
+			boolean largeLanguageSet) {
 		return getIdeaGeneratorForTestingMountain(problem, largeLanguageSet, false);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
-		 boolean largeLanguageSet, boolean branchwiseBorrowing) {
+			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		Set<String> concepts = new HashSet<>();
 		concepts.add("BergN");
 		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
@@ -217,8 +212,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
-			boolean largeConceptSet, boolean largeLanguageSet,
-			boolean branchwiseBorrowing) {
+			boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		Set<String> concepts = new HashSet<>();
 		concepts.add("SpracheN");
 		if (largeConceptSet) {
@@ -227,9 +221,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
-	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem,
-			Set<String> concepts, boolean largeLanguageSet,
-			boolean branchwiseBorrowing) {
+	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
+			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> languages = new ArrayList<>();
 		languages.add("eng");
 		languages.add("deu");
@@ -273,7 +266,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, objectStore, concepts, languages,
 				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
 
-		eig.languages = languages.stream().map(lang -> eig.ISO2LangID.getOrDefault(lang, lang))
+		Map<String, String> ISO2LangID = new HashMap<>();
+		for (String langID : objectStore.getLanguageIds()) {
+			ISO2LangID.put(objectStore.getIsoForLang(langID), langID);
+		}
+		eig.languages = languages.stream().map(lang -> ISO2LangID.getOrDefault(lang, lang))
 				.collect(Collectors.toList());
 
 		return eig;
@@ -326,7 +323,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, TEST_DB_DIR + "/tree.nwk", net,
 				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
 	}
-	
+
 	public void generateAtoms() {
 		// 1. Determine and retrieve/generate the relevant F-atoms.
 
@@ -337,10 +334,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Retrieving languages from the tree to get proto languages as well.
 		for (String lang : tree.getAllLanguages()) {
-			// TODO check if this includes only the languages in `languages' + their ancestors (vbl)
-//			System.out.println(lang + " : " + ISO2LangID.getOrDefault(lang, lang));
-			// ISO2LangID is useful for the NELex test, but *might* be unnecessary otherwise.
-			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
+			// TODO check if this includes only the languages in `languages' +
+			// their ancestors (vbl)
+			// System.out.println(lang + " : " + ISO2LangID.getOrDefault(lang,
+			// lang));
+			// ISO2LangID is useful for the NELex test, but *might* be
+			// unnecessary otherwise.
+//			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
+			Set<Integer> cldfForms = objectStore.getFormsForLanguage(lang);
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
 				cldfForms = new HashSet<>();
@@ -358,13 +359,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 			for (Integer cldfFormID : cldfForms) {
 				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-					entryPool.add(new Entry(getPrintForm(cldfFormID, lang), cldfFormID, lang,
+					entryPool.add(new Entry(cldfFormID, lang,
 							objectStore.getConceptForForm(cldfFormID)));
 					// TODO only add these for proto languages that don't
 					// have
 					// these yet, retrieve existing F-atoms from db and pass
 					// them on
-					addFormAtoms(getPrintForm(cldfFormID, lang), lang, objectStore.getConceptForForm(cldfFormID),
+					addFormAtoms(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID),
 							cldfFormID);
 				}
 			}
@@ -402,7 +403,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// 4. Generate etymology atoms.
 
 		for (Entry entry1 : entryPool) {
-			pslProblem.addTarget("Eunk", entry1.id);
+			pslProblem.addTarget("Eunk", entry1.formIdAsString);
 			for (Entry entry2 : entryPool) {
 				addAtomsForFormPair(entry1, entry2);
 			}
@@ -410,23 +411,23 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	private void addAtomsForFormPair(Entry entry1, Entry entry2) {
-		if (entry1.id.equals(entry2.id) || (entry1.id.length() == 0 && entry2.id.length() == 0)) {
+		if (entry1.formId.equals(entry2.formId)) {
 			return;
 		}
 
 		if (tree.distanceToAncestor(entry1.language, entry2.language) == 1) {
-			pslProblem.addTarget("Einh", entry1.id, entry2.id);
-			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
+			pslProblem.addTarget("Einh", entry1.formIdAsString, entry2.formIdAsString);
+			pslProblem.addObservation("Eloa", 0.0, entry1.formIdAsString, entry2.formIdAsString);
 		} else if (tree.getLevel(entry1.language) == tree.getLevel(entry2.language)) {
-			pslProblem.addObservation("Einh", 0.0, entry1.id, entry2.id);
+			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
 			if (!branchwiseBorrowing) {
-				pslProblem.addTarget("Eloa", entry1.id, entry2.id);
+				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 			}
 		} else if (branchwiseBorrowing && tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
-			pslProblem.addTarget("Eloa", entry1.id, entry2.id);
+			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 		} else {
-			pslProblem.addObservation("Einh", 0.0, entry1.id, entry2.id);
-			pslProblem.addObservation("Eloa", 0.0, entry1.id, entry2.id);
+			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
+			pslProblem.addObservation("Eloa", 0.0, entry1.formIdAsString, entry2.formIdAsString);
 		}
 
 		String ipa1 = "";
@@ -450,19 +451,19 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
-		System.out.println("Fsim(" + entry1.id + "/" + ipa1 + "/" + form1 + "," + entry2.id + "/" + ipa2 + "/" + form2
+		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/" + form2
 				+ ") " + sim);
 
 	}
 
-	private void addFormAtoms(String id, String doculect, String concept, int cldfForm) {
-		pslProblem.addObservation("Flng", 1.0, id, doculect);
-		pslProblem.addObservation("Fsem", 1.0, id, concept);
+	private void addFormAtoms(int formId, String doculectId, String concept, int cldfForm) {
+		pslProblem.addObservation("Flng", 1.0, formId + "", doculectId);
+		pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
 		String ipa = objectStore.getFormForFormId(cldfForm);
 		if (!ipa.isEmpty()) {
 			// TODO add XFufo also for imported Fufo atoms!!
-			pslProblem.addObservation(F_UFO_EX, 1.0, id);
-			pslProblem.addObservation("Fufo", 1.0, id, ipa);
+			pslProblem.addObservation(F_UFO_EX, 1.0, formId + "");
+			pslProblem.addObservation("Fufo", 1.0, formId + "", ipa);
 		}
 	}
 
@@ -522,10 +523,38 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.concepts = concepts;
 	}
 
+	// Costly because this involves renaming the leaf nodes in the tree.
 	public void setLanguages(List<String> languages) {
 		System.err.println("Adding languages to Etymology Idea Generator and updating the phylogenetic tree.");
 		this.languages = languages;
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages);
+		setTree();
 	}
+	
+	private void setTree(){
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
+		tree.renameChildren(objectStore.getIsoToLanguageIdMap());
+		tree.getTree().saveLayeredTreeToFile(System.out);
+	}
+	
+	private class Entry {
+
+		Integer formId = null;
+		String formIdAsString = null;
+		String language;
+		String concept;
+
+		public Entry( int formId, String language, String concept) {
+			this.formId = formId;
+			this.formIdAsString = formId + "";
+			this.language = language;
+			this.concept = concept;
+		}
+
+		public String toString(){
+			return formIdAsString + " (" + language + ", " + concept + ")";
+		}
+
+	}
+
 
 }
