@@ -2,7 +2,9 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -78,15 +80,17 @@ public class EtymologyInferenceTest {
 	private static EtymologyRagFilter runTestFictional(EtymologyConfig config, boolean synonyms,
 			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "TestDataEtymologyProblem",
-				config);
+		String problemId = "TestDataEtymologyProblem";
+		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), problemId, config);
 		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, synonyms, moreLangsPerBranch, moreBranches,
 				branchwiseBorrowing).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		if (showAllEloa) {
-			for (RankingEntry<AtomTemplate> eloaResult : problemManager.getDbManager().getAtoms("Eloa",
-					new AtomTemplate("Eloa", "?", "?"))) {
+			List<RankingEntry<AtomTemplate>> eloaResults = problemManager.getDbManager().getAtomsForProblem("Eloa",
+					problemId, new AtomTemplate("Eloa", "?", "?"));
+			Collections.sort(eloaResults, Collections.reverseOrder());
+			for (RankingEntry<AtomTemplate> eloaResult : eloaResults) {
 				System.out.println(eloaResult);
 			}
 		}
@@ -160,15 +164,15 @@ public class EtymologyInferenceTest {
 	public static void main(String[] args) {
 		// gridSearch();
 
-//		String configPath = "";
-//		String configPath = "etinen-etymology/src/test/resources/serialization/config-languagelvl.json";
+		// String configPath = "";
+		// String configPath = "etinen-etymology/src/test/resources/serialization/config-languagelvl.json";
 		String configPath = "etinen-etymology/src/test/resources/serialization/config-branchlvl.json";
 		boolean branchwiseBorrowing = true;
-		
+
 		boolean printAllEloaValues = false;
 
 		// Which tests should be run?
-		boolean singleTest = false;
+		boolean singleTest = true;
 		boolean fictionalData = true;
 		boolean language = false;
 		boolean mountain = false;
