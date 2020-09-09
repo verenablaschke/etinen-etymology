@@ -32,6 +32,7 @@ import de.tuebingen.sfs.util.LoadUtils;
 public class EtymologyNelexTest {
 
 	private Map<String, Multimap<String, Etymology>> conceptToLanguageToEtymology;
+	private Set<String> borrowedConcepts;
 	private IndexedObjectStore ios;
 	private Map<String, String> isoToLanguageId;
 	private Map<String, String> conceptConverter;
@@ -67,6 +68,7 @@ public class EtymologyNelexTest {
 		}
 
 		conceptToLanguageToEtymology = new TreeMap<>();
+		borrowedConcepts = new HashSet<>();
 		Set<String> langs = new HashSet<>();
 
 		try (FileInputStream fis = new FileInputStream(goldStandardFile);
@@ -97,18 +99,19 @@ public class EtymologyNelexTest {
 				String concept = conceptConverter.get(cells[1].trim());
 				String language = cells[2].trim();
 				language = isoToLanguageId.getOrDefault(language, language);
-				langs.add(language);
 				String word = cells[3].trim();
 				String source = cells[6].trim();
 				if (source.contains("{") && source.contains(",")) {
 					System.err.println("Entry contains several sources: " + line);
 					System.err.println("(Skipping this entry.)");
 				}
-
 				Multimap<String, Etymology> languageToEtymology = conceptToLanguageToEtymology.getOrDefault(concept,
 						new Multimap<>(CollectionType.SET));
 				languageToEtymology.put(language, new Etymology(word, language, source, status));
 				conceptToLanguageToEtymology.put(concept, languageToEtymology);
+				langs.add(language);
+				if (status == LoanwordStatus.LOANED || status == LoanwordStatus.LOANED_ACROSS_CONCEPT)
+					borrowedConcepts.add(concept);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -165,17 +168,19 @@ public class EtymologyNelexTest {
 
 	private void compare(String concept, Map<String, Etymology> goldStandard, EtymologyIdeaGenerator eig,
 			EtymologyRagFilter erf, String expected, PrintStream verboseOut, PrintStream out) {
+		if (goldStandard.isEmpty()) {
+			out.println(String.format("%s\t%s\t---", concept, expected));
+			verboseOut.println(String.format("No entries in the gold standard.\n"));
+			return;
+		}
 		int predMatches = 0;
 		int atomMatches = 0;
 		int count = 0;
 		for (Entry<String, Etymology> entry : goldStandard.entrySet()) {
 			verboseOut.println("Actual: " + entry.getValue());
 			count++;
-			verboseOut.println(entry.getKey() + " " + concept);
-			verboseOut.println(ios.getFormsForLangAndConcepts(entry.getKey(), concept));
 			for (Integer formId : ios.getFormsForLangAndConcepts(entry.getKey(), concept)) {
 				String ortho = ios.getOrthoForForm(formId);
-				verboseOut.println(ortho + " - " + entry.getValue().word);
 				if (ortho != null && !ortho.isEmpty() && !ortho.equals(entry.getValue().word)) {
 					continue;
 				}
@@ -209,12 +214,15 @@ public class EtymologyNelexTest {
 						}
 					}
 				}
-				verboseOut.println(" - Best prediction: " + atoms.get(0));
-				for (RankingEntry<String> atom : atoms.subList(1, atoms.size())) {
-					if (atom.value < 0.1) {
+				for (RankingEntry<String> atom : atoms) {
+					if (atom.value < 0.05) {
 						break;
 					}
 					String pred = atom.key.substring(0, 4);
+					if (pred.equals("Eunk")) {
+						verboseOut.println(" - " + pred + " " + form + " < ???");
+						continue;
+					}
 					int otherFormId = Integer
 							.parseInt(atom.key.substring(5, atom.key.length() - 1).split(",")[1].trim());
 					verboseOut.println(" - " + pred + " " + form + " < " + ios.getFormForFormId(otherFormId) + " ("
@@ -230,14 +238,17 @@ public class EtymologyNelexTest {
 			verboseOut.println(
 					String.format("Predicted the etymology type and source of %d/%d entries (%.2f%%) correctly",
 							atomMatches, count, 100 * ((double) atomMatches) / count));
-		verboseOut.println("\n==================================================\n");
 		if (expected.equals("Eloa"))
 			out.print(String.format("\t%d/%d (%.2f%%)", atomMatches, count, 100 * ((double) atomMatches) / count));
 		out.println();
+		verboseOut.println("\n==================================================\n");
 	}
 
 	public void runAll(int minLangs, PrintStream verboseOut, PrintStream out) {
 		for (String concept : conceptToLanguageToEtymology.keySet()) {
+			if (!borrowedConcepts.contains(concept)) {
+				continue;
+			}
 			if (conceptToLanguageToEtymology.get(concept).keySet().size() >= minLangs)
 				run(Collections.singleton(concept), verboseOut, out);
 		}
@@ -248,6 +259,9 @@ public class EtymologyNelexTest {
 		int atLeast25 = 0;
 		int atLeast30 = 0;
 		for (String concept : conceptToLanguageToEtymology.keySet()) {
+			if (!borrowedConcepts.contains(concept)) {
+				continue;
+			}
 			int size = conceptToLanguageToEtymology.get(concept).keySet().size();
 			if (size >= 20) {
 				atLeast20++;
@@ -271,13 +285,8 @@ public class EtymologyNelexTest {
 		try {
 			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
 			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
-//			test.runAll(30, verboseOut, out);
+			test.runAll(25, verboseOut, out);
 			// test.run(Collections.singleton("BergN"), verboseOut, out);
-			 test.run(Collections.singleton("SpracheN"), verboseOut, out);
-			// test.run(Collections.singleton("KopfN"), verboseOut, out);
-			 test.run(Collections.singleton("AbendN"), verboseOut, out);
-			 test.run(Collections.singleton("LiedN"), verboseOut, out);
-			 test.run(Collections.singleton("BogenWaffeN"), verboseOut, out);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
