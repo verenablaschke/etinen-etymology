@@ -2,6 +2,7 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -137,8 +138,8 @@ public class EtymologyNelexTest {
 		Set<String> removed = eig.removeIsolates();
 
 		Set<String> interestingCases = new HashSet<>();
-		interestingCases.addAll(borrowedConceptToLanguages.get(concept));
-		interestingCases.addAll(unknownConceptToLanguages.get(concept));
+		interestingCases.addAll(borrowedConceptToLanguages.getOrDefault(concept, new HashSet<>()));
+		interestingCases.addAll(unknownConceptToLanguages.getOrDefault(concept, new HashSet<>()));
 		interestingCases.removeAll(removed);
 		if (interestingCases.isEmpty()) {
 			String msg = "Removed all gold-standard Eloa/Eunk cases for " + concept + ". Skipping inference.";
@@ -320,19 +321,17 @@ public class EtymologyNelexTest {
 
 		// test.checkInventory();
 
-		// try {
-		// PrintStream out = new
-		// PrintStream("src/test/resources/etymology/nelex-output.tsv");
-		// PrintStream verboseOut = new
-		// PrintStream("src/test/resources/etymology/nelex-output.log");
-		// test.runAll(25, verboseOut, out);
-		// } catch (FileNotFoundException e) {
-		// e.printStackTrace();
-		// }
+		try {
+			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
+			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
+			test.runAll(20, verboseOut, out);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 
 		// test.runAndShow("MeerN");
 
-		test.run("HonigN", System.out, System.out, true);
+		// test.run("HonigN", System.out, System.out, true);
 	}
 
 	private enum LoanwordStatus {
