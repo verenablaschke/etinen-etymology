@@ -340,7 +340,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			// lang));
 			// ISO2LangID is useful for the NELex test, but *might* be
 			// unnecessary otherwise.
-//			Set<Integer> cldfForms = objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang, lang));
+			// Set<Integer> cldfForms =
+			// objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang,
+			// lang));
 			Set<Integer> cldfForms = objectStore.getFormsForLanguage(lang);
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
@@ -359,14 +361,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 			for (Integer cldfFormID : cldfForms) {
 				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-					entryPool.add(new Entry(cldfFormID, lang,
-							objectStore.getConceptForForm(cldfFormID)));
+					entryPool.add(new Entry(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
 					// TODO only add these for proto languages that don't
 					// have
 					// these yet, retrieve existing F-atoms from db and pass
 					// them on
-					addFormAtoms(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID),
-							cldfFormID);
+					addFormAtoms(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID), cldfFormID);
 				}
 			}
 		}
@@ -451,8 +451,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
-		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/" + form2
-				+ ") " + sim);
+		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/"
+				+ form2 + ") " + sim);
 
 	}
 
@@ -529,17 +529,59 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.languages = languages;
 		setTree();
 	}
-	
-	private void setTree(){
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile, languages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
+
+	private void setTree() {
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile,
+				languages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
 		tree.renameChildren(objectStore.getIsoToLanguageIdMap());
-		tree.getTree().saveLayeredTreeToFile(System.out);
+		// tree.getTree().saveLayeredTreeToFile(System.err);
 	}
-	
-	public LevelBasedPhylogeny getTree(){
+
+	public LevelBasedPhylogeny getTree() {
 		return tree;
 	}
-	
+
+	public void addSiblingLanguages() {
+		Set<String> parents = new HashSet<>();
+		for (String lang : languages) {
+			parents.add(tree.getParent(lang));
+		}
+		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(treeFile);
+		Set<String> targetLangs = new HashSet<>();
+		for (String langId : objectStore.getLanguageIds()) {
+			targetLangs.add(langId);
+		}
+		targetLangs.removeAll(languages);
+		for (String langId : targetLangs) {
+			for (String parent : parents) {
+				if (fullTree.getTree().pathToRoot(objectStore.getIsoForLang(langId)).contains(parent)) {
+					tree.getTree().children.get(parent).add(langId);
+					tree.getTree().parents.put(langId, parent);
+					tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
+					languages.add(langId);
+					System.err.println("Added " + langId + " to " + parent + ".");
+				}
+			}
+		}
+	}
+
+	public Set<String> removeIsolates() {
+		Set<String> toBeRemoved = new HashSet<>();
+		for (String lang : languages) {
+			String parent = tree.getTree().parents.get(lang);
+			while ((tree.getTree().children.get(parent)).size() == 1) {
+				tree.getTree().children.remove(parent);
+				tree.getTree().parents.remove(lang);
+				toBeRemoved.add(lang);
+				System.err.println("Removed " + lang + ".");
+				lang = parent;
+				parent = tree.getTree().parents.get(parent);
+			}
+		}
+		languages.removeAll(toBeRemoved);
+		return toBeRemoved;
+	}
+
 	private class Entry {
 
 		Integer formId = null;
@@ -547,18 +589,17 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		String language;
 		String concept;
 
-		public Entry( int formId, String language, String concept) {
+		public Entry(int formId, String language, String concept) {
 			this.formId = formId;
 			this.formIdAsString = formId + "";
 			this.language = language;
 			this.concept = concept;
 		}
 
-		public String toString(){
+		public String toString() {
 			return formIdAsString + " (" + language + ", " + concept + ")";
 		}
 
 	}
-
 
 }

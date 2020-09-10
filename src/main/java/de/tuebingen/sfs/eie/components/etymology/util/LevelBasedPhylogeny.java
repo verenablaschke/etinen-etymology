@@ -27,6 +27,16 @@ public class LevelBasedPhylogeny {
 		init();
 	}
 
+	public LevelBasedPhylogeny(String pathToNwkFile) {
+		try {
+			tree = LanguageTree.fromNewickFile(pathToNwkFile);
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+		this.numAncestors = -1;
+		this.languages = null;
+	}
+
 	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, List<String> languages) {
 		try {
 			tree = LanguageTree.fromNewickFile(pathToNwkFile);
@@ -73,6 +83,10 @@ public class LevelBasedPhylogeny {
 
 	public List<String> getAncestors(String language) {
 		return tree.pathToRoot(language);
+	}
+
+	public String getParent(String language) {
+		return tree.parents.get(language);
 	}
 
 	public boolean decendsFrom(String language, String potentialAncestor) {
@@ -125,20 +139,17 @@ public class LevelBasedPhylogeny {
 
 		List<String> desc = new ArrayList<String>();
 		tree.collectDescendants("ROOT", desc);
-		System.out.println(desc);
-		System.out.println("Norwegian: " + tree.pathToRoot("nor"));
-		System.out.println("Portuguese: " + tree.pathToRoot("por"));
-		System.out.println("Croatian: " + tree.pathToRoot("hrv"));
-		System.out.println(tree.toNewickStringWithBranchLengths());
+		System.err.println(tree.toNewickStringWithBranchLengths());
 	}
 
 	private void moveChildrenUp(String oldParent) {
 		String newParent = tree.parents.get(oldParent);
-
+		Integer previousLayer = tree.nodeToLayerPlacement.remove(oldParent);
 		for (String child : tree.children.get(oldParent)) {
 			tree.children.get(newParent).add(child);
 			tree.parents.put(child, newParent);
 			System.out.println("Moved " + child + " from " + oldParent + " to " + newParent);
+			tree.nodeToLayerPlacement.put(child, previousLayer);
 		}
 		tree.children.remove(oldParent);
 		tree.children.get(newParent).remove(oldParent);
@@ -148,16 +159,20 @@ public class LevelBasedPhylogeny {
 		String newNode = "Old_" + child;
 		tree.children.get(parent).remove(child);
 		tree.children.get(parent).add(newNode);
-		tree.children.put(newNode, new TreeSet<String>() {
-			private static final long serialVersionUID = 1L;
-
-			{
-				add(child);
-			}
-		});
+		TreeSet<String> children = new TreeSet<>();
+		children.add(child);
+		tree.children.put(newNode, children);
 		tree.parents.put(newNode, parent);
 		tree.parents.put(child, newNode);
-		System.out.println("Added " + newNode + " between " + child + " and " + parent);
+		Integer previousLayer = tree.nodeToLayerPlacement.get(child);
+		tree.nodeToLayerPlacement.put(newNode, previousLayer);
+		while (children != null) {
+			for (String curChild : children) {
+				tree.nodeToLayerPlacement.put(curChild, ++previousLayer);
+				children = tree.children.get(curChild);
+			}
+		}
+		System.err.println("Added " + newNode + " between " + child + " and " + parent);
 		return newNode;
 	}
 

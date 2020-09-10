@@ -2,7 +2,6 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
@@ -21,6 +20,7 @@ import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -32,10 +32,13 @@ import de.tuebingen.sfs.util.LoadUtils;
 public class EtymologyNelexTest {
 
 	private Map<String, Multimap<String, Etymology>> conceptToLanguageToEtymology;
-	private Set<String> borrowedConcepts;
 	private IndexedObjectStore ios;
 	private Map<String, String> isoToLanguageId;
 	private Map<String, String> conceptConverter;
+	private Multimap<String, String> borrowedConceptToLanguages;
+	private Multimap<String, String> unknownConceptToLanguages;
+
+	private EtymologyProblem problem;
 
 	private boolean branchwise = true;
 
@@ -68,7 +71,8 @@ public class EtymologyNelexTest {
 		}
 
 		conceptToLanguageToEtymology = new TreeMap<>();
-		borrowedConcepts = new HashSet<>();
+		borrowedConceptToLanguages = new Multimap<>(CollectionType.SET);
+		unknownConceptToLanguages = new Multimap<>(CollectionType.SET);
 		Set<String> langs = new HashSet<>();
 
 		try (FileInputStream fis = new FileInputStream(goldStandardFile);
@@ -77,6 +81,10 @@ public class EtymologyNelexTest {
 			String line = "";
 			loop: while ((line = br.readLine()) != null) {
 				String[] cells = line.split("\t");
+				String concept = conceptConverter.get(cells[1].trim());
+				String language = cells[2].trim();
+				language = isoToLanguageId.getOrDefault(language, language);
+
 				String statusStr = cells[5].trim();
 				LoanwordStatus status;
 				switch (statusStr) {
@@ -86,9 +94,11 @@ public class EtymologyNelexTest {
 					break;
 				case "yes, within NEL with donor candidates":
 					status = LoanwordStatus.LOANED;
+					borrowedConceptToLanguages.put(concept, language);
 					break;
 				case "yes, but source gives no same-concept reflexes in NEL for donor":
-					status = LoanwordStatus.LOANED_ACROSS_CONCEPT;
+					status = LoanwordStatus.LOANED_ACROSS_CONCEPT_OR_OUTSIDE_NELEX;
+					unknownConceptToLanguages.put(concept, language);
 					break;
 				default:
 					System.err.println("Did not recognize the loanword status in the following line: " + line);
@@ -96,9 +106,6 @@ public class EtymologyNelexTest {
 					continue loop;
 				}
 
-				String concept = conceptConverter.get(cells[1].trim());
-				String language = cells[2].trim();
-				language = isoToLanguageId.getOrDefault(language, language);
 				String word = cells[3].trim();
 				String source = cells[6].trim();
 				if (source.contains("{") && source.contains(",")) {
@@ -110,60 +117,76 @@ public class EtymologyNelexTest {
 				languageToEtymology.put(language, new Etymology(word, language, source, status));
 				conceptToLanguageToEtymology.put(concept, languageToEtymology);
 				langs.add(language);
-				if (status == LoanwordStatus.LOANED || status == LoanwordStatus.LOANED_ACROSS_CONCEPT)
-					borrowedConcepts.add(concept);
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void run(Set<String> concepts, PrintStream verboseOut, PrintStream out) {
+	private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
+		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
-		eig.setConcepts(concepts);
+		eig.setConcepts(Collections.singleton(concept));
 		Set<String> languages = new HashSet<>();
-		for (String concept : concepts) {
-			for (String language : conceptToLanguageToEtymology.get(concept).keySet()) {
-				languages.add(language);
-			}
+		for (String language : conceptToLanguageToEtymology.get(concept).keySet()) {
+			languages.add(language);
 		}
 		eig.setLanguages(languages.stream().collect(Collectors.toList()));
+		eig.addSiblingLanguages();
+		Set<String> removed = eig.removeIsolates();
+
+		Set<String> interestingCases = new HashSet<>();
+		interestingCases.addAll(borrowedConceptToLanguages.get(concept));
+		interestingCases.addAll(unknownConceptToLanguages.get(concept));
+		interestingCases.removeAll(removed);
+		if (interestingCases.isEmpty()) {
+			String msg = "Removed all gold-standard Eloa/Eunk cases for " + concept + ". Skipping inference.";
+			System.out.println(msg);
+			verboseOut.println(msg);
+			return null;
+		}
+
 		eig.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		EtymologyRagFilter erf = (EtymologyRagFilter) result.getRag().getRagFilter();
 
-		for (String concept : concepts) {
-			Map<String, Etymology> inheritedGs = new HashMap<>();
-			Map<String, Etymology> borrowedNelexGs = new HashMap<>();
-			Map<String, Etymology> borrowedOutsideGs = new HashMap<>();
-			for (Entry<String, Collection<Etymology>> entry : conceptToLanguageToEtymology.get(concept).entrySet()) {
-				for (Etymology etym : entry.getValue()) {
-					switch (etym.status) {
-					case INHERITED:
-						inheritedGs.put(entry.getKey(), etym);
-						break;
-					case LOANED:
-						borrowedNelexGs.put(entry.getKey(), etym);
-						break;
-					case LOANED_ACROSS_CONCEPT:
-						borrowedOutsideGs.put(entry.getKey(), etym);
-						break;
-					default:
-						break;
-					}
+		if (!compare) {
+			return result;
+		}
+
+		Map<String, Etymology> inheritedGs = new HashMap<>();
+		Map<String, Etymology> borrowedNelexGs = new HashMap<>();
+		Map<String, Etymology> borrowedOutsideGs = new HashMap<>();
+		for (Entry<String, Collection<Etymology>> entry : conceptToLanguageToEtymology.get(concept).entrySet()) {
+			for (Etymology etym : entry.getValue()) {
+				if (removed.contains(etym.language)) {
+					continue;
+				}
+				switch (etym.status) {
+				case INHERITED:
+					inheritedGs.put(entry.getKey(), etym);
+					break;
+				case LOANED:
+					borrowedNelexGs.put(entry.getKey(), etym);
+					break;
+				case LOANED_ACROSS_CONCEPT_OR_OUTSIDE_NELEX:
+					borrowedOutsideGs.put(entry.getKey(), etym);
+					break;
+				default:
+					break;
 				}
 			}
-			verboseOut.println("CONCEPT: " + concept + "\n========\n");
-			verboseOut.println("BORROWED FROM SAME CONCEPT\n");
-			compare(concept, borrowedNelexGs, eig, erf, "Eloa", verboseOut, out);
-			verboseOut.println("BORROWED ACROSS CONCEPTS\n");
-			compare(concept, borrowedOutsideGs, eig, erf, "Eunk", verboseOut, out);
-			verboseOut.println("INHERITED\n");
-			compare(concept, inheritedGs, eig, erf, "Einh", verboseOut, out);
-			verboseOut.println("==================================================");
 		}
+		verboseOut.println("CONCEPT: " + concept + "\n========\n");
+		verboseOut.println("BORROWED FROM SAME CONCEPT\n");
+		compare(concept, borrowedNelexGs, eig, erf, "Eloa", verboseOut, out);
+		verboseOut.println("BORROWED ACROSS CONCEPTS OR OUTSIDE NELEX\n");
+		compare(concept, borrowedOutsideGs, eig, erf, "Eunk", verboseOut, out);
+		verboseOut.println("INHERITED\n");
+		compare(concept, inheritedGs, eig, erf, "Einh", verboseOut, out);
+		verboseOut.println("==================================================");
+		return result;
 	}
 
 	private void compare(String concept, Map<String, Etymology> goldStandard, EtymologyIdeaGenerator eig,
@@ -245,12 +268,22 @@ public class EtymologyNelexTest {
 	}
 
 	public void runAll(int minLangs, PrintStream verboseOut, PrintStream out) {
+		Set<String> borrowedConcepts = new HashSet<>();
+		borrowedConcepts.addAll(borrowedConceptToLanguages.keySet());
+		borrowedConcepts.addAll(unknownConceptToLanguages.keySet());
 		for (String concept : conceptToLanguageToEtymology.keySet()) {
 			if (!borrowedConcepts.contains(concept)) {
 				continue;
 			}
 			if (conceptToLanguageToEtymology.get(concept).keySet().size() >= minLangs)
-				run(Collections.singleton(concept), verboseOut, out);
+				run(concept, verboseOut, out, true);
+		}
+	}
+
+	public void runAndShow(String concept) {
+		InferenceResult result = run(concept, System.out, System.out, false);
+		if (result != null) {
+			StandaloneFactViewer.launchWithData(problem, result);
 		}
 	}
 
@@ -258,6 +291,9 @@ public class EtymologyNelexTest {
 		int atLeast20 = 0;
 		int atLeast25 = 0;
 		int atLeast30 = 0;
+		Set<String> borrowedConcepts = new HashSet<>();
+		borrowedConcepts.addAll(borrowedConceptToLanguages.keySet());
+		borrowedConcepts.addAll(unknownConceptToLanguages.keySet());
 		for (String concept : conceptToLanguageToEtymology.keySet()) {
 			if (!borrowedConcepts.contains(concept)) {
 				continue;
@@ -281,19 +317,26 @@ public class EtymologyNelexTest {
 
 	public static void main(String[] args) {
 		EtymologyNelexTest test = new EtymologyNelexTest();
+
 		// test.checkInventory();
-		try {
-			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
-			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
-			test.runAll(25, verboseOut, out);
-			// test.run(Collections.singleton("BergN"), verboseOut, out);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+
+		// try {
+		// PrintStream out = new
+		// PrintStream("src/test/resources/etymology/nelex-output.tsv");
+		// PrintStream verboseOut = new
+		// PrintStream("src/test/resources/etymology/nelex-output.log");
+		// test.runAll(25, verboseOut, out);
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// }
+
+		// test.runAndShow("MeerN");
+
+		test.run("HonigN", System.out, System.out, true);
 	}
 
 	private enum LoanwordStatus {
-		INHERITED, LOANED, LOANED_ACROSS_CONCEPT
+		INHERITED, LOANED, LOANED_ACROSS_CONCEPT_OR_OUTSIDE_NELEX
 		// TODO!! cover the last one
 	}
 
