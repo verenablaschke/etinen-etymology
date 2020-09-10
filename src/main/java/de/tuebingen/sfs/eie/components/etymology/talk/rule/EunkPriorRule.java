@@ -1,9 +1,9 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
-import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
-public class EunkPriorRule extends TalkingLogicalRule {
+public class EunkPriorRule extends EtinenTalkingLogicalRule {
 	
 	public static final String NAME = "EunkPrior";
 	public static final String RULE = "~Eunk(X)";

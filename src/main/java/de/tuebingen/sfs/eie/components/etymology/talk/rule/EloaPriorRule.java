@@ -1,10 +1,10 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
-public class EloaPriorRule extends TalkingLogicalRule {
+public class EloaPriorRule extends EtinenTalkingLogicalRule {
 
 	public static final String NAME = "EloaPrior";
 	private static final String RULE = "~Eloa(X, Y)";

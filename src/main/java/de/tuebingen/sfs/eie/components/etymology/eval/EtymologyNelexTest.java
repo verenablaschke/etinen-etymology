@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.eie.core.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
@@ -34,6 +35,7 @@ public class EtymologyNelexTest {
 
 	private Map<String, Multimap<String, Etymology>> conceptToLanguageToEtymology;
 	private IndexedObjectStore ios;
+	private EtinenConstantRenderer renderer;
 	private Map<String, String> isoToLanguageId;
 	private Map<String, String> conceptConverter;
 	private Multimap<String, String> borrowedConceptToLanguages;
@@ -49,6 +51,7 @@ public class EtymologyNelexTest {
 	public EtymologyNelexTest() {
 		ios = new IndexedObjectStore(
 				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
+		renderer = new EtinenConstantRenderer(ios);
 		isoToLanguageId = ios.getIsoToLanguageIdMap();
 		setUp();
 	}
@@ -124,7 +127,8 @@ public class EtymologyNelexTest {
 		}
 	}
 
-	private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare) {
+	private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare,
+			boolean compareInherited) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
@@ -184,8 +188,10 @@ public class EtymologyNelexTest {
 		compare(concept, borrowedNelexGs, eig, erf, "Eloa", verboseOut, out);
 		verboseOut.println("BORROWED ACROSS CONCEPTS OR OUTSIDE NELEX\n");
 		compare(concept, borrowedOutsideGs, eig, erf, "Eunk", verboseOut, out);
-		verboseOut.println("INHERITED\n");
-		compare(concept, inheritedGs, eig, erf, "Einh", verboseOut, out);
+		if (compareInherited) {
+			verboseOut.println("INHERITED\n");
+			compare(concept, inheritedGs, eig, erf, "Einh", verboseOut, out);
+		}
 		verboseOut.println("==================================================");
 		return result;
 	}
@@ -195,6 +201,7 @@ public class EtymologyNelexTest {
 		if (goldStandard.isEmpty()) {
 			out.println(String.format("%s\t%s\t---", concept, expected));
 			verboseOut.println(String.format("No entries in the gold standard.\n"));
+			verboseOut.println("==================================================\n");
 			return;
 		}
 		int predMatches = 0;
@@ -277,14 +284,14 @@ public class EtymologyNelexTest {
 				continue;
 			}
 			if (conceptToLanguageToEtymology.get(concept).keySet().size() >= minLangs)
-				run(concept, verboseOut, out, true);
+				run(concept, verboseOut, out, true, false);
 		}
 	}
 
 	public void runAndShow(String concept) {
-		InferenceResult result = run(concept, System.out, System.out, false);
+		InferenceResult result = run(concept, System.out, System.out, false, false);
 		if (result != null) {
-			StandaloneFactViewer.launchWithData(problem, result);
+			StandaloneFactViewer.launchWithData(renderer, problem, result);
 		}
 	}
 
@@ -321,15 +328,15 @@ public class EtymologyNelexTest {
 
 		// test.checkInventory();
 
-		try {
-			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
-			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
-			test.runAll(20, verboseOut, out);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
+//		try {
+//			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
+//			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
+//			test.runAll(20, verboseOut, out);
+//		} catch (FileNotFoundException e) {
+//			e.printStackTrace();
+//		}
 
-		// test.runAndShow("MeerN");
+		 test.runAndShow("MeerN");
 
 		// test.run("HonigN", System.out, System.out, true);
 	}
