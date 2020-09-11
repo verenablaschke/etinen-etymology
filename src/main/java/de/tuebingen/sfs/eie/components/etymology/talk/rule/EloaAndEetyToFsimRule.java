@@ -3,15 +3,16 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.List;
 import java.util.Locale;
 
+import de.tuebingen.sfs.eie.core.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.pred.FsimPred;
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
-import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
+public class EloaAndEetyToFsimRule extends EtinenTalkingLogicalRule {
 
 	public static final String NAME = "EloaAndEetyToFsim";
 	// Only Eety and Fsim can have a value other than 0 or 1.
@@ -20,18 +21,24 @@ public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
 	private static final String VERBALIZATION = "A loanword should be similar to the word it is derived from and its relatives.";
 
 	// For serialization.
-	public EloaAndEetyToFsimRule(){
+	public EloaAndEetyToFsimRule() {
 		super(NAME, RULE, VERBALIZATION);
 	}
-	
+
 	public EloaAndEetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
-			super(String.format("EloaAnd%sAnd%sToFsim", eetyType1, eetyType2),
-					String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);
-		}
+		super(String.format("EloaAnd%sAnd%sToFsim", eetyType1, eetyType2),
+				String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);
+	}
 
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
+		return generateExplanation(null, groundingName, contextAtom, rag, whyExplanation);
+	}
+
+	@Override
+	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
+			RuleAtomGraph rag, boolean whyExplanation) {
 		List<Tuple> atomsToStatuses = rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName);
 		String[] eety1Args = null;
 		String eety1Atom = null;
@@ -68,24 +75,24 @@ public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
 			}
 		}
 
-		// TODO make sure order makes sense
+		// TODO make sure order makes sense (vbl)
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION);
 		sb.append(" It ").append(BeliefScale.verbalizeBeliefAsPredicate(eety1Belief));
 		sb.append(" that ");
 		sb.append("\\url[");
-		sb.append(escapeForURL(eety1Args[0])).append(" is ");
+		sb.append(escapeForURL(renderer.getFormRepresentation(eety1Args[0]))).append(" is ");
 		if (eety1Atom.startsWith("Einh")) {
 			sb.append("inherited");
 		} else {
 			sb.append("borrowed");
 		}
-		sb.append(" from ").append(escapeForURL(eety1Args[1]));
+		sb.append(" from ").append(escapeForURL(renderer.getFormRepresentation(eety1Args[1])));
 		sb.append("]{").append(eety1Atom).append("}");
 		sb.append(", and it ").append(BeliefScale.verbalizeBeliefAsPredicate(eety2Belief));
 		sb.append(" that ");
 		sb.append("\\url[");
-		sb.append(escapeForURL(eety2Args[0])).append(" is also ");
+		sb.append(escapeForURL(renderer.getFormRepresentation(eety2Args[0]))).append(" is also ");
 		if (eety1Atom.startsWith("Einh") && eety2Atom.startsWith("Einh")) {
 			sb.append("inherited");
 		} else if (eety1Atom.startsWith("Eloa") && eety2Atom.startsWith("Eloa")) {
@@ -93,10 +100,10 @@ public class EloaAndEetyToFsimRule extends TalkingLogicalRule {
 		} else {
 			sb.append("derived");
 		}
-		sb.append(" from ").append(escapeForURL(eety2Args[1]));
+		sb.append(" from ").append(escapeForURL(renderer.getFormRepresentation(eety2Args[1])));
 		sb.append("]{").append(eety2Atom).append("}");
 		sb.append(", but ");
-		sb.append(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs));
+		sb.append(new FsimPred().verbalizeIdeaAsSentence(renderer, fsimBelief, fsimArgs));
 		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(". ");
 		return sb.toString();

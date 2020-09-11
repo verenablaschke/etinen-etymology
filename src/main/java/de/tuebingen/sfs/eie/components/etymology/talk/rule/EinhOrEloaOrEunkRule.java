@@ -3,36 +3,43 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.ArrayList;
 import java.util.List;
 
+import de.tuebingen.sfs.eie.core.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.talk.pred.EloaPred;
+import de.tuebingen.sfs.eie.talk.pred.EtinenTalkingPredicate;
 import de.tuebingen.sfs.eie.talk.pred.EunkPred;
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingArithmeticRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
-import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
-import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
+public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 
 	public static final String NAME = "EinhOrEloaOrEunk";
 	private static final String RULE = "Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 .";
 	private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 
 	// For serialization.
-	public EinhOrEloaOrEunkRule(){
+	public EinhOrEloaOrEunkRule() {
 		super(NAME, RULE, VERBALIZATION);
 	}
-	
+
 	public EinhOrEloaOrEunkRule(PslProblem pslProblem) {
 		super(NAME, RULE, pslProblem, VERBALIZATION);
 	}
 
-	// TODO remove last comma, sort competitors by belief value
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
+		return generateExplanation(null, groundingName, contextAtom, rag, whyExplanation);
+	}
+
+	// TODO remove last comma, sort competitors by belief value (vbl)
+	@Override
+	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
+			RuleAtomGraph rag, boolean whyExplanation) {
 		double threshold = 0.1;
 		List<String> competitorAtoms = new ArrayList<>();
 		List<String> competitorPreds = new ArrayList<>();
@@ -66,7 +73,8 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 		if (competitorPreds.size() == 1) {
 			sb.append(" An alternative explanation is that ");
 			sb.append("\\url[");
-			sb.append(escapeForURL(stringToPred(competitorPreds.get(0)).verbalizeIdeaAsSentence(competitorArgs.get(0))));
+			sb.append(escapeForURL(
+					stringToPred(competitorPreds.get(0)).verbalizeIdeaAsSentence(renderer, competitorArgs.get(0))));
 			sb.append("]{").append(competitorAtoms.get(0)).append("}");
 			sb.append(", which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitorBeliefs.get(0)));
 			sb.append(".");
@@ -76,7 +84,8 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 		for (int i = 0; i < competitorPreds.size(); i++) {
 			sb.append("that ");
 			sb.append("\\url[");
-			sb.append(escapeForURL(stringToPred(competitorPreds.get(i)).verbalizeIdeaAsSentence(competitorArgs.get(i))));
+			sb.append(escapeForURL(
+					stringToPred(competitorPreds.get(i)).verbalizeIdeaAsSentence(renderer, competitorArgs.get(i))));
 			sb.append("]{").append(competitorAtoms.get(i)).append("}");
 			sb.append(" (which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitorBeliefs.get(i)));
 			sb.append(")");
@@ -90,7 +99,7 @@ public class EinhOrEloaOrEunkRule extends TalkingArithmeticRule {
 		return sb.toString();
 	}
 
-	private static TalkingPredicate stringToPred(String str) {
+	private static EtinenTalkingPredicate stringToPred(String str) {
 		switch (str) {
 		case "Einh":
 			return new EinhPred();

@@ -4,6 +4,8 @@ import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 
 public class EetyPred extends TalkingPredicate {
+	
+	// TODO Is this class obsolete?
 
 	public EetyPred() {
 		super("Eety", 2);

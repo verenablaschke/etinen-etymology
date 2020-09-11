@@ -88,7 +88,7 @@ public class EetyToFsimRule extends EtinenTalkingLogicalRule {
 		sb.append(" from ").append(escapeForURL(arg));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(", but ");
-		sb.append(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs));
+		sb.append(new FsimPred().verbalizeIdeaAsSentence(renderer, fsimBelief, fsimArgs));
 		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(". ");
 		return sb.toString();
