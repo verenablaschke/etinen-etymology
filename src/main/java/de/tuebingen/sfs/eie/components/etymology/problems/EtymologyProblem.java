@@ -29,6 +29,8 @@ import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 
+import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
+
 public class EtymologyProblem extends PslProblem {
 
 	private EtymologyConfig config;
@@ -158,10 +160,10 @@ public class EtymologyProblem extends PslProblem {
 		// high-belief E-atoms
 		// - delete low-belief E-atoms
 		Set<AtomTemplate> atomsToDelete = new HashSet<>();
-		atomsToDelete.add(new AtomTemplate("Tanc", "?", "?"));
-		atomsToDelete.add(new AtomTemplate("Tcnt", "?", "?"));
-		atomsToDelete.add(new AtomTemplate("XFufo", "?", "?"));
-		atomsToDelete.add(new AtomTemplate("Fsim", "?", "?"));
+		atomsToDelete.add(new AtomTemplate("Tanc", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("Tcnt", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("XFufo", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("Fsim", ANY_CONST, ANY_CONST));
 		return atomsToDelete;
 	}
 

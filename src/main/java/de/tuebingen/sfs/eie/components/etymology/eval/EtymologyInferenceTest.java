@@ -29,6 +29,8 @@ import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
+import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
+
 public class EtymologyInferenceTest {
 	// For debugging with a GUI, use the EtymologyFactViewer in the etinen
 	// repository.
@@ -88,7 +90,7 @@ public class EtymologyInferenceTest {
 		RuleAtomGraph rag = result.getRag();
 		if (showAllEloa) {
 			List<RankingEntry<AtomTemplate>> eloaResults = problemManager.getDbManager().getAtoms("Eloa",
-					 new AtomTemplate("Eloa", "?", "?"));
+					 new AtomTemplate("Eloa", ANY_CONST, ANY_CONST));
 			Collections.sort(eloaResults, Collections.reverseOrder());
 			for (RankingEntry<AtomTemplate> eloaResult : eloaResults) {
 				System.out.println(eloaResult);
