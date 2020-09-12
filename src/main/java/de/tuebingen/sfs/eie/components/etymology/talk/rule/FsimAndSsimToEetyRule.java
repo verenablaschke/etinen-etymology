@@ -3,17 +3,18 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.List;
 import java.util.Locale;
 
+import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.talk.pred.EloaPred;
+import de.tuebingen.sfs.eie.talk.pred.EtinenTalkingPredicate;
 import de.tuebingen.sfs.eie.talk.pred.FsimPred;
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
-import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
+public class FsimAndSsimToEetyRule extends EtinenTalkingLogicalRule {
 
 	public static final String NAME = "FsimAndSsimToEety";
 	private static final String RULE = // phonetic similarity
@@ -36,10 +37,16 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 				pslProblem, VERBALIZATION);
 		this.eetyType = eetyType;
 	}
-
+	
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
+		return generateExplanation(null, groundingName, contextAtom, rag, whyExplanation);
+	}
+
+	@Override
+	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
+			RuleAtomGraph rag, boolean whyExplanation) {
 		List<Tuple> atomsToStatuses = rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName);
 		String[] fsimArgs = null;
 		double fsimBelief = -2.0;
@@ -64,11 +71,11 @@ public class FsimAndSsimToEetyRule extends TalkingLogicalRule {
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(VERBALIZATION).append(" ");
-		sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(fsimBelief, fsimArgs)));
+		sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(renderer, fsimBelief, fsimArgs)));
 		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(", and \\url[");
-		TalkingPredicate pred = eetyType.equals("Einh") ? new EinhPred() : new EloaPred();
-		sb.append(escapeForURL(pred.verbalizeIdeaAsSentence(eetyBelief, eetyArgs)));
+		EtinenTalkingPredicate pred = eetyType.equals("Einh") ? new EinhPred() : new EloaPred();
+		sb.append(escapeForURL(pred.verbalizeIdeaAsSentence(renderer, eetyBelief, eetyArgs)));
 		sb.append("]{").append(eetyAtom).append("}");
 		sb.append(". ");
 

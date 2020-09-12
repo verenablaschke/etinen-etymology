@@ -3,7 +3,7 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.ArrayList;
 import java.util.List;
 
-import de.tuebingen.sfs.eie.core.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.talk.pred.EtinenTalkingPredicate;

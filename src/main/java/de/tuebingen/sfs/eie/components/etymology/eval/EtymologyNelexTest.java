@@ -20,9 +20,9 @@ import java.util.stream.Collectors;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
-import de.tuebingen.sfs.eie.core.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
+import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -336,24 +336,24 @@ public class EtymologyNelexTest {
 //			e.printStackTrace();
 //		}
 
-//		 test.runAndShow("MeerN");
+		 test.runAndShow("MeerN");
 
 		// test.run("HonigN", System.out, System.out, true);
 		
-		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
-		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
-		eig.setConcepts(Collections.singleton("MeerN"));
-		Set<String> languages = new HashSet<>();
-		languages.add("french");
-		languages.add("italian");
-		eig.setLanguages(languages.stream().collect(Collectors.toList()));
-		eig.generateAtoms();
-		InferenceResult result = problemManager.registerAndRunProblem(problem);
-		EtymologyRagFilter erf = (EtymologyRagFilter) result.getRag().getRagFilter();
-		if (result != null) {
-			StandaloneFactViewer.launchWithData(test.renderer, problem, result);
-		}
+//		ProblemManager problemManager = ProblemManager.defaultProblemManager();
+//		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
+//		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
+//		eig.setConcepts(Collections.singleton("MeerN"));
+//		Set<String> languages = new HashSet<>();
+//		languages.add("french");
+//		languages.add("italian");
+//		eig.setLanguages(languages.stream().collect(Collectors.toList()));
+//		eig.generateAtoms();
+//		InferenceResult result = problemManager.registerAndRunProblem(problem);
+//		EtymologyRagFilter erf = (EtymologyRagFilter) result.getRag().getRagFilter();
+//		if (result != null) {
+//			StandaloneFactViewer.launchWithData(test.renderer, problem, result);
+//		}
 	}
 
 	private enum LoanwordStatus {

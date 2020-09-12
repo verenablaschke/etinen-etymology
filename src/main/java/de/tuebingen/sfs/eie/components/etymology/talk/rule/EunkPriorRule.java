@@ -1,7 +1,9 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
+import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 
 public class EunkPriorRule extends EtinenTalkingLogicalRule {
 	
@@ -16,6 +18,18 @@ public class EunkPriorRule extends EtinenTalkingLogicalRule {
 	
 	public EunkPriorRule(PslProblem pslProblem, double weight) {
 		super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION);
+	}
+	
+	@Override
+	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
+			boolean whyExplanation) {
+		return VERBALIZATION;
+	}
+
+	@Override
+	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
+			RuleAtomGraph rag, boolean whyExplanation) {
+		return VERBALIZATION;
 	}
 
 }

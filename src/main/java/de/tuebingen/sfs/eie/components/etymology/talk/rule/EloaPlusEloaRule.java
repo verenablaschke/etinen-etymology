@@ -1,14 +1,15 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
+import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.talk.pred.EloaPred;
+import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingArithmeticRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
-import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EloaPlusEloaRule extends TalkingArithmeticRule {
+public class EloaPlusEloaRule extends EtinenTalkingArithmeticRule {
 
 	public static final String NAME = "EloaPlusEloa";
 	private static final String RULE = "Eloa(X, Y) + Eloa(Y, X) <= 1 .";
@@ -26,6 +27,12 @@ public class EloaPlusEloaRule extends TalkingArithmeticRule {
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
+		return generateExplanation(null, groundingName, contextAtom, rag, whyExplanation);
+	}
+
+	@Override
+	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
+			RuleAtomGraph rag, boolean whyExplanation) {
 		String competitorAtom = null;
 		String[] competitorArgs = null;
 		double competitorBelief = -1.0;
@@ -44,7 +51,7 @@ public class EloaPlusEloaRule extends TalkingArithmeticRule {
 		StringBuilder sb = new StringBuilder();
 		sb.append("The inverse loanword relationship (");
 		sb.append("\\url[");
-		sb.append(escapeForURL(new EloaPred().verbalizeIdeaAsNP(competitorArgs)));
+		sb.append(escapeForURL(new EloaPred().verbalizeIdeaAsNP(renderer, competitorArgs)));
 		sb.append("]{").append(competitorAtom).append("}");
 		sb.append(") ").append(BeliefScale.verbalizeBeliefAsPredicate(competitorBelief));
 		sb.append(".");

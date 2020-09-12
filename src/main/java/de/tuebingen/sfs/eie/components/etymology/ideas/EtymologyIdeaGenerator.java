@@ -352,8 +352,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					// available)
 					// TODO note that is treated like a proper form, not like a
 					// distribution over reconstructed ones
-					int formId = objectStore.createFormId("");
-					objectStore.addFormIdWithForm(formId, "");
+					int formId = objectStore.createFormId();
 					objectStore.addFormIdWithConcept(formId, concept);
 					objectStore.addFormIdWithLanguage(formId, lang);
 					cldfForms.add(formId);
@@ -433,12 +432,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		String ipa1 = "";
 		String ipa2 = "";
 		ipa1 = objectStore.getFormForFormId(entry1.formId);
-		if (ipa1.isEmpty()) {
+		if (ipa1 == null || ipa1.isEmpty()) {
 			return;
 		}
 
 		ipa2 = objectStore.getFormForFormId(entry2.formId);
-		if (ipa2.isEmpty()) {
+		if (ipa2 == null || ipa2.isEmpty()) {
 			return;
 		}
 
@@ -460,7 +459,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		pslProblem.addObservation("Flng", 1.0, formId + "", doculectId);
 		pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
 		String ipa = objectStore.getFormForFormId(cldfForm);
-		if (!ipa.isEmpty()) {
+		if (ipa != null && !ipa.isEmpty()) {
 			// TODO add XFufo also for imported Fufo atoms!!
 			pslProblem.addObservation(F_UFO_EX, 1.0, formId + "");
 			pslProblem.addObservation("Fufo", 1.0, formId + "", ipa);
