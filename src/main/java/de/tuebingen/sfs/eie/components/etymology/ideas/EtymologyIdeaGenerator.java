@@ -44,7 +44,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
 	private IndexedObjectStore objectStore;
-	private List<String> languages;
+	private List<String> modernLanguages;
+	private List<String> ancestors;
 	private int treeDepth;
 	private String treeFile;
 	private boolean branchwiseBorrowing;
@@ -113,10 +114,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 		if (languages == null) {
 			System.err.println(
-					"...No languages specified. Will only construct the phylogenetic tree once the languages are set via setLanguages().");
-			this.languages = new ArrayList<>();
+					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
+			this.modernLanguages = new ArrayList<>();
 		} else {
-			this.languages = languages;
+			this.modernLanguages = languages;
 			setTree();
 		}
 		entryPool = new HashSet<>();
@@ -154,7 +155,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		try {
 			JsonNode rootNode = mapper.readTree(in);
 			concepts = mapper.treeToValue(rootNode.path("concepts"), HashSet.class);
-			languages = mapper.treeToValue(rootNode.path("languages"), ArrayList.class);
+			languages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
 			treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
 			branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
 			treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
@@ -270,7 +271,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (String langID : objectStore.getLanguageIds()) {
 			ISO2LangID.put(objectStore.getIsoForLang(langID), langID);
 		}
-		eig.languages = languages.stream().map(lang -> ISO2LangID.getOrDefault(lang, lang))
+		eig.modernLanguages = languages.stream().map(lang -> ISO2LangID.getOrDefault(lang, lang))
 				.collect(Collectors.toList());
 
 		return eig;
@@ -328,13 +329,16 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// 1. Determine and retrieve/generate the relevant F-atoms.
 
 		// TODO
-		// For the given concept and languages, retrieve Fufo, Flng, Fsem, Hmem
+		// For the given concept and modernLanguages, retrieve Fufo, Flng, Fsem,
+		// Hmem
 		// Get the Hmem siblings for these atoms and retrieve their F-atoms
 		// (update `concepts`!)
 
-		// Retrieving languages from the tree to get proto languages as well.
+		// Retrieving modernLanguages from the tree to get proto modernLanguages
+		// as well.
 		for (String lang : tree.getAllLanguages()) {
-			// TODO check if this includes only the languages in `languages' +
+			// TODO check if this includes only the modernLanguages in
+			// `modernLanguages' +
 			// their ancestors (vbl)
 			// System.out.println(lang + " : " + ISO2LangID.getOrDefault(lang,
 			// lang));
@@ -361,7 +365,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			for (Integer cldfFormID : cldfForms) {
 				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
 					entryPool.add(new Entry(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
-					// TODO only add these for proto languages that don't
+					// TODO only add these for proto modernLanguages that don't
 					// have
 					// these yet, retrieve existing F-atoms from db and pass
 					// them on
@@ -466,14 +470,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	private String getPrintForm(int form, String lang) {
-		String ipa = objectStore.getFormForFormId(form);
-		if (ipa.isEmpty()) {
-			ipa = "N/A";
-		}
-		return lang + ":" + objectStore.getOrthoForForm(form) + ":" + ipa + ":" + objectStore.getConceptForForm(form);
-	}
-
 	private double logistic(double input) {
 		double growthRate = 8.0;
 		double midpoint = 0.42;
@@ -492,7 +488,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		try {
 			ObjectNode rootNode = mapper.createObjectNode();
 			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
-			rootNode.set("languages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(languages)));
+			rootNode.set("modernLanguages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(modernLanguages)));
 			rootNode.set("treeDepth", new IntNode(treeDepth));
 			rootNode.set("branchwiseBorrowing",
 					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
@@ -524,16 +520,27 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	// Costly because this involves renaming the leaf nodes in the tree.
 	public void setLanguages(List<String> languages) {
-		System.err.println("Adding languages to Etymology Idea Generator and updating the phylogenetic tree.");
-		this.languages = languages;
+		System.err.println("Adding modernLanguages to Etymology Idea Generator and updating the phylogenetic tree.");
+		this.modernLanguages = languages;
 		setTree();
 	}
 
 	private void setTree() {
 		tree = new LevelBasedPhylogeny(treeDepth, treeFile,
-				languages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
+				modernLanguages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
 		tree.renameChildren(objectStore.getIsoToLanguageIdMap());
-		// tree.getTree().saveLayeredTreeToFile(System.err);
+		ancestors = new ArrayList<>();
+		for (String language : tree.getAllLanguages()) {
+			if (modernLanguages.contains(language)) {
+				continue;
+			}
+			String languageId = language;
+			if (objectStore.getNameForLang(language) == null) {
+				languageId = objectStore.addNewLanguage(language);
+				tree.getTree().renameNode(language, languageId);
+			}
+			ancestors.add(languageId);
+		}
 	}
 
 	public LevelBasedPhylogeny getTree() {
@@ -542,7 +549,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public void addSiblingLanguages() {
 		Set<String> parents = new HashSet<>();
-		for (String lang : languages) {
+		for (String lang : modernLanguages) {
 			parents.add(tree.getParent(lang));
 		}
 		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(treeFile);
@@ -550,34 +557,51 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (String langId : objectStore.getLanguageIds()) {
 			targetLangs.add(langId);
 		}
-		targetLangs.removeAll(languages);
+		targetLangs.removeAll(modernLanguages);
+		targetLangs.removeAll(ancestors);
+		String anc;
 		for (String langId : targetLangs) {
-			for (String parent : parents) {
-				if (fullTree.getTree().pathToRoot(objectStore.getIsoForLang(langId)).contains(parent)) {
-					tree.getTree().children.get(parent).add(langId);
-					tree.getTree().parents.put(langId, parent);
-					tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
-					languages.add(langId);
-					System.err.println("Added " + langId + " to " + parent + ".");
+			String langIso = objectStore.getIsoForLang(langId);
+			for (String ancestor : fullTree.getTree().pathToRoot(langIso)) {
+				anc = objectStore.getNameForLang(ancestor);
+				if (anc != null) {
+					ancestor = anc;
+				}
+				for (String parent : parents) {
+					if (ancestor.equals(parent)) {
+						tree.getTree().children.get(parent).add(langId);
+						tree.getTree().parents.put(langId, parent);
+						tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
+						modernLanguages.add(langId);
+						break;
+					}
 				}
 			}
 		}
+
 	}
 
 	public Set<String> removeIsolates() {
 		Set<String> toBeRemoved = new HashSet<>();
-		for (String lang : languages) {
+		for (String lang : modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
-			while ((tree.getTree().children.get(parent)).size() == 1) {
-				tree.getTree().children.remove(parent);
+			// no siblings ...or...
+			while (tree.getTree().children.get(parent).size() == 1
+					// ...no children (as intermediary node)
+					|| (tree.getLevel(lang) < treeDepth && (tree.getTree().children.get(lang) == null
+							|| tree.getTree().children.get(lang).isEmpty()))) {
+				tree.getTree().children.get(parent).remove(lang);
 				tree.getTree().parents.remove(lang);
 				toBeRemoved.add(lang);
 				System.err.println("Removed " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
+				if (lang.equals(tree.getTree().root)) {
+					break;
+				}
 			}
 		}
-		languages.removeAll(toBeRemoved);
+		modernLanguages.removeAll(toBeRemoved);
 		return toBeRemoved;
 	}
 

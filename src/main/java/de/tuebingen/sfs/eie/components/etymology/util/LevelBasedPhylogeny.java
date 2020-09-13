@@ -17,7 +17,6 @@ public class LevelBasedPhylogeny {
 
 	private LanguageTree tree;
 	private int numAncestors;
-	private List<String> languages;
 
 	public LevelBasedPhylogeny(int numAncestors, LanguageTree tree) {
 		this.tree = tree;
@@ -34,19 +33,10 @@ public class LevelBasedPhylogeny {
 			e.printStackTrace();
 		}
 		this.numAncestors = -1;
-		this.languages = null;
 	}
 
 	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, List<String> languages) {
-		try {
-			tree = LanguageTree.fromNewickFile(pathToNwkFile);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-		tree.reduceToLangs(languages.toArray(new String[0]));
-		this.numAncestors = numAncestors;
-		this.languages = languages;
-		init();
+		this(numAncestors, pathToNwkFile, languages.toArray(new String[0]));
 	}
 
 	public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, String[] languages) {
@@ -57,7 +47,6 @@ public class LevelBasedPhylogeny {
 		}
 		tree.reduceToLangs(languages);
 		this.numAncestors = numAncestors;
-		this.languages = new ArrayList<>(Arrays.asList(languages));
 		init();
 	}
 
@@ -78,7 +67,8 @@ public class LevelBasedPhylogeny {
 	// Level 0 = ROOT
 	// Level numAncestors = leaves (modern languages)
 	public int getLevel(String language) {
-		return (tree.pathToRoot(language)).size();
+		return tree.nodeToLayerPlacement.get(language);
+//		return (tree.pathToRoot(language)).size();
 	}
 
 	public List<String> getAncestors(String language) {
@@ -105,10 +95,6 @@ public class LevelBasedPhylogeny {
 			}
 		}
 		return -1;
-	}
-
-	public List<String> getModernLanguages() {
-		return languages;
 	}
 
 	public List<String> getAllLanguages() {
