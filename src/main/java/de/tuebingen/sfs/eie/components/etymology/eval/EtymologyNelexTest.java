@@ -51,7 +51,7 @@ public class EtymologyNelexTest {
 	public EtymologyNelexTest() {
 		ios = new IndexedObjectStore(
 				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
-		renderer = new EtinenConstantRenderer(ios);
+		renderer = EtinenConstantRenderer.newRenderer(ios, "", null);
 		isoToLanguageId = ios.getIsoToLanguageIdMap();
 		setUp();
 	}
