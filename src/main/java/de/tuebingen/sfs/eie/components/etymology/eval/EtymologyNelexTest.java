@@ -17,8 +17,11 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyConfig;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
@@ -51,7 +54,8 @@ public class EtymologyNelexTest {
 	public EtymologyNelexTest() {
 		ios = new IndexedObjectStore(
 				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
-		renderer = new EtinenConstantRenderer(ios);
+		renderer = EtinenConstantRenderer.newRenderer(ios, "src/test/resources/serialization/constant-renderer.json",
+				null);
 		isoToLanguageId = ios.getIsoToLanguageIdMap();
 		setUp();
 	}
@@ -130,7 +134,8 @@ public class EtymologyNelexTest {
 	private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare,
 			boolean compareInherited) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
+		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem", EtymologyConfig.fromJson(
+				new ObjectMapper(), "etinen-etymology/src/test/resources/serialization/config-branchlvl.json"));
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
 		eig.setConcepts(Collections.singleton(concept));
 		Set<String> languages = new HashSet<>();
@@ -226,9 +231,6 @@ public class EtymologyNelexTest {
 						if (branchwise) {
 							// Get ancestor of donor.
 							donorLanguage = eig.getTree().getTree().parents.get(donorLanguage);
-							// TODO how to properly check for the correct form
-							// when branchwise=true and the donor's ancestor has
-							// multiple forms for the concept?? (vbl)
 							if (ios.getLangForForm(otherFormId).equals(donorLanguage)) {
 								atomMatches++;
 							}
@@ -291,7 +293,7 @@ public class EtymologyNelexTest {
 	public void runAndShow(String concept) {
 		InferenceResult result = run(concept, System.out, System.out, false, false);
 		if (result != null) {
-			StandaloneFactViewer.launchWithData(renderer, problem, result);
+			StandaloneFactViewer.launchWithData(renderer, problem, result, true, false, true);
 		}
 	}
 
@@ -328,37 +330,44 @@ public class EtymologyNelexTest {
 
 		// test.checkInventory();
 
-//		try {
-//			PrintStream out = new PrintStream("src/test/resources/etymology/nelex-output.tsv");
-//			PrintStream verboseOut = new PrintStream("src/test/resources/etymology/nelex-output.log");
-//			test.runAll(20, verboseOut, out);
-//		} catch (FileNotFoundException e) {
-//			e.printStackTrace();
-//		}
+		// try {
+		// PrintStream out = new
+		// PrintStream("src/test/resources/etymology/nelex-output.tsv");
+		// PrintStream verboseOut = new
+		// PrintStream("src/test/resources/etymology/nelex-output.log");
+		// test.runAll(20, verboseOut, out);
+		// } catch (FileNotFoundException e) {
+		// e.printStackTrace();
+		// }
 
-		 test.runAndShow("MeerN");
+		test.runAndShow("SpracheN");
 
 		// test.run("HonigN", System.out, System.out, true);
-		
-//		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-//		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem");
-//		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
-//		eig.setConcepts(Collections.singleton("MeerN"));
-//		Set<String> languages = new HashSet<>();
-//		languages.add("french");
-//		languages.add("italian");
-//		eig.setLanguages(languages.stream().collect(Collectors.toList()));
-//		eig.generateAtoms();
-//		InferenceResult result = problemManager.registerAndRunProblem(problem);
-//		EtymologyRagFilter erf = (EtymologyRagFilter) result.getRag().getRagFilter();
-//		if (result != null) {
-//			StandaloneFactViewer.launchWithData(test.renderer, problem, result);
-//		}
+
+		// ProblemManager problemManager =
+		// ProblemManager.defaultProblemManager();
+		// EtymologyProblem problem = new
+		// EtymologyProblem(problemManager.getDbManager(),
+		// "EtymologyNelexProblem");
+		// EtymologyIdeaGenerator eig =
+		// EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
+		// eig.setConcepts(Collections.singleton("MeerN"));
+		// Set<String> languages = new HashSet<>();
+		// languages.add("french");
+		// languages.add("italian");
+		// eig.setLanguages(languages.stream().collect(Collectors.toList()));
+		// eig.generateAtoms();
+		// InferenceResult result =
+		// problemManager.registerAndRunProblem(problem);
+		// EtymologyRagFilter erf = (EtymologyRagFilter)
+		// result.getRag().getRagFilter();
+		// if (result != null) {
+		// StandaloneFactViewer.launchWithData(test.renderer, problem, result);
+		// }
 	}
 
 	private enum LoanwordStatus {
 		INHERITED, LOANED, LOANED_ACROSS_CONCEPT_OR_OUTSIDE_NELEX
-		// TODO!! cover the last one
 	}
 
 	private class Etymology {

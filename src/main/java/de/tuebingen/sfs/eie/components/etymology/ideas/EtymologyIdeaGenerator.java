@@ -337,25 +337,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// Retrieving modernLanguages from the tree to get proto modernLanguages
 		// as well.
 		for (String lang : tree.getAllLanguages()) {
-			// TODO check if this includes only the modernLanguages in
-			// `modernLanguages' +
-			// their ancestors (vbl)
-			// System.out.println(lang + " : " + ISO2LangID.getOrDefault(lang,
-			// lang));
-			// ISO2LangID is useful for the NELex test, but *might* be
-			// unnecessary otherwise.
-			// Set<Integer> cldfForms =
-			// objectStore.getFormsForLanguage(ISO2LangID.getOrDefault(lang,
-			// lang));
 			Set<Integer> cldfForms = objectStore.getFormsForLanguage(lang);
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
 				cldfForms = new HashSet<>();
 				for (String concept : concepts) {
 					// TODO get the most likely reconstructed form instead (if
-					// available)
-					// TODO note that is treated like a proper form, not like a
-					// distribution over reconstructed ones
+					// available) (vbl)
 					int formId = objectStore.createFormId();
 					objectStore.addFormIdWithConcept(formId, concept);
 					objectStore.addFormIdWithLanguage(formId, lang);
@@ -451,9 +439,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		form1 = phonSimHelper.extractSegments(entry1.formId);
 		form2 = phonSimHelper.extractSegments(entry2.formId);
 		sim = phonSimHelper.similarity(form1, form2);
-		// pslProblem.addObservation("Fsimorig", sim, ipa1, ipa2);
 		sim = logistic(sim);
-		pslProblem.addObservation("Fsim", sim, ipa1, ipa2);
+		pslProblem.addObservation("Fsim", sim, entry1.formIdAsString, entry2.formIdAsString);
 		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/"
 				+ form2 + ") " + sim);
 
@@ -466,7 +453,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (ipa != null && !ipa.isEmpty()) {
 			// TODO add XFufo also for imported Fufo atoms!!
 			pslProblem.addObservation(F_UFO_EX, 1.0, formId + "");
-			pslProblem.addObservation("Fufo", 1.0, formId + "", ipa);
+			pslProblem.addObservation("Fufo", 1.0, formId + "", formId + "");
 		}
 	}
 

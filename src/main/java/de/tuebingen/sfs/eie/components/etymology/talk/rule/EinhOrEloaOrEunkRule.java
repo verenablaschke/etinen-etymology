@@ -1,6 +1,8 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
@@ -36,15 +38,11 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 		return generateExplanation(null, groundingName, contextAtom, rag, whyExplanation);
 	}
 
-	// TODO remove last comma, sort competitors by belief value (vbl)
 	@Override
 	public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
 			RuleAtomGraph rag, boolean whyExplanation) {
 		double threshold = 0.1;
-		List<String> competitorAtoms = new ArrayList<>();
-		List<String> competitorPreds = new ArrayList<>();
-		List<String[]> competitorArgs = new ArrayList<>();
-		List<Double> competitorBeliefs = new ArrayList<>();
+		List<Result> competitors = new ArrayList<>();
 
 		for (Tuple atomToStatus : rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName)) {
 			String atom = atomToStatus.get(0);
@@ -55,46 +53,45 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 			if (belief < threshold) {
 				continue;
 			}
-			competitorAtoms.add(atom);
 			String[] predDetails = StringUtils.split(atom, '(');
-			competitorPreds.add(predDetails[0]);
-			competitorArgs.add(StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", "));
-			competitorBeliefs.add(belief);
+			competitors.add(new Result(atom, predDetails[0],
+					StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", "), belief));
 		}
 
 		StringBuilder sb = new StringBuilder();
 		sb.append(
 				"A word's origin can be explained as inheritance or borrowing (several sources may seem plausible), or it is unknown.");
 
-		if (competitorPreds.size() == 0) {
+		if (competitors.size() == 0) {
 			sb.append(" In this case, there are no likely competing explanations.");
 			return sb.toString();
 		}
-		if (competitorPreds.size() == 1) {
+		if (competitors.size() == 1) {
 			sb.append(" An alternative explanation is that ");
 			sb.append("\\url[");
-			sb.append(escapeForURL(
-					stringToPred(competitorPreds.get(0)).verbalizeIdeaAsSentence(renderer, competitorArgs.get(0))));
-			sb.append("]{").append(competitorAtoms.get(0)).append("}");
-			sb.append(", which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitorBeliefs.get(0)));
+			Result competitor = competitors.get(0);
+			sb.append(escapeForURL(stringToPred(competitor.pred).verbalizeIdeaAsSentence(renderer, competitor.args)));
+			sb.append("]{").append(competitor.atom).append("}");
+			sb.append(", which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitor.belief));
 			sb.append(".");
 			return sb.toString();
 		}
+		Collections.sort(competitors, new Comparator<Result>() {
+			@Override
+			public int compare(Result o1, Result o2) {
+				return -o1.belief.compareTo(o2.belief);
+			}
+		});
 		sb.append(" Other explanations are ");
-		for (int i = 0; i < competitorPreds.size(); i++) {
+		for (Result competitor : competitors) {
 			sb.append("that ");
 			sb.append("\\url[");
-			sb.append(escapeForURL(
-					stringToPred(competitorPreds.get(i)).verbalizeIdeaAsSentence(renderer, competitorArgs.get(i))));
-			sb.append("]{").append(competitorAtoms.get(i)).append("}");
-			sb.append(" (which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitorBeliefs.get(i)));
-			sb.append(")");
-			if (i < competitorPreds.size() - 1) {
-				sb.append(", or ");
-			} else {
-				sb.append(", ");
-			}
+			sb.append(escapeForURL(stringToPred(competitor.pred).verbalizeIdeaAsSentence(renderer, competitor.args)));
+			sb.append("]{").append(competitor.atom).append("}");
+			sb.append(" (which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitor.belief));
+			sb.append("), or ");
 		}
+		sb.delete(sb.length() - 5, sb.length());
 		sb.append(".");
 		return sb.toString();
 	}
@@ -109,6 +106,20 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 			return new EunkPred();
 		}
 		return null;
+	}
+
+	private class Result {
+		String atom;
+		String pred;
+		String args[];
+		Double belief;
+
+		Result(String atom, String pred, String[] args, double belief) {
+			this.atom = atom;
+			this.pred = pred;
+			this.args = args;
+			this.belief = belief;
+		}
 	}
 
 }
