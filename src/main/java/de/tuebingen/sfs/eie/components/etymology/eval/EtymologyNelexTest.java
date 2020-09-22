@@ -293,7 +293,7 @@ public class EtymologyNelexTest {
 	public void runAndShow(String concept) {
 		InferenceResult result = run(concept, System.out, System.out, false, false);
 		if (result != null) {
-			StandaloneFactViewer.launchWithData(renderer, problem, result, true, false, true);
+			StandaloneFactViewer.launchWithData(renderer, problem, result, true, true);
 		}
 	}
 
@@ -344,26 +344,24 @@ public class EtymologyNelexTest {
 
 		// test.run("HonigN", System.out, System.out, true);
 
-		// ProblemManager problemManager =
-		// ProblemManager.defaultProblemManager();
-		// EtymologyProblem problem = new
-		// EtymologyProblem(problemManager.getDbManager(),
-		// "EtymologyNelexProblem");
-		// EtymologyIdeaGenerator eig =
-		// EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
-		// eig.setConcepts(Collections.singleton("MeerN"));
-		// Set<String> languages = new HashSet<>();
-		// languages.add("french");
-		// languages.add("italian");
-		// eig.setLanguages(languages.stream().collect(Collectors.toList()));
-		// eig.generateAtoms();
-		// InferenceResult result =
-		// problemManager.registerAndRunProblem(problem);
-		// EtymologyRagFilter erf = (EtymologyRagFilter)
-		// result.getRag().getRagFilter();
-		// if (result != null) {
-		// StandaloneFactViewer.launchWithData(test.renderer, problem, result);
-		// }
+//		 ProblemManager problemManager =
+//		 ProblemManager.defaultProblemManager();
+//		 EtymologyProblem problem = new
+//		 EtymologyProblem(problemManager.getDbManager(),
+//		 "EtymologyNelexProblem");
+//		 EtymologyIdeaGenerator eig =
+//		 EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
+//		 eig.setConcepts(Collections.singleton("MeerN"));
+//		 Set<String> languages = new HashSet<>();
+//		 languages.add("french");
+//		 languages.add("italian");
+//		 eig.setLanguages(languages.stream().collect(Collectors.toList()));
+//		 eig.generateAtoms();
+//		 InferenceResult result =
+//		 problemManager.registerAndRunProblem(problem);
+//		 if (result != null) {
+//		 StandaloneFactViewer.launchWithData(test.renderer, problem, result);
+//		 }
 	}
 
 	private enum LoanwordStatus {
