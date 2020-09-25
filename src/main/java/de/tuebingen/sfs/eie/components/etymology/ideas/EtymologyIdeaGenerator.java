@@ -38,7 +38,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private static final String NETWORK_IDS_FILE = "src/test/resources/etymology/clics2-network-ids.txt";
 	private static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
 
-	private Set<String> concepts;
+	private List<String> concepts;
 	private SemanticNetwork semanticNet;
 	private PhoneticSimilarityHelper phonSimHelper;
 	private LevelBasedPhylogeny tree;
@@ -54,7 +54,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
 
-	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore, Set<String> concepts,
+	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore, List<String> concepts,
 			List<String> languages, String treeFile, SemanticNetwork semanticNet,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, int treeDepth,
 			boolean branchwiseBorrowing) {
@@ -67,7 +67,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		System.err.println("Creating EtymologyIdeaGenerator.");
 		if (concepts == null) {
 			System.err.println("...No concepts specified.");
-			this.concepts = new HashSet<>();
+			this.concepts = new ArrayList<>();
 		} else {
 			this.concepts = concepts;
 		}
@@ -144,7 +144,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	@SuppressWarnings("unchecked")
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
 			ObjectMapper mapper, InputStream in) {
-		Set<String> concepts = null;
+		List<String> concepts = null;
 		List<String> languages = null;
 		Integer treeDepth = null;
 		Boolean branchwiseBorrowing = null;
@@ -154,7 +154,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		String correspondenceDbDir = null;
 		try {
 			JsonNode rootNode = mapper.readTree(in);
-			concepts = mapper.treeToValue(rootNode.path("concepts"), HashSet.class);
+			concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
 			languages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
 			treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
 			branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
@@ -190,7 +190,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
 			boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		Set<String> concepts = new HashSet<>();
+		List<String> concepts = new ArrayList<>();
 		concepts.add("BergN");
 		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
@@ -202,7 +202,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
 			boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		Set<String> concepts = new HashSet<>();
+		List<String> concepts = new ArrayList<>();
 		concepts.add("KopfN");
 		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
@@ -214,7 +214,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
 			boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		Set<String> concepts = new HashSet<>();
+		List<String> concepts = new ArrayList<>();
 		concepts.add("SpracheN");
 		if (largeConceptSet) {
 			concepts.add("ZungeN");
@@ -222,7 +222,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
-	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, Set<String> concepts,
+	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, List<String> concepts,
 			boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> languages = new ArrayList<>();
 		languages.add("eng");
@@ -310,7 +310,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			languages.add("d4");
 		}
 
-		Set<String> concepts = new HashSet<>();
+		List<String> concepts = new ArrayList<>();
 		concepts.add("SpracheN");
 
 		InferenceLogger logger = new InferenceLogger();
@@ -501,7 +501,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	public void setConcepts(Set<String> concepts) {
+	public void setConcepts(List<String> concepts) {
 		this.concepts = concepts;
 	}
 

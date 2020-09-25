@@ -2,12 +2,11 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintStream;
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -137,7 +136,9 @@ public class EtymologyNelexTest {
 		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem", EtymologyConfig.fromJson(
 				new ObjectMapper(), "etinen-etymology/src/test/resources/serialization/config-branchlvl.json"));
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
-		eig.setConcepts(Collections.singleton(concept));
+		List<String> concepts = new ArrayList<>();
+		concepts.add(concept);
+		eig.setConcepts(concepts);
 		Set<String> languages = new HashSet<>();
 		for (String language : conceptToLanguageToEtymology.get(concept).keySet()) {
 			languages.add(language);
