@@ -1,4 +1,4 @@
-package de.tuebingen.sfs.eie.components.etymology.util;
+ package de.tuebingen.sfs.eie.components.etymology.util;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;

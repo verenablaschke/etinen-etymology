@@ -22,6 +22,7 @@ public class EtymologyRagFilter extends RagFilter {
 	public EtymologyRagFilter(Map<String, Double> transparencyMap) {
 		super(transparencyMap);
 		initializeIgnoreInGui();
+		initializePreventUserInteraction();
 	}
 
 	private void initializeIgnoreInGui() {
@@ -45,6 +46,23 @@ public class EtymologyRagFilter extends RagFilter {
 		ignoreInGui.add("TCNT");
 		ignoreInGui.add("#EQUAL");
 		ignoreInGui.add("#NOTEQUAL");
+	}
+	
+	private void initializePreventUserInteraction() {
+		preventUserInteraction.add("Flng");
+		preventUserInteraction.add("Fsem");
+		preventUserInteraction.add("Fufo");
+		preventUserInteraction.add("XFufo");
+		preventUserInteraction.add("Tanc");
+		preventUserInteraction.add("#equal");
+		preventUserInteraction.add("#notequal");
+		preventUserInteraction.add("FLNG");
+		preventUserInteraction.add("FSEM");
+		preventUserInteraction.add("FUFO");
+		preventUserInteraction.add("XFUFO");
+		preventUserInteraction.add("TANC");
+		preventUserInteraction.add("#EQUAL");
+		preventUserInteraction.add("#NOTEQUAL");
 	}
 
 	@Override
