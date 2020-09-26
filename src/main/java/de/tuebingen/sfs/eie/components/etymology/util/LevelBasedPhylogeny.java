@@ -54,16 +54,6 @@ public class LevelBasedPhylogeny {
 		return tree;
 	}
 
-	public void renameChildren(Map<String, String> names) {
-		List<String> leaves = new ArrayList<>();
-		tree.collectLeaves(tree.root, leaves);
-		for (String leaf : leaves) {
-			if (names.containsKey(leaf)) {
-				tree.renameNode(leaf, names.get(leaf));
-			}
-		}
-	}
-
 	// Level 0 = ROOT
 	// Level numAncestors = leaves (modern languages)
 	public int getLevel(String language) {

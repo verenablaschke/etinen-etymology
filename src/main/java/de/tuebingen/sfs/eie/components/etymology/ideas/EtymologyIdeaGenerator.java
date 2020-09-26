@@ -266,14 +266,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, objectStore, concepts, languages,
 				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
-
-		Map<String, String> ISO2LangID = new HashMap<>();
-		for (String langID : objectStore.getLanguageIds()) {
-			ISO2LangID.put(objectStore.getIsoForLang(langID), langID);
-		}
-		eig.modernLanguages = languages.stream().map(lang -> ISO2LangID.getOrDefault(lang, lang))
-				.collect(Collectors.toList());
-
 		return eig;
 	}
 
@@ -513,9 +505,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	private void setTree() {
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile,
-				modernLanguages.stream().map(x -> objectStore.getIsoForLang(x)).collect(Collectors.toList()));
-		tree.renameChildren(objectStore.getIsoToLanguageIdMap());
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile, modernLanguages);
 		ancestors = new ArrayList<>();
 		for (String language : tree.getAllLanguages()) {
 			if (modernLanguages.contains(language)) {
@@ -524,7 +514,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			String languageId = language;
 			if (objectStore.getNameForLang(language) == null) {
 				languageId = objectStore.addNewLanguage(language);
-				tree.getTree().renameNode(language, languageId);
+				if (!languageId.equals(language))
+					tree.getTree().renameNode(language, languageId);
 			}
 			ancestors.add(languageId);
 		}
@@ -548,8 +539,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		targetLangs.removeAll(ancestors);
 		String anc;
 		for (String langId : targetLangs) {
-			String langIso = objectStore.getIsoForLang(langId);
-			for (String ancestor : fullTree.getTree().pathToRoot(langIso)) {
+			for (String ancestor : fullTree.getTree().pathToRoot(langId)) {
 				anc = objectStore.getNameForLang(ancestor);
 				if (anc != null) {
 					ancestor = anc;
