@@ -560,6 +560,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public Set<String> removeIsolates() {
 		Set<String> toBeRemoved = new HashSet<>();
+		tree.getTree().saveLayeredTreeToFile(System.err);
 		for (String lang : modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
 			// no siblings ...or...
@@ -573,7 +574,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				System.err.println("Removed " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
-				if (lang.equals(tree.getTree().root)) {
+				if (parent == null || lang.equals(tree.getTree().root)) {
 					break;
 				}
 			}
