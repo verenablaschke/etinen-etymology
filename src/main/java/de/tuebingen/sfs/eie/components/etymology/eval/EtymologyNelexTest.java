@@ -44,6 +44,7 @@ public class EtymologyNelexTest {
 	private Multimap<String, String> unknownConceptToLanguages;
 
 	private EtymologyProblem problem;
+	private InferenceLogger logger;
 
 	private boolean branchwise = true;
 
@@ -51,8 +52,9 @@ public class EtymologyNelexTest {
 	private static String parameterFile = "src/test/resources/northeuralex-0.9/parameters.csv";
 
 	public EtymologyNelexTest() {
+		logger = new InferenceLogger();
 		ios = new IndexedObjectStore(
-				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", new InferenceLogger()), null);
+				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", logger), null);
 		renderer = EtinenConstantRenderer.newRenderer(ios, "src/test/resources/serialization/constant-renderer.json",
 				null);
 		isoToLanguageId = ios.getIsoToLanguageIdMap();
@@ -135,7 +137,7 @@ public class EtymologyNelexTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem", EtymologyConfig.fromJson(
 				new ObjectMapper(), "etinen-etymology/src/test/resources/serialization/config-branchlvl.json"));
-		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
+		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios, logger);
 		List<String> concepts = new ArrayList<>();
 		concepts.add(concept);
 		eig.setConcepts(concepts);

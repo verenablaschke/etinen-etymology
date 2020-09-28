@@ -52,12 +52,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private Set<Entry> entryPool;
 
+	private InferenceLogger logger;
+
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore, List<String> concepts,
 			List<String> languages, String treeFile, SemanticNetwork semanticNet,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, int treeDepth,
-			boolean branchwiseBorrowing) {
+			boolean branchwiseBorrowing, InferenceLogger logger) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
@@ -77,7 +79,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		} else {
 			this.semanticNet = semanticNet;
 		}
-		InferenceLogger logger = new InferenceLogger();
+		if (logger == null)
+			this.logger = new InferenceLogger();
+		else
+			this.logger = logger;
 		if (wordListDb == null) {
 			System.err.println("...No CLDF Wordlist Database given, loading default version.");
 			this.wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
@@ -125,8 +130,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		System.err.println("Finished setting up the Etymology Idea Generator.");
 	}
 
-	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null, null, null, -1, true);
+	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
+			InferenceLogger logger) {
+		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null, null, null, -1, true, logger);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
@@ -180,7 +186,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger), objectStore);
 
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, treeFile, semanticNet,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
+				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
@@ -265,7 +271,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 4;
 
 		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, objectStore, concepts, languages,
-				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
+				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
 		return eig;
 	}
 
@@ -314,7 +320,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 2;
 
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, TEST_DB_DIR + "/tree.nwk", net,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing);
+				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
 	}
 
 	public void generateAtoms() {
@@ -526,6 +532,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public void addSiblingLanguages() {
+		logger.displayln("Adding sibling languages to the language set.");
 		Set<String> parents = new HashSet<>();
 		for (String lang : modernLanguages) {
 			parents.add(tree.getParent(lang));
@@ -538,6 +545,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		targetLangs.removeAll(modernLanguages);
 		targetLangs.removeAll(ancestors);
 		String anc;
+		boolean addedAny = false;
 		for (String langId : targetLangs) {
 			for (String ancestor : fullTree.getTree().pathToRoot(langId)) {
 				anc = objectStore.getNameForLang(ancestor);
@@ -550,17 +558,30 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						tree.getTree().parents.put(langId, parent);
 						tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
 						modernLanguages.add(langId);
+						addedAny = true;
+						logger.displayln("- Added " + langId + ".");
 						break;
 					}
 				}
 			}
 		}
-
+		if (addedAny)
+			logger.displayln("New language set: " + modernLanguages);
+		else
+			logger.displayln("No sibling languages found.");
 	}
 
 	public Set<String> removeIsolates() {
+		logger.displayln("Removing isolates from the language set.");
+		// TODO check again (vbl). might be a bit overzealous and remove more nodes than
+		// intended.
+		// the parent==null check shouldn't be necessary
+		// since the children map gets updated each loop, it might be necessary to
+		// impose size==1
+		// in the while loop only for the leaf nodes, and size==0 afterwards
 		Set<String> toBeRemoved = new HashSet<>();
 		tree.getTree().saveLayeredTreeToFile(System.err);
+		boolean removedAny = false;
 		for (String lang : modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
 			// no siblings ...or...
@@ -568,10 +589,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					// ...no children (as intermediary node)
 					|| (tree.getLevel(lang) < treeDepth && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
+				removedAny = true;
 				tree.getTree().children.get(parent).remove(lang);
 				tree.getTree().parents.remove(lang);
 				toBeRemoved.add(lang);
 				System.err.println("Removed " + lang + ".");
+				logger.displayln("- Removed " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
 				if (parent == null || lang.equals(tree.getTree().root)) {
@@ -580,6 +603,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 		modernLanguages.removeAll(toBeRemoved);
+		if (removedAny)
+			logger.displayln("Remaining languages: " + modernLanguages);
+		else
+			logger.displayln("No isolates found.");
 		return toBeRemoved;
 	}
 
