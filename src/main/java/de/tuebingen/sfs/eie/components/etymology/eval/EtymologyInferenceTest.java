@@ -24,7 +24,7 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.io.RuleAtomGraphIo;
+import de.tuebingen.sfs.psl.io.InferenceResultIo;
 import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
@@ -90,13 +90,13 @@ public class EtymologyInferenceTest {
 		RuleAtomGraph rag = result.getRag();
 		if (showAllEloa) {
 			List<RankingEntry<AtomTemplate>> eloaResults = problemManager.getDbManager().getAtoms("Eloa",
-					 new AtomTemplate("Eloa", ANY_CONST, ANY_CONST));
+					new AtomTemplate("Eloa", ANY_CONST, ANY_CONST));
 			Collections.sort(eloaResults, Collections.reverseOrder());
 			for (RankingEntry<AtomTemplate> eloaResult : eloaResults) {
 				System.out.println(eloaResult);
 			}
 		}
-		
+
 		return (EtymologyRagFilter) rag.getRagFilter();
 	}
 
@@ -138,7 +138,7 @@ public class EtymologyInferenceTest {
 		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
-		RuleAtomGraphIo.saveToFile(rag, problem, mapper);
+		InferenceResultIo.saveToFile(result, problem, mapper);
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 	}
 
@@ -153,12 +153,15 @@ public class EtymologyInferenceTest {
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		System.out.println("(New) RAG from imported config and idea generator:");
 		RuleAtomGraph rag = result.getRag();
-		RuleAtomGraphIo.saveToFile(rag, problem, mapper);
+		InferenceResultIo.saveToFile(result, problem, mapper);
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 		System.out.println("Deserialized version of the same RAG:");
 		Map<String, TalkingPredicate> talkingPreds = new TreeMap<>();
 		Map<String, TalkingRule> talkingRules = new TreeMap<>();
-		rag = RuleAtomGraphIo.ragFromFile(mapper, talkingPreds, talkingRules);
+		result = InferenceResultIo.fromFile(mapper, talkingPreds, talkingRules);
+		rag = result.getRag();
+		System.out.println(rag.getAtomNodes());
+		System.out.println(result.getInferenceValues());
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 		System.out.println("Talking predicates: " + talkingPreds);
 		System.out.println("Talking rules: " + talkingRules);
@@ -195,8 +198,8 @@ public class EtymologyInferenceTest {
 			config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
 		}
 
-		// serialize(mapper, config);
-		// deserialize(mapper);
+//		 serialize(mapper, config);
+//		 deserialize(mapper);
 
 		if (fictionalData) {
 			System.out.println("\nTEST 1");

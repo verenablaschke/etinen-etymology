@@ -6,8 +6,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -59,7 +63,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore, List<String> concepts,
 			List<String> languages, String treeFile, SemanticNetwork semanticNet,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, int treeDepth,
-			boolean branchwiseBorrowing, InferenceLogger logger) {
+			boolean branchwiseBorrowing, InferenceLogger logger, String correspondenceDbDir) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
@@ -95,11 +99,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		} else {
 			this.objectStore = objectStore;
 		}
+		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty())
+			correspondenceDbDir = DB_DIR;
 		if (phonSimHelper == null) {
 			System.err.println("...No Phonetic Similarity Helper given, using default version.");
 			IPATokenizer tokenizer = new IPATokenizer();
 			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), this.objectStore);
+					LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, this.logger), this.objectStore);
 		} else {
 			this.phonSimHelper = phonSimHelper;
 		}
@@ -132,7 +138,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
 			InferenceLogger logger) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null, null, null, -1, true, logger);
+		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null, null, null, -1, true, logger,
+				null);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
@@ -182,11 +189,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = new InferenceLogger();
 		IPATokenizer tokenizer = new IPATokenizer();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(wordListDbDir, logger);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger), objectStore);
+		PhoneticSimilarityHelper phonSimHelper = null;
+		if (objectStore != null && correspondenceDbDir != null && !correspondenceDbDir.isEmpty())
+			phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
+					LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger), objectStore);
 
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, treeFile, semanticNet,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
+				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, correspondenceDbDir);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
@@ -271,7 +280,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 4;
 
 		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, objectStore, concepts, languages,
-				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
+				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, null);
 		return eig;
 	}
 
@@ -320,7 +329,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 2;
 
 		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, TEST_DB_DIR + "/tree.nwk", net,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null);
+				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, null);
 	}
 
 	public void generateAtoms() {
