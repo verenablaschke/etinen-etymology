@@ -19,7 +19,7 @@ public class DirectEetyToFsimRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "A word should be phonetically similar to its source form.";
 
 	// For serialization.
-	public DirectEetyToFsimRule() {
+	public DirectEetyToFsimRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 

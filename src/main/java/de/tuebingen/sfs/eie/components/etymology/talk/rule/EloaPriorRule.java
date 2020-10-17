@@ -12,7 +12,7 @@ public class EloaPriorRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "By default, we do not assume that a word is a loanword.";
 
 	// For serialization.
-	public EloaPriorRule(){
+	public EloaPriorRule(String serializedParameters){
 		super(NAME, RULE, VERBALIZATION);
 	}
 	

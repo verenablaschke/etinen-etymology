@@ -21,7 +21,7 @@ public class EetyToSsimRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "Words derived from the same source should be semantically similar.";
 
 	// For serialization.
-	public EetyToSsimRule() {
+	public EetyToSsimRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 

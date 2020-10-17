@@ -16,7 +16,7 @@ public class TancToEinhRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "A word can be inherited from its direct ancestor language";
 
 	// For serialization.
-	public TancToEinhRule() {
+	public TancToEinhRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 

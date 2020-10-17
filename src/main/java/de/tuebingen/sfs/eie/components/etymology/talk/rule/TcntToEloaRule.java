@@ -16,7 +16,7 @@ public class TcntToEloaRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "A word can be loaned from a contact language";
 
 	// For serialization.
-	public TcntToEloaRule() {
+	public TcntToEloaRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 

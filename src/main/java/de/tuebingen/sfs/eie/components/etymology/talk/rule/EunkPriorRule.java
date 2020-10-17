@@ -12,7 +12,7 @@ public class EunkPriorRule extends EtinenTalkingLogicalRule {
 	public static final String VERBALIZATION = "By default, we do not assume that words are of unknown origin.";
 
 	// For serialization.
-	public EunkPriorRule(){
+	public EunkPriorRule(String serializedParameters){
 		super(NAME, RULE, VERBALIZATION);
 	}
 	

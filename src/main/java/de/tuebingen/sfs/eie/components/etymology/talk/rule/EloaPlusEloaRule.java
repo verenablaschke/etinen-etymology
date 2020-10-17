@@ -16,7 +16,7 @@ public class EloaPlusEloaRule extends EtinenTalkingArithmeticRule {
 	private static final String VERBALIZATION = "Borrowing cannot happen in a circular fashion.";
 
 	// For serialization.
-	public EloaPlusEloaRule(){
+	public EloaPlusEloaRule(String serializedParameters){
 		super(NAME, RULE, VERBALIZATION);
 	}
 	

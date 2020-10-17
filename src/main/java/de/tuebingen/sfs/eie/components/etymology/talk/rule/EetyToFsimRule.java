@@ -15,19 +15,31 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 public class EetyToFsimRule extends EtinenTalkingLogicalRule {
 
 	public static final String NAME = "EetyToFsim";
+	private String eetyType1;
+	private String eetyType2;
+	private double weight;
 	// Only Eety and Fsim can have a value other than 0 or 1.
 	// Eety is the only open predicate.
 	private static final String RULE = "%.1f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
 	private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar.";
 
 	// For serialization.
-	public EetyToFsimRule() {
+	public EetyToFsimRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
+		String[] params = serializedParameters.split("-");
+		eetyType1 = params[0];
+		eetyType2 = params[1];
+		weight = Double.valueOf(params[2]);
+		setName(String.format("%sAnd%sToFsim", eetyType1, eetyType2));
+		setRuleString(String.format(Locale.US, RULE, weight, eetyType1, eetyType2));
 	}
 
 	public EetyToFsimRule(String eetyType1, String eetyType2, PslProblem pslProblem, double weight) {
 		super(String.format("%sAnd%sToFsim", eetyType1, eetyType2),
 				String.format(Locale.US, RULE, weight, eetyType1, eetyType2), pslProblem, VERBALIZATION);
+		this.eetyType1 = eetyType1;
+		this.eetyType2 = eetyType2;
+		this.weight = weight;
 	}
 
 	@Override
@@ -92,6 +104,11 @@ public class EetyToFsimRule extends EtinenTalkingLogicalRule {
 		sb.append(" (" + (int) (100 * fsimBelief) + "%)");
 		sb.append(". ");
 		return sb.toString();
+	}
+
+	@Override
+	public String getSerializedParameters() {
+		return eetyType1 + "-" + eetyType2 + "-" + weight;
 	}
 
 }

@@ -24,7 +24,7 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 	private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 
 	// For serialization.
-	public EinhOrEloaOrEunkRule() {
+	public EinhOrEloaOrEunkRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 

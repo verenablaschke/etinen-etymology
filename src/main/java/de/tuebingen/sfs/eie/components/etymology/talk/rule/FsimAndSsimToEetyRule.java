@@ -28,7 +28,7 @@ public class FsimAndSsimToEetyRule extends EtinenTalkingLogicalRule {
 	private String eetyType = null;
 	
 	// For serialization.
-	public FsimAndSsimToEetyRule(){
+	public FsimAndSsimToEetyRule(String serializedParameters){
 		super(NAME, RULE, VERBALIZATION);
 	}
 

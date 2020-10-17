@@ -21,7 +21,7 @@ public class EloaAndEetyToFsimRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "A loanword should be similar to the word it is derived from and its relatives.";
 
 	// For serialization.
-	public EloaAndEetyToFsimRule() {
+	public EloaAndEetyToFsimRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 
