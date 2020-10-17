@@ -108,5 +108,11 @@ public class EloaAndEetyToFsimRule extends EtinenTalkingLogicalRule {
 		sb.append(". ");
 		return sb.toString();
 	}
+	
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
+
 
 }

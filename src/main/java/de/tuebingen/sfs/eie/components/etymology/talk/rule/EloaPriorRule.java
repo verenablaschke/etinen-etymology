@@ -31,5 +31,11 @@ public class EloaPriorRule extends EtinenTalkingLogicalRule {
 			RuleAtomGraph rag, boolean whyExplanation) {
 		return VERBALIZATION;
 	}
+	
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
+
 
 }

@@ -121,5 +121,10 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
 			this.belief = belief;
 		}
 	}
+	
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
 
 }

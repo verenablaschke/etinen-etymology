@@ -55,4 +55,9 @@ public class TcntToEloaRule extends EtinenTalkingLogicalRule {
 		return sb.toString();
 	}
 
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
+
 }

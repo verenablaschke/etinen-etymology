@@ -54,5 +54,11 @@ public class TancToEinhRule extends EtinenTalkingLogicalRule {
 		sb.append(ancestor).append(".");
 		return sb.toString();
 	}
+	
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
+
 
 }

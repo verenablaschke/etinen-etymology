@@ -58,4 +58,10 @@ public class EloaPlusEloaRule extends EtinenTalkingArithmeticRule {
 		return sb.toString();
 	}
 
+	@Override
+	public String getSerializedParameters() {
+		return "";
+	}
+
+	
 }

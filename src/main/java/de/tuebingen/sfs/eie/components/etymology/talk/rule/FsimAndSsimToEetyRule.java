@@ -26,9 +26,9 @@ public class FsimAndSsimToEetyRule extends EtinenTalkingLogicalRule {
 	private static final String VERBALIZATION = "If two words are phonetically and semantically similar, "
 			+ "they are probably derived from the same source.";
 	private String eetyType = null;
-	
+
 	// For serialization.
-	public FsimAndSsimToEetyRule(String serializedParameters){
+	public FsimAndSsimToEetyRule(String serializedParameters) {
 		super(NAME, RULE, VERBALIZATION);
 	}
 
@@ -37,7 +37,7 @@ public class FsimAndSsimToEetyRule extends EtinenTalkingLogicalRule {
 				pslProblem, VERBALIZATION);
 		this.eetyType = eetyType;
 	}
-	
+
 	@Override
 	public String generateExplanation(String groundingName, String contextAtom, RuleAtomGraph rag,
 			boolean whyExplanation) {
@@ -80,6 +80,11 @@ public class FsimAndSsimToEetyRule extends EtinenTalkingLogicalRule {
 		sb.append(". ");
 
 		return sb.toString();
+	}
+
+	@Override
+	public String getSerializedParameters() {
+		return "";
 	}
 
 }
