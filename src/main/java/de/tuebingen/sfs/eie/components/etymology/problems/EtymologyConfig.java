@@ -7,47 +7,66 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.io.UnsupportedEncodingException;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.function.Consumer;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+
 public class EtymologyConfig {
 
-	Map<String, Double> ruleWeights;
-	Set<String> ignoreRules;
+	// TODO (vbl) make sure logger is used
+
+	private Map<String, Double> ruleWeights;
+	private Set<String> ignoreRules;
+	private double persistenceThreshold;
+
+	private String logfilePath;
+	private InferenceLogger logger;
 
 	public EtymologyConfig() {
-		this(null, null);
+		this(null, null, null);
 	}
 
 	public EtymologyConfig(Map<String, Double> ruleWeights) {
-		this(ruleWeights, null);
+		this(ruleWeights, null, null);
 	}
 
-	public EtymologyConfig(Map<String, Double> ruleWeights, Set<String> ignoreRules) {
-		if (ruleWeights == null) {
-			this.ruleWeights = new TreeMap<>();
-		} else {
+	public EtymologyConfig(Map<String, Double> ruleWeights, Set<String> ignoreRules, Double persistenceThreshold) {
+		defaultValues();
+		if (ruleWeights != null) {
 			this.ruleWeights = ruleWeights;
 		}
-		if (ignoreRules == null) {
-			this.ignoreRules = new TreeSet<>();
-		} else {
+		if (ignoreRules != null) {
 			this.ignoreRules = ignoreRules;
 		}
+		if (persistenceThreshold != null) {
+			this.persistenceThreshold = persistenceThreshold;
+		}
+	}
+
+	private void defaultValues() {
+		this.ruleWeights = new TreeMap<>();
+		this.ignoreRules = new TreeSet<>();
+		logger = new InferenceLogger();
+		setLogfile("src/test/resources/etym-inf-log.txt");
+		persistenceThreshold = 0.05;
 	}
 
 	public static EtymologyConfig fromJson(ObjectMapper mapper, String path) {
-//		if (! path.startsWith("/"))
-//			path = "/" + path;
-//		return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
+		// if (! path.startsWith("/"))
+		// path = "/" + path;
+		// return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
 		try {
 			return fromJson(mapper, new FileInputStream(path));
 		} catch (FileNotFoundException e) {
@@ -60,10 +79,24 @@ public class EtymologyConfig {
 	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in) {
 		Map<String, Double> ruleWeights = null;
 		Set<String> ignoreRules = null;
+		double persistenceThreshold = -1;
 		try {
 			JsonNode rootNode = mapper.readTree(in);
-			ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), TreeMap.class);
-			ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), TreeSet.class);
+			try {
+				ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), TreeMap.class);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+			try {
+				ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), TreeSet.class);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
+			try {
+				persistenceThreshold = mapper.treeToValue(rootNode.path("persistenceThreshold"), Double.class);
+			} catch (JsonProcessingException e) {
+				e.printStackTrace();
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -72,7 +105,7 @@ public class EtymologyConfig {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return new EtymologyConfig(ruleWeights, ignoreRules);
+		return new EtymologyConfig(ruleWeights, ignoreRules, persistenceThreshold);
 	}
 
 	public void addRuleToIgnoreList(String rule) {
@@ -89,6 +122,14 @@ public class EtymologyConfig {
 
 	public double getRuleWeightOrDefault(String rule, double defaultWeight) {
 		return ruleWeights.getOrDefault(rule, defaultWeight);
+	}
+
+	public void setBeliefThreshold(Double threshold) {
+		this.persistenceThreshold = threshold;
+	}
+
+	public double getBeliefThreshold() {
+		return persistenceThreshold;
 	}
 
 	public void print(PrintStream out) {
@@ -127,10 +168,44 @@ public class EtymologyConfig {
 					(ObjectNode) mapper.readTree(mapper.writeValueAsString(ruleWeights)));
 			((ObjectNode) rootNode).set("ignoreRules",
 					(ArrayNode) mapper.readTree(mapper.writeValueAsString(ignoreRules)));
+			((ObjectNode) rootNode).set("persistenceThreshold",
+					(ArrayNode) mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
 			mapper.writerWithDefaultPrettyPrinter().writeValue(out, rootNode);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	public void setGuiMessager(Consumer<String> messager) {
+		logger.setGuiStream(messager);
+	}
+
+	public Consumer<String> getGuiMessager() {
+		return logger.getGuiStream();
+	}
+
+	public boolean setLogfile(String logfilePath) {
+		this.logfilePath = logfilePath;
+		if (logfilePath.isEmpty())
+			logger.setLogStream(System.err);
+		else {
+			try {
+				PrintStream logStream = new PrintStream(logfilePath, "UTF-8");
+				logger.setLogStream(logStream);
+			} catch (FileNotFoundException | UnsupportedEncodingException e) {
+				e.printStackTrace();
+				return false;
+			}
+		}
+		return true;
+	}
+
+	public String getLogfilePath() {
+		return logfilePath;
+	}
+
+	public InferenceLogger getLogger() {
+		return logger;
 	}
 
 }
