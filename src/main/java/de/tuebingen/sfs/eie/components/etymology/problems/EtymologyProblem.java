@@ -32,6 +32,13 @@ import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
 import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
 
 public class EtymologyProblem extends PslProblem {
+	
+	public static final String[] RULES = new String[] {
+			EunkPriorRule.NAME, EloaPriorRule.NAME,
+			EinhOrEloaOrEunkRule.NAME, EloaPlusEloaRule.NAME,
+			TancToEinhRule.NAME, TcntToEloaRule.NAME,
+			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME
+	};
 
 	private EtymologyConfig config;
 

@@ -123,6 +123,14 @@ public class EtymologyConfig {
 	public double getRuleWeightOrDefault(String rule, double defaultWeight) {
 		return ruleWeights.getOrDefault(rule, defaultWeight);
 	}
+	
+	public boolean hasRuleWeight(String rule) {
+		return ruleWeights.containsKey(rule);
+	}
+	
+	public double getRuleWeight(String rule) {
+		return ruleWeights.get(rule);
+	}
 
 	public void setBeliefThreshold(Double threshold) {
 		this.persistenceThreshold = threshold;
