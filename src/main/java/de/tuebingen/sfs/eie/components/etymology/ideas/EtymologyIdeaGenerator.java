@@ -3,23 +3,14 @@ package de.tuebingen.sfs.eie.components.etymology.ideas;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 
 import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
@@ -33,26 +24,19 @@ import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import de.tuebingen.sfs.util.LoadUtils;
 import de.tuebingen.sfs.util.PhoneticSimilarityHelper;
-import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
-	private static final String DB_DIR = "src/test/resources/northeuralex-0.9";
-	private static final String TEST_DB_DIR = "etinen-etymology/src/test/resources/testdb";
-	private static final String NETWORK_EDGES_FILE = "src/test/resources/etymology/clics2-network-edges.txt";
-	private static final String NETWORK_IDS_FILE = "src/test/resources/etymology/clics2-network-ids.txt";
-	private static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
 
-	private List<String> concepts;
-	private SemanticNetwork semanticNet;
 	private PhoneticSimilarityHelper phonSimHelper;
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
 	private IndexedObjectStore objectStore;
-	private List<String> modernLanguages;
 	private List<String> ancestors;
 	private int treeDepth;
 	private String treeFile;
 	private boolean branchwiseBorrowing;
+
+	private EtymologyIdeaGeneratorConfig ideaGenConfig;
 
 	private Set<Entry> entryPool;
 
@@ -60,10 +44,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
 
-	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore, List<String> concepts,
-			List<String> languages, String treeFile, SemanticNetwork semanticNet,
-			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, int treeDepth,
-			boolean branchwiseBorrowing, InferenceLogger logger, String correspondenceDbDir) {
+	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore,
+			EtymologyIdeaGeneratorConfig ideaGenConfig, PhoneticSimilarityHelper phonSimHelper,
+			CLDFWordlistDatabase wordListDb, InferenceLogger logger) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
@@ -71,75 +54,52 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
 		System.err.println("Creating EtymologyIdeaGenerator.");
-		if (concepts == null) {
-			System.err.println("...No concepts specified.");
-			this.concepts = new ArrayList<>();
-		} else {
-			this.concepts = concepts;
-		}
-		if (semanticNet == null) {
-			System.err.println("...No semantic net given, using default network.");
-			this.semanticNet = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
-		} else {
-			this.semanticNet = semanticNet;
+		this.ideaGenConfig = ideaGenConfig;
+		if (ideaGenConfig == null) {
+			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig();
 		}
 		if (logger == null)
 			this.logger = new InferenceLogger();
 		else
 			this.logger = logger;
 		if (wordListDb == null) {
-			System.err.println("...No CLDF Wordlist Database given, loading default version.");
-			this.wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
+			System.err.println("...No CLDF Wordlist Database given, loading database.");
+			this.wordListDb = LoadUtils.loadDatabase(ideaGenConfig.wordListDbDir, logger);
 		} else {
 			this.wordListDb = wordListDb;
 		}
+
 		if (objectStore == null) {
 			System.err.println("...No IndexedObjectStore given, loading the default version.");
 			this.objectStore = new IndexedObjectStore(this.wordListDb, null);
 		} else {
 			this.objectStore = objectStore;
 		}
-		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty())
-			correspondenceDbDir = DB_DIR;
 		if (phonSimHelper == null) {
 			System.err.println("...No Phonetic Similarity Helper given, using default version.");
 			IPATokenizer tokenizer = new IPATokenizer();
 			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, this.logger), this.objectStore);
+					LoadUtils.loadCorrModel(ideaGenConfig.correspondenceDbDir, false, tokenizer, this.logger),
+					this.objectStore);
 		} else {
 			this.phonSimHelper = phonSimHelper;
 		}
-		this.branchwiseBorrowing = branchwiseBorrowing;
-		if (treeDepth < 1) {
-			this.treeDepth = 4;
-			System.err
-					.println("...No phylogenetic tree depth specified, using default value (" + this.treeDepth + ").");
-		} else {
-			this.treeDepth = treeDepth;
-		}
-		if (treeFile == null || treeFile.trim().isEmpty()) {
-			this.treeFile = DB_DIR + "/tree.nwk";
-			System.err.println("...No input file for the tree specified, using default: " + this.treeFile);
-		} else {
-			this.treeFile = treeFile;
-		}
-		if (languages == null) {
+		if (ideaGenConfig.modernLanguages.isEmpty()) {
 			System.err.println(
 					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
-			this.modernLanguages = new ArrayList<>();
+			// this.modernLanguages = new ArrayList<>();
 		} else {
-			this.modernLanguages = languages;
+			// this.modernLanguages = languages;
 			setTree();
 		}
 		entryPool = new HashSet<>();
 
 		System.err.println("Finished setting up the Etymology Idea Generator.");
 	}
-
+	
 	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
 			InferenceLogger logger) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null, null, null, -1, true, logger,
-				null);
+		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
@@ -154,48 +114,20 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
 			ObjectMapper mapper, InputStream in) {
-		List<String> concepts = null;
-		List<String> languages = null;
-		Integer treeDepth = null;
-		Boolean branchwiseBorrowing = null;
-		String treeFile = null;
-		SemanticNetwork semanticNet = null;
-		String wordListDbDir = null;
-		String correspondenceDbDir = null;
-		try {
-			JsonNode rootNode = mapper.readTree(in);
-			concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
-			languages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
-			treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
-			branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
-			treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
-			Map<String, Object> semanticNetConfig = mapper.treeToValue(rootNode.path("semanticNet"), HashMap.class);
-			semanticNet = new SemanticNetwork((String) semanticNetConfig.get("edges"),
-					(String) semanticNetConfig.get("ids"), (String) semanticNetConfig.get("nelexConcepts"),
-					(Integer) semanticNetConfig.get("maxDist"));
-			wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
-			correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		EtymologyIdeaGeneratorConfig ideaGenConfig = new EtymologyIdeaGeneratorConfig();
+		ideaGenConfig.initializeFromJson(mapper, in);
 		InferenceLogger logger = new InferenceLogger();
 		IPATokenizer tokenizer = new IPATokenizer();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(wordListDbDir, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(ideaGenConfig.wordListDbDir, logger);
 		PhoneticSimilarityHelper phonSimHelper = null;
-		if (objectStore != null && correspondenceDbDir != null && !correspondenceDbDir.isEmpty())
+		if (objectStore != null && ideaGenConfig.correspondenceDbDir != null
+				&& !ideaGenConfig.correspondenceDbDir.isEmpty())
 			phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(correspondenceDbDir, false, tokenizer, logger), objectStore);
+					LoadUtils.loadCorrModel(ideaGenConfig.correspondenceDbDir, false, tokenizer, logger), objectStore);
 
-		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, treeFile, semanticNet,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, correspondenceDbDir);
+		return new EtymologyIdeaGenerator(problem, objectStore, ideaGenConfig, phonSimHelper, wordListDb, null);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
@@ -271,17 +203,17 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		InferenceLogger logger = new InferenceLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyIdeaGeneratorConfig.DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger), objectStore);
-		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
+				LoadUtils.loadCorrModel(EtymologyIdeaGeneratorConfig.DB_DIR, false, tokenizer, logger), objectStore);
 		int treeDepth = 4;
 
-		EtymologyIdeaGenerator eig = new EtymologyIdeaGenerator(problem, objectStore, concepts, languages,
-				DB_DIR + "/tree.nwk", net, phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, null);
-		return eig;
+		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
+				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth,
+				branchwiseBorrowing, null);
+		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
@@ -321,15 +253,17 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		concepts.add("SpracheN");
 
 		InferenceLogger logger = new InferenceLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(TEST_DB_DIR, logger);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyIdeaGeneratorConfig.TEST_DB_DIR, logger);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyIdeaGeneratorConfig.DB_DIR, false, tokenizer,
+				logger);
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres, objectStore);
-		SemanticNetwork net = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, 2);
 		int treeDepth = 2;
 
-		return new EtymologyIdeaGenerator(problem, objectStore, concepts, languages, TEST_DB_DIR + "/tree.nwk", net,
-				phonSimHelper, wordListDb, treeDepth, branchwiseBorrowing, null, null);
+		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
+				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth,
+				branchwiseBorrowing, null);
+		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
 	public void generateAtoms() {
@@ -348,7 +282,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			if (cldfForms == null || cldfForms.isEmpty()) {
 				// Proto language
 				cldfForms = new HashSet<>();
-				for (String concept : concepts) {
+				for (String concept : ideaGenConfig.concepts) {
 					// TODO get the most likely reconstructed form instead (if
 					// available) (vbl)
 					int formId = objectStore.createFormId();
@@ -358,7 +292,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 			}
 			for (Integer cldfFormID : cldfForms) {
-				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
+				if (ideaGenConfig.concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
 					entryPool.add(new Entry(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
 					// TODO only add these for proto modernLanguages that don't
 					// have
@@ -371,9 +305,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// 2. Generate semantic similarity atoms.
 
-		for (String concept1 : concepts) {
-			for (String concept2 : concepts) {
-				pslProblem.addObservation("Ssim", semanticNet.getSimilarity(concept1, concept2), concept1, concept2);
+		for (String concept1 : ideaGenConfig.concepts) {
+			for (String concept2 : ideaGenConfig.concepts) {
+				pslProblem.addObservation("Ssim", ideaGenConfig.semanticNet.getSimilarity(concept1, concept2), concept1,
+						concept2);
 			}
 		}
 
@@ -479,51 +414,25 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public void export(ObjectMapper mapper, OutputStream out) {
-		try {
-			ObjectNode rootNode = mapper.createObjectNode();
-			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
-			rootNode.set("modernLanguages", (ArrayNode) mapper.readTree(mapper.writeValueAsString(modernLanguages)));
-			rootNode.set("treeDepth", new IntNode(treeDepth));
-			rootNode.set("branchwiseBorrowing",
-					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
-			rootNode.set("treeFile", new TextNode(treeFile));
-			rootNode.set("wordListDbDir", new TextNode(wordListDb.currentPath));
-			rootNode.set("correspondenceDbDir", new TextNode(phonSimHelper.getCorrModel().getDbPath()));
-
-			Map<String, Object> semanticNetConfig = new HashMap<>();
-			semanticNetConfig.put("edges", semanticNet.getNetworkEdgesFile());
-			semanticNetConfig.put("ids", semanticNet.getNetworkIdsFile());
-			semanticNetConfig.put("nelexConcepts", semanticNet.getNelexConceptsFile());
-			semanticNetConfig.put("maxDist", semanticNet.getMaxDist());
-			rootNode.set("semanticNet", (ObjectNode) mapper.readTree(mapper.writeValueAsString(semanticNetConfig)));
-
-			mapper.writerWithDefaultPrettyPrinter().writeValue(out, rootNode);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			out.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+		ideaGenConfig.export(mapper, out);
 	}
 
 	public void setConcepts(List<String> concepts) {
-		this.concepts = concepts;
+		ideaGenConfig.concepts = concepts;
 	}
 
 	// Costly because this involves renaming the leaf nodes in the tree.
 	public void setLanguages(List<String> languages) {
 		System.err.println("Adding modernLanguages to Etymology Idea Generator and updating the phylogenetic tree.");
-		this.modernLanguages = languages;
+		ideaGenConfig.modernLanguages = languages;
 		setTree();
 	}
 
 	private void setTree() {
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile, modernLanguages);
+		tree = new LevelBasedPhylogeny(treeDepth, treeFile, ideaGenConfig.modernLanguages);
 		ancestors = new ArrayList<>();
 		for (String language : tree.getAllLanguages()) {
-			if (modernLanguages.contains(language)) {
+			if (ideaGenConfig.modernLanguages.contains(language)) {
 				continue;
 			}
 			String languageId = language;
@@ -543,7 +452,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public void addSiblingLanguages() {
 		logger.displayln("Adding sibling languages to the language set.");
 		Set<String> parents = new HashSet<>();
-		for (String lang : modernLanguages) {
+		for (String lang : ideaGenConfig.modernLanguages) {
 			parents.add(tree.getParent(lang));
 		}
 		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(treeFile);
@@ -551,7 +460,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (String langId : objectStore.getLanguageIds()) {
 			targetLangs.add(langId);
 		}
-		targetLangs.removeAll(modernLanguages);
+		targetLangs.removeAll(ideaGenConfig.modernLanguages);
 		targetLangs.removeAll(ancestors);
 		String anc;
 		boolean addedAny = false;
@@ -566,7 +475,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						tree.getTree().children.get(parent).add(langId);
 						tree.getTree().parents.put(langId, parent);
 						tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
-						modernLanguages.add(langId);
+						ideaGenConfig.modernLanguages.add(langId);
 						addedAny = true;
 						logger.displayln("- Added " + langId + ".");
 						break;
@@ -575,7 +484,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 		if (addedAny)
-			logger.displayln("New language set: " + modernLanguages);
+			logger.displayln("New language set: " + ideaGenConfig.modernLanguages);
 		else
 			logger.displayln("No sibling languages found.");
 	}
@@ -591,7 +500,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		Set<String> toBeRemoved = new HashSet<>();
 		tree.getTree().saveLayeredTreeToFile(System.err);
 		boolean removedAny = false;
-		for (String lang : modernLanguages) {
+		for (String lang : ideaGenConfig.modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
 			// no siblings ...or...
 			while (tree.getTree().children.get(parent).size() == 1
@@ -611,9 +520,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 			}
 		}
-		modernLanguages.removeAll(toBeRemoved);
+		ideaGenConfig.modernLanguages.removeAll(toBeRemoved);
 		if (removedAny)
-			logger.displayln("Remaining languages: " + modernLanguages);
+			logger.displayln("Remaining languages: " + ideaGenConfig.modernLanguages);
 		else
 			logger.displayln("No isolates found.");
 		return toBeRemoved;

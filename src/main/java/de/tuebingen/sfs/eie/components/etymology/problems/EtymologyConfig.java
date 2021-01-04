@@ -31,6 +31,8 @@ public class EtymologyConfig {
 	private Set<String> ignoreRules;
 	private double persistenceThreshold;
 
+	private static final double DEFAULT_THRESHOLD = 0.05;
+
 	private String logfilePath;
 	private InferenceLogger logger;
 
@@ -60,7 +62,7 @@ public class EtymologyConfig {
 		this.ignoreRules = new TreeSet<>();
 		logger = new InferenceLogger();
 		setLogfile("src/test/resources/etym-inf-log.txt");
-		persistenceThreshold = 0.05;
+		persistenceThreshold = DEFAULT_THRESHOLD;
 	}
 
 	public static EtymologyConfig fromJson(ObjectMapper mapper, String path) {
@@ -123,17 +125,18 @@ public class EtymologyConfig {
 	public double getRuleWeightOrDefault(String rule, double defaultWeight) {
 		return ruleWeights.getOrDefault(rule, defaultWeight);
 	}
-	
+
 	public boolean hasRuleWeight(String rule) {
 		return ruleWeights.containsKey(rule);
 	}
-	
+
 	public double getRuleWeight(String rule) {
 		return ruleWeights.get(rule);
 	}
 
 	public void setBeliefThreshold(Double threshold) {
-		this.persistenceThreshold = threshold;
+		if (threshold != null)
+			this.persistenceThreshold = threshold;
 	}
 
 	public double getBeliefThreshold() {
