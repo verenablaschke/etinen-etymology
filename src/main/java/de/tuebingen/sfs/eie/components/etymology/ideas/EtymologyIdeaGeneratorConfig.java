@@ -193,4 +193,18 @@ public class EtymologyIdeaGeneratorConfig {
 	public void setCorrespondenceDbDir(String correspondenceDbDir) {
 		this.correspondenceDbDir = correspondenceDbDir;
 	}
+
+	public void printConfig() {
+		System.err.println("- branchwiseBorrowing: " + branchwiseBorrowing);
+		System.err.println("- treeDepth: " + treeDepth);
+		System.err.println("- treeFile: " + treeFile);
+		System.err.println("- wordListDbDir: " + wordListDbDir);
+		System.err.println("- correspondenceDbDir: " + correspondenceDbDir);
+		System.err.println("- concepts (in config!): " + concepts);
+		System.err.println("- modernLanguages (in config!): " + modernLanguages);
+		System.err.println("- networkEdgesFile: " + semanticNet.getNetworkEdgesFile());
+		System.err.println("- networkIdsFile: " + semanticNet.getNetworkIdsFile());
+		System.err.println("- nelexConceptsFile: " + semanticNet.getNelexConceptsFile());
+		System.err.println("- maxDist: " + semanticNet.getMaxDist());
+	}
 }

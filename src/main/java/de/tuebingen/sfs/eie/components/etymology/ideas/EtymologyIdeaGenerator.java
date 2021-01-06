@@ -40,6 +40,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private Set<Entry> entryPool;
 
+	// TODO use (vbl)
 	private InferenceLogger logger;
 
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
@@ -53,11 +54,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
 		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
-		System.err.println("Creating EtymologyIdeaGenerator.");
+		System.err.println("...Creating EtymologyIdeaGenerator.");
 		this.ideaGenConfig = ideaGenConfig;
 		if (ideaGenConfig == null) {
 			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig();
 		}
+		System.err.println("...Working with the following idea generation configuration:");
+		this.ideaGenConfig.printConfig();
 		if (logger == null)
 			this.logger = new InferenceLogger();
 		else
