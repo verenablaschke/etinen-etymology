@@ -60,7 +60,9 @@ public class EtymologyIdeaGeneratorConfig {
 		}
 		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty()) {
 			System.err.println("...No Correspondence Database directory given, using default.");
-			correspondenceDbDir = DB_DIR;
+			this.correspondenceDbDir = DB_DIR;
+		} else {
+			this.correspondenceDbDir = correspondenceDbDir;
 		}
 		this.branchwiseBorrowing = branchwiseBorrowing;
 		if (treeDepth < 1) {

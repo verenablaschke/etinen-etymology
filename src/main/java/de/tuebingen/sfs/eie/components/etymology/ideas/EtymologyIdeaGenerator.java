@@ -32,12 +32,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private CLDFWordlistDatabase wordListDb;
 	private IndexedObjectStore objectStore;
 	private List<String> ancestors;
-	private int treeDepth;
-	private String treeFile;
-	private boolean branchwiseBorrowing;
-
 	private EtymologyIdeaGeneratorConfig ideaGenConfig;
-
 	private Set<Entry> entryPool;
 
 	// TODO use (vbl)
@@ -324,13 +319,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
+				} else if ((!ideaGenConfig.branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
 					// TODO: borrowing from e.g. Latin
 					// TODO: geographical distance etc.
 					// TODO: make this open instead? e.g.
 					// pslProblem.addTarget
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
+				} else if (ideaGenConfig.branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
 			}
@@ -356,10 +351,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			pslProblem.addObservation("Eloa", 0.0, entry1.formIdAsString, entry2.formIdAsString);
 		} else if (tree.getLevel(entry1.language) == tree.getLevel(entry2.language)) {
 			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
-			if (!branchwiseBorrowing) {
+			if (!ideaGenConfig.branchwiseBorrowing) {
 				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 			}
-		} else if (branchwiseBorrowing && tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
+		} else if (ideaGenConfig.branchwiseBorrowing && tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
 			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 		} else {
 			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
@@ -432,7 +427,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	private void setTree() {
-		tree = new LevelBasedPhylogeny(treeDepth, treeFile, ideaGenConfig.modernLanguages);
+		tree = new LevelBasedPhylogeny(ideaGenConfig.treeDepth, ideaGenConfig.treeFile, ideaGenConfig.modernLanguages);
 		ancestors = new ArrayList<>();
 		for (String language : tree.getAllLanguages()) {
 			if (ideaGenConfig.modernLanguages.contains(language)) {
@@ -458,7 +453,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (String lang : ideaGenConfig.modernLanguages) {
 			parents.add(tree.getParent(lang));
 		}
-		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(treeFile);
+		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(ideaGenConfig.treeFile);
 		Set<String> targetLangs = new HashSet<>();
 		for (String langId : objectStore.getLanguageIds()) {
 			targetLangs.add(langId);
@@ -477,7 +472,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					if (ancestor.equals(parent)) {
 						tree.getTree().children.get(parent).add(langId);
 						tree.getTree().parents.put(langId, parent);
-						tree.getTree().nodeToLayerPlacement.put(langId, treeDepth);
+						tree.getTree().nodeToLayerPlacement.put(langId, ideaGenConfig.treeDepth);
 						ideaGenConfig.modernLanguages.add(langId);
 						addedAny = true;
 						logger.displayln("- Added " + langId + ".");
@@ -508,7 +503,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			// no siblings ...or...
 			while (tree.getTree().children.get(parent).size() == 1
 					// ...no children (as intermediary node)
-					|| (tree.getLevel(lang) < treeDepth && (tree.getTree().children.get(lang) == null
+					|| (tree.getLevel(lang) < ideaGenConfig.treeDepth && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
 				removedAny = true;
 				tree.getTree().children.get(parent).remove(lang);
