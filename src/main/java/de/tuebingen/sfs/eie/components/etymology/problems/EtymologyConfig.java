@@ -21,9 +21,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import de.tuebingen.sfs.psl.engine.PslProblemConfig;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
-public class EtymologyConfig {
+public class EtymologyConfig extends PslProblemConfig {
 
 	// TODO (vbl) make sure logger is used
 
@@ -110,6 +111,27 @@ public class EtymologyConfig {
 		return new EtymologyConfig(ruleWeights, ignoreRules, persistenceThreshold);
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public void setFromJson(ObjectMapper mapper, JsonNode rootNode) {
+		super.setFromJson(mapper, rootNode);
+		try {
+			ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), TreeMap.class);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), TreeSet.class);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			persistenceThreshold = mapper.treeToValue(rootNode.path("persistenceThreshold"), Double.class);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+	}
+
 	public void addRuleToIgnoreList(String rule) {
 		ignoreRules.add(rule);
 	}
@@ -185,6 +207,22 @@ public class EtymologyConfig {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public ObjectNode toJson(ObjectMapper mapper) {
+		ObjectNode rootNode = super.toJson(mapper);
+		try {
+			rootNode.set("ruleWeights",
+					mapper.readTree(mapper.writeValueAsString(ruleWeights)));
+			rootNode.set("ignoreRules",
+					mapper.readTree(mapper.writeValueAsString(ignoreRules)));
+			rootNode.set("persistenceThreshold",
+					mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return rootNode;
 	}
 
 	public void setGuiMessager(Consumer<String> messager) {
