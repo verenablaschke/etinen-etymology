@@ -167,7 +167,7 @@ public class EtymologyIdeaGeneratorConfig {
 	public boolean branchwiseBorrowing() {
 		return branchwiseBorrowing;
 	}
-	
+
 	public boolean addSiblingLanguages() {
 		return addSiblingLanguages;
 	}
@@ -183,6 +183,14 @@ public class EtymologyIdeaGeneratorConfig {
 
 	public String getCorrespondenceDbDir() {
 		return correspondenceDbDir;
+	}
+
+	public List<String> getConcepts() {
+		return concepts;
+	}
+
+	public List<String> getLanguages() {
+		return modernLanguages;
 	}
 
 	public void setTreeDepth(int depth) {
@@ -212,6 +220,14 @@ public class EtymologyIdeaGeneratorConfig {
 
 	public void setCorrespondenceDbDir(String correspondenceDbDir) {
 		this.correspondenceDbDir = correspondenceDbDir;
+	}
+
+	public void setConcepts(List<String> concepts) {
+		this.concepts = concepts;
+	}
+
+	public void setLanguages(List<String> modernLanguages) {
+		this.modernLanguages = modernLanguages;
 	}
 
 	public void printConfig() {

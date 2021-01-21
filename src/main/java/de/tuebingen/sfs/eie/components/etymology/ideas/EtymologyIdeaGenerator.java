@@ -92,6 +92,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			setTree();
 		}
 		entryPool = new HashSet<>();
+		
+		updateLanguagesAndTree();
 
 		System.err.println("Finished setting up the Etymology Idea Generator.");
 	}
@@ -417,19 +419,23 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		ideaGenConfig.export(mapper, out);
 	}
 
-	public void setConcepts(List<String> concepts) {
-		ideaGenConfig.concepts = concepts;
-	}
-
 	// Costly because this involves renaming the leaf nodes in the tree.
-	public void setLanguages(List<String> languages) {
-		System.err.println("Adding modernLanguages to Etymology Idea Generator and updating the phylogenetic tree.");
-		ideaGenConfig.modernLanguages = languages;
+	private void updateLanguagesAndTree() {
 		setTree();
 		if (ideaGenConfig.addSiblingLanguages) {
 			addSiblingLanguages();
 		}
 		removeIsolates();
+	}
+	
+	// Costly because this involves renaming the leaf nodes in the tree.
+	public void setLanguages(List<String> languages) {
+		ideaGenConfig.setLanguages(languages);
+		updateLanguagesAndTree();
+	}
+
+	public void setConcepts(List<String> concepts) {
+		ideaGenConfig.setConcepts(concepts);
 	}
 
 	private void setTree() {
