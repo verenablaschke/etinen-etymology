@@ -34,6 +34,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private List<String> ancestors;
 	private EtymologyIdeaGeneratorConfig ideaGenConfig;
 	private Set<Entry> entryPool;
+	private Set<String> removedIsolates;
 
 	// TODO use (vbl)
 	private InferenceLogger logger;
@@ -94,7 +95,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		System.err.println("Finished setting up the Etymology Idea Generator.");
 	}
-	
+
 	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
 			InferenceLogger logger) {
 		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null);
@@ -209,8 +210,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 4;
 
 		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
-				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth,
-				branchwiseBorrowing, null);
+				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth, branchwiseBorrowing, true,
+				null);
 		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
@@ -259,8 +260,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		int treeDepth = 2;
 
 		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
-				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth,
-				branchwiseBorrowing, null);
+				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth, branchwiseBorrowing, true,
+				null);
 		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
@@ -354,7 +355,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			if (!ideaGenConfig.branchwiseBorrowing) {
 				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 			}
-		} else if (ideaGenConfig.branchwiseBorrowing && tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
+		} else if (ideaGenConfig.branchwiseBorrowing
+				&& tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
 			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 		} else {
 			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
@@ -424,6 +426,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		System.err.println("Adding modernLanguages to Etymology Idea Generator and updating the phylogenetic tree.");
 		ideaGenConfig.modernLanguages = languages;
 		setTree();
+		if (ideaGenConfig.addSiblingLanguages) {
+			addSiblingLanguages();
+		}
+		removeIsolates();
 	}
 
 	private void setTree() {
@@ -447,7 +453,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		return tree;
 	}
 
-	public void addSiblingLanguages() {
+	private void addSiblingLanguages() {
 		logger.displayln("Adding sibling languages to the language set.");
 		Set<String> parents = new HashSet<>();
 		for (String lang : ideaGenConfig.modernLanguages) {
@@ -487,7 +493,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			logger.displayln("No sibling languages found.");
 	}
 
-	public Set<String> removeIsolates() {
+	private void removeIsolates() {
 		logger.displayln("Removing isolates from the language set.");
 		// TODO check again (vbl). might be a bit overzealous and remove more nodes than
 		// intended.
@@ -523,7 +529,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			logger.displayln("Remaining languages: " + ideaGenConfig.modernLanguages);
 		else
 			logger.displayln("No isolates found.");
-		return toBeRemoved;
+		this.removedIsolates = toBeRemoved;
+	}
+
+	public Set<String> getRemovedIsolates() {
+		return removedIsolates;
 	}
 
 	private class Entry {

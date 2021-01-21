@@ -29,6 +29,7 @@ public class EtymologyIdeaGeneratorConfig {
 
 	Integer treeDepth = null;
 	Boolean branchwiseBorrowing = null;
+	Boolean addSiblingLanguages = null;
 	String treeFile = null;
 	SemanticNetwork semanticNet = null;
 	String wordListDbDir = null;
@@ -37,8 +38,8 @@ public class EtymologyIdeaGeneratorConfig {
 	List<String> modernLanguages = null;
 
 	public EtymologyIdeaGeneratorConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
-			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, boolean branchwiseBorrowing,
-			String correspondenceDbDir) {
+			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, Boolean branchwiseBorrowing,
+			Boolean addSiblingLanguages, String correspondenceDbDir) {
 		System.err.println("Creating EtymologyIdeaGeneratorConfig.");
 		if (concepts == null) {
 			System.err.println("...No concepts specified.");
@@ -65,6 +66,15 @@ public class EtymologyIdeaGeneratorConfig {
 			this.correspondenceDbDir = correspondenceDbDir;
 		}
 		this.branchwiseBorrowing = branchwiseBorrowing;
+		if (branchwiseBorrowing == null) {
+			System.err.println("...No value for branchwiseBorrowing given, using default (true).");
+			this.branchwiseBorrowing = true;
+		}
+		this.addSiblingLanguages = addSiblingLanguages;
+		if (addSiblingLanguages == null) {
+			System.err.println("...No value for addSiblingLanguages given, using default (true).");
+			this.addSiblingLanguages = true;
+		}
 		if (treeDepth < 1) {
 			this.treeDepth = 4;
 			System.err
@@ -88,7 +98,7 @@ public class EtymologyIdeaGeneratorConfig {
 	}
 
 	public EtymologyIdeaGeneratorConfig() {
-		this(null, null, null, null, null, -1, true, null);
+		this(null, null, null, null, null, -1, null, null, null);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -157,6 +167,10 @@ public class EtymologyIdeaGeneratorConfig {
 	public boolean branchwiseBorrowing() {
 		return branchwiseBorrowing;
 	}
+	
+	public boolean addSiblingLanguages() {
+		return addSiblingLanguages;
+	}
 
 	public String[] getSemanticNetworkConfig() {
 		return new String[] { semanticNet.getNetworkEdgesFile(), semanticNet.getNetworkIdsFile(),
@@ -181,6 +195,10 @@ public class EtymologyIdeaGeneratorConfig {
 
 	public void setBranchwiseBorrowing(boolean branchwiseBorrowing) {
 		this.branchwiseBorrowing = branchwiseBorrowing;
+	}
+
+	public void setAddSiblingLanguages(boolean addSiblingLanguages) {
+		this.addSiblingLanguages = addSiblingLanguages;
 	}
 
 	public void setSemanticNetworkConfig(String networkEdgesFile, String networkIdsFile, String nelexConceptsFile,

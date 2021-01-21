@@ -146,8 +146,7 @@ public class EtymologyNelexTest {
 			languages.add(language);
 		}
 		eig.setLanguages(languages.stream().collect(Collectors.toList()));
-		eig.addSiblingLanguages();
-		Set<String> removed = eig.removeIsolates();
+		Set<String> removed = eig.getRemovedIsolates();
 
 		Set<String> interestingCases = new HashSet<>();
 		interestingCases.addAll(borrowedConceptToLanguages.getOrDefault(concept, new HashSet<>()));
