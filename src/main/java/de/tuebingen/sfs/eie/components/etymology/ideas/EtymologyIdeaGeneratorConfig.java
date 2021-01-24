@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import de.tuebingen.sfs.util.SemanticNetwork;
 
 public class EtymologyIdeaGeneratorConfig {
@@ -36,43 +37,45 @@ public class EtymologyIdeaGeneratorConfig {
 	String correspondenceDbDir = null;
 	List<String> concepts = null;
 	List<String> modernLanguages = null;
+	InferenceLogger logger = null;
 
 	public EtymologyIdeaGeneratorConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
 			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, Boolean branchwiseBorrowing,
-			Boolean addSiblingLanguages, String correspondenceDbDir) {
-		System.err.println("Creating EtymologyIdeaGeneratorConfig.");
+			Boolean addSiblingLanguages, String correspondenceDbDir, InferenceLogger logger) {
+		this.logger = logger;
+		logger.displayln("Creating EtymologyIdeaGeneratorConfig.");
 		if (concepts == null) {
-			System.err.println("...No concepts specified.");
+			logger.displayln("...No concepts specified.");
 			this.concepts = new ArrayList<>();
 		} else {
 			this.concepts = concepts;
 		}
 		if (semanticNet == null) {
-			System.err.println("...No semantic net given, using default network.");
+			logger.displayln("...No semantic net given, using default network.");
 			this.semanticNet = new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, MAX_DIST);
 		} else {
 			this.semanticNet = semanticNet;
 		}
 		if (wordListDbDir == null) {
-			System.err.println("...No CLDF Wordlist Database given, using default.");
+			logger.displayln("...No CLDF Wordlist Database given, using default.");
 			this.wordListDbDir = DB_DIR;
 		} else {
 			this.wordListDbDir = wordListDbDir;
 		}
 		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty()) {
-			System.err.println("...No Correspondence Database directory given, using default.");
+			logger.displayln("...No Correspondence Database directory given, using default.");
 			this.correspondenceDbDir = DB_DIR;
 		} else {
 			this.correspondenceDbDir = correspondenceDbDir;
 		}
 		this.branchwiseBorrowing = branchwiseBorrowing;
 		if (branchwiseBorrowing == null) {
-			System.err.println("...No value for branchwiseBorrowing given, using default (true).");
+			logger.displayln("...No value for branchwiseBorrowing given, using default (true).");
 			this.branchwiseBorrowing = true;
 		}
 		this.addSiblingLanguages = addSiblingLanguages;
 		if (addSiblingLanguages == null) {
-			System.err.println("...No value for addSiblingLanguages given, using default (true).");
+			logger.displayln("...No value for addSiblingLanguages given, using default (true).");
 			this.addSiblingLanguages = true;
 		}
 		if (treeDepth < 1) {
@@ -84,12 +87,12 @@ public class EtymologyIdeaGeneratorConfig {
 		}
 		if (treeFile == null || treeFile.trim().isEmpty()) {
 			this.treeFile = DB_DIR + "/tree.nwk";
-			System.err.println("...No input file for the tree specified, using default: " + this.treeFile);
+			logger.displayln("...No input file for the tree specified, using default: " + this.treeFile);
 		} else {
 			this.treeFile = treeFile;
 		}
 		if (modernLanguages == null) {
-			System.err.println(
+			logger.displayln(
 					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
 			this.modernLanguages = new ArrayList<>();
 		} else {
@@ -97,12 +100,13 @@ public class EtymologyIdeaGeneratorConfig {
 		}
 	}
 
-	public EtymologyIdeaGeneratorConfig() {
-		this(null, null, null, null, null, -1, null, null, null);
+	public EtymologyIdeaGeneratorConfig(InferenceLogger logger) {
+		this(null, null, null, null, null, -1, null, null, null, logger);
 	}
 
 	@SuppressWarnings("unchecked")
-	public void initializeFromJson(ObjectMapper mapper, InputStream in) {
+	public void initializeFromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
+		this.logger = logger;
 		try {
 			JsonNode rootNode = mapper.readTree(in);
 			concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
@@ -229,18 +233,32 @@ public class EtymologyIdeaGeneratorConfig {
 	public void setLanguages(List<String> modernLanguages) {
 		this.modernLanguages = modernLanguages;
 	}
-
+	
 	public void printConfig() {
-		System.err.println("- branchwiseBorrowing: " + branchwiseBorrowing);
-		System.err.println("- treeDepth: " + treeDepth);
-		System.err.println("- treeFile: " + treeFile);
-		System.err.println("- wordListDbDir: " + wordListDbDir);
-		System.err.println("- correspondenceDbDir: " + correspondenceDbDir);
-		System.err.println("- concepts (in config!): " + concepts);
-		System.err.println("- modernLanguages (in config!): " + modernLanguages);
-		System.err.println("- networkEdgesFile: " + semanticNet.getNetworkEdgesFile());
-		System.err.println("- networkIdsFile: " + semanticNet.getNetworkIdsFile());
-		System.err.println("- nelexConceptsFile: " + semanticNet.getNelexConceptsFile());
-		System.err.println("- maxDist: " + semanticNet.getMaxDist());
+		System.out.println("- branchwiseBorrowing: " + branchwiseBorrowing);
+		System.out.println("- treeDepth: " + treeDepth);
+		System.out.println("- treeFile: " + treeFile);
+		System.out.println("- wordListDbDir: " + wordListDbDir);
+		System.out.println("- correspondenceDbDir: " + correspondenceDbDir);
+		System.out.println("- concepts (in config!): " + concepts);
+		System.out.println("- modernLanguages (in config!): " + modernLanguages);
+		System.out.println("- networkEdgesFile: " + semanticNet.getNetworkEdgesFile());
+		System.out.println("- networkIdsFile: " + semanticNet.getNetworkIdsFile());
+		System.out.println("- nelexConceptsFile: " + semanticNet.getNelexConceptsFile());
+		System.out.println("- maxDist: " + semanticNet.getMaxDist());
+	}
+
+	public void logConfig() {
+		logger.displayln("- branchwiseBorrowing: " + branchwiseBorrowing);
+		logger.displayln("- treeDepth: " + treeDepth);
+		logger.displayln("- treeFile: " + treeFile);
+		logger.displayln("- wordListDbDir: " + wordListDbDir);
+		logger.displayln("- correspondenceDbDir: " + correspondenceDbDir);
+		logger.displayln("- concepts (in config!): " + concepts);
+		logger.displayln("- modernLanguages (in config!): " + modernLanguages);
+		logger.displayln("- networkEdgesFile: " + semanticNet.getNetworkEdgesFile());
+		logger.displayln("- networkIdsFile: " + semanticNet.getNetworkIdsFile());
+		logger.displayln("- nelexConceptsFile: " + semanticNet.getNelexConceptsFile());
+		logger.displayln("- maxDist: " + semanticNet.getMaxDist());
 	}
 }

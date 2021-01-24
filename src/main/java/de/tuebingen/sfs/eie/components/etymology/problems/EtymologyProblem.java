@@ -28,6 +28,7 @@ import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.TalkingArithmeticRule;
 import de.tuebingen.sfs.psl.talk.TalkingLogicalRule;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
 
@@ -49,11 +50,12 @@ public class EtymologyProblem extends PslProblem {
 	public EtymologyProblem(DatabaseManager dbManager, String name, EtymologyConfig config) {
 		super(dbManager, name);
 		if (config == null) {
-			config = new EtymologyConfig();
+			config = new EtymologyConfig(new InferenceLogger());
 		}
 		this.config = config;
 		System.out.println("Using the following configuration:");
 		config.print(System.out);
+		config.logSettings();
 	}
 
 	@Override

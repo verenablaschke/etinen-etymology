@@ -26,8 +26,6 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyConfig extends PslProblemConfig {
 
-	// TODO (vbl) make sure logger is used
-
 	private Map<String, Double> ruleWeights;
 	private Set<String> ignoreRules;
 	private double persistenceThreshold;
@@ -37,15 +35,17 @@ public class EtymologyConfig extends PslProblemConfig {
 	private String logfilePath;
 	private InferenceLogger logger;
 
-	public EtymologyConfig() {
-		this(null, null, null);
+	public EtymologyConfig(InferenceLogger logger) {
+		this(null, null, null, logger);
 	}
 
-	public EtymologyConfig(Map<String, Double> ruleWeights) {
-		this(ruleWeights, null, null);
+	public EtymologyConfig(Map<String, Double> ruleWeights, InferenceLogger logger) {
+		this(ruleWeights, null, null, logger);
 	}
 
-	public EtymologyConfig(Map<String, Double> ruleWeights, Set<String> ignoreRules, Double persistenceThreshold) {
+	public EtymologyConfig(Map<String, Double> ruleWeights, Set<String> ignoreRules, Double persistenceThreshold,
+			InferenceLogger logger) {
+		this.logger = logger;
 		defaultValues();
 		if (ruleWeights != null) {
 			this.ruleWeights = ruleWeights;
@@ -61,17 +61,16 @@ public class EtymologyConfig extends PslProblemConfig {
 	private void defaultValues() {
 		this.ruleWeights = new TreeMap<>();
 		this.ignoreRules = new TreeSet<>();
-		logger = new InferenceLogger();
 		setLogfile("src/test/resources/etym-inf-log.txt");
 		persistenceThreshold = DEFAULT_THRESHOLD;
 	}
 
-	public static EtymologyConfig fromJson(ObjectMapper mapper, String path) {
+	public static EtymologyConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
 		// if (! path.startsWith("/"))
 		// path = "/" + path;
 		// return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
 		try {
-			return fromJson(mapper, new FileInputStream(path));
+			return fromJson(mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
@@ -79,7 +78,7 @@ public class EtymologyConfig extends PslProblemConfig {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in) {
+	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
 		Map<String, Double> ruleWeights = null;
 		Set<String> ignoreRules = null;
 		double persistenceThreshold = -1;
@@ -108,7 +107,7 @@ public class EtymologyConfig extends PslProblemConfig {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return new EtymologyConfig(ruleWeights, ignoreRules, persistenceThreshold);
+		return new EtymologyConfig(ruleWeights, ignoreRules, persistenceThreshold, logger);
 	}
 
 	@Override
@@ -183,7 +182,26 @@ public class EtymologyConfig extends PslProblemConfig {
 				out.println("- " + entry.getKey() + " : " + entry.getValue());
 			}
 		}
-
+	}
+	
+	public void logSettings() {
+		logger.displayln("Etymology config");
+		if (ignoreRules == null || ignoreRules.isEmpty()) {
+			logger.displayln("No rules to ignore.");
+		} else {
+			logger.displayln("Ignoring:");
+			for (String rule : ignoreRules) {
+				logger.displayln("- " + rule);
+			}
+		}
+		if (ruleWeights == null || ruleWeights.isEmpty()) {
+			logger.displayln("No rule weights changed.");
+		} else {
+			logger.displayln("Updated rule weights:");
+			for (Entry<String, Double> entry : ruleWeights.entrySet()) {
+				logger.displayln("- " + entry.getKey() + " : " + entry.getValue());
+			}
+		}
 	}
 
 	public void export(ObjectMapper mapper, String path) {
@@ -213,12 +231,9 @@ public class EtymologyConfig extends PslProblemConfig {
 	public ObjectNode toJson(ObjectMapper mapper) {
 		ObjectNode rootNode = super.toJson(mapper);
 		try {
-			rootNode.set("ruleWeights",
-					mapper.readTree(mapper.writeValueAsString(ruleWeights)));
-			rootNode.set("ignoreRules",
-					mapper.readTree(mapper.writeValueAsString(ignoreRules)));
-			rootNode.set("persistenceThreshold",
-					mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
+			rootNode.set("ruleWeights", mapper.readTree(mapper.writeValueAsString(ruleWeights)));
+			rootNode.set("ignoreRules", mapper.readTree(mapper.writeValueAsString(ignoreRules)));
+			rootNode.set("persistenceThreshold", mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

@@ -28,6 +28,7 @@ import de.tuebingen.sfs.psl.io.InferenceResultIo;
 import de.tuebingen.sfs.psl.talk.TalkingPredicate;
 import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
 
@@ -37,7 +38,7 @@ public class EtymologyInferenceTest {
 
 	private static void run(Map<String, Double> ruleWeights, PrintStream out) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyConfig config = new EtymologyConfig(ruleWeights);
+		EtymologyConfig config = new EtymologyConfig(ruleWeights, new InferenceLogger());
 		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
 		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
@@ -144,11 +145,11 @@ public class EtymologyInferenceTest {
 
 	private static void deserialize(ObjectMapper mapper) {
 		EtymologyConfig config = EtymologyConfig.fromJson(mapper,
-				"etinen-etymology/src/test/resources/serialization/config.json");
+				"etinen-etymology/src/test/resources/serialization/config.json", new InferenceLogger());
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, null, mapper,
-				"etinen-etymology/src/test/resources/serialization/ideas.json");
+				"etinen-etymology/src/test/resources/serialization/ideas.json", new InferenceLogger());
 		ideaGen.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		System.out.println("(New) RAG from imported config and idea generator:");
@@ -188,9 +189,9 @@ public class EtymologyInferenceTest {
 		EtymologyConfig config;
 
 		if (!configPath.isEmpty()) {
-			config = EtymologyConfig.fromJson(mapper, configPath);
+			config = EtymologyConfig.fromJson(mapper, configPath, new InferenceLogger());
 		} else {
-			config = new EtymologyConfig();
+			config = new EtymologyConfig(new InferenceLogger());
 			config.addRuleWeight(EloaPriorRule.NAME, 5.0);
 			config.addRuleWeight(EunkPriorRule.NAME, 6.0);
 			config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
@@ -198,8 +199,8 @@ public class EtymologyInferenceTest {
 			config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
 		}
 
-//		 serialize(mapper, config);
-//		 deserialize(mapper);
+		// serialize(mapper, config);
+		// deserialize(mapper);
 
 		if (fictionalData) {
 			System.out.println("\nTEST 1");

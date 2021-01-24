@@ -56,10 +56,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
 		this.ideaGenConfig = ideaGenConfig;
 		if (ideaGenConfig == null) {
-			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig();
+			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig(logger);
 		}
 		logger.displayln("...Working with the following idea generation configuration:");
-		this.ideaGenConfig.printConfig();
+		this.ideaGenConfig.logConfig();
 		if (wordListDb == null) {
 			logger.displayln("...No CLDF Wordlist Database given, loading database.");
 			this.wordListDb = LoadUtils.loadDatabase(ideaGenConfig.wordListDbDir, logger);
@@ -99,15 +99,15 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
 			InferenceLogger logger) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, null);
+		return new EtymologyIdeaGenerator(problem, objectStore, null, null, null, logger);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
-			ObjectMapper mapper, String path) {
+			ObjectMapper mapper, String path, InferenceLogger logger) {
 		// return fromJson(problem, mapper,
 		// EtymologyIdeaGenerator.class.getResourceAsStream(path));
 		try {
-			return fromJson(problem, objectStore, mapper, new FileInputStream(path));
+			return fromJson(problem, objectStore, mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
@@ -115,10 +115,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
-			ObjectMapper mapper, InputStream in) {
-		EtymologyIdeaGeneratorConfig ideaGenConfig = new EtymologyIdeaGeneratorConfig();
-		ideaGenConfig.initializeFromJson(mapper, in);
-		InferenceLogger logger = new InferenceLogger();
+			ObjectMapper mapper, InputStream in, InferenceLogger logger) {
+		EtymologyIdeaGeneratorConfig ideaGenConfig = new EtymologyIdeaGeneratorConfig(logger);
+		ideaGenConfig.initializeFromJson(mapper, in, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(ideaGenConfig.wordListDbDir, logger);
 		PhoneticSimilarityHelper phonSimHelper = null;
@@ -212,7 +211,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
 				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth, branchwiseBorrowing, true,
-				null);
+				null, new InferenceLogger());
 		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
@@ -262,7 +261,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		EtymologyIdeaGeneratorConfig conf = new EtymologyIdeaGeneratorConfig(concepts, languages,
 				EtymologyIdeaGeneratorConfig.DB_DIR + "/tree.nwk", null, null, treeDepth, branchwiseBorrowing, true,
-				null);
+				null, new InferenceLogger());
 		return new EtymologyIdeaGenerator(problem, objectStore, conf, phonSimHelper, wordListDb, logger);
 	}
 
@@ -427,6 +426,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		removeIsolates();
 		logger.displayln("Language tree used for the inference:");
 		tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+		logger.displayln("");
 	}
 
 	// Costly because this involves renaming the leaf nodes in the tree.

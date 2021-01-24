@@ -53,8 +53,7 @@ public class EtymologyNelexTest {
 
 	public EtymologyNelexTest() {
 		logger = new InferenceLogger();
-		ios = new IndexedObjectStore(
-				LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", logger), null);
+		ios = new IndexedObjectStore(LoadUtils.loadDatabase("src/test/resources/northeuralex-0.9", logger), null);
 		renderer = EtinenConstantRenderer.newRenderer(ios, "src/test/resources/serialization/constant-renderer.json",
 				null);
 		isoToLanguageId = ios.getIsoToLanguageIdMap();
@@ -135,8 +134,10 @@ public class EtymologyNelexTest {
 	private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare,
 			boolean compareInherited) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem", EtymologyConfig.fromJson(
-				new ObjectMapper(), "etinen-etymology/src/test/resources/serialization/config-branchlvl.json"));
+		problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem",
+				EtymologyConfig.fromJson(new ObjectMapper(),
+						"etinen-etymology/src/test/resources/serialization/config-branchlvl.json",
+						new InferenceLogger()));
 		EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios, logger);
 		List<String> concepts = new ArrayList<>();
 		concepts.add(concept);
@@ -346,24 +347,24 @@ public class EtymologyNelexTest {
 
 		// test.run("HonigN", System.out, System.out, true);
 
-//		 ProblemManager problemManager =
-//		 ProblemManager.defaultProblemManager();
-//		 EtymologyProblem problem = new
-//		 EtymologyProblem(problemManager.getDbManager(),
-//		 "EtymologyNelexProblem");
-//		 EtymologyIdeaGenerator eig =
-//		 EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
-//		 eig.setConcepts(Collections.singleton("MeerN"));
-//		 Set<String> languages = new HashSet<>();
-//		 languages.add("french");
-//		 languages.add("italian");
-//		 eig.setLanguages(languages.stream().collect(Collectors.toList()));
-//		 eig.generateAtoms();
-//		 InferenceResult result =
-//		 problemManager.registerAndRunProblem(problem);
-//		 if (result != null) {
-//		 StandaloneFactViewer.launchWithData(test.renderer, problem, result);
-//		 }
+		// ProblemManager problemManager =
+		// ProblemManager.defaultProblemManager();
+		// EtymologyProblem problem = new
+		// EtymologyProblem(problemManager.getDbManager(),
+		// "EtymologyNelexProblem");
+		// EtymologyIdeaGenerator eig =
+		// EtymologyIdeaGenerator.initializeDefault(problem, test.ios);
+		// eig.setConcepts(Collections.singleton("MeerN"));
+		// Set<String> languages = new HashSet<>();
+		// languages.add("french");
+		// languages.add("italian");
+		// eig.setLanguages(languages.stream().collect(Collectors.toList()));
+		// eig.generateAtoms();
+		// InferenceResult result =
+		// problemManager.registerAndRunProblem(problem);
+		// if (result != null) {
+		// StandaloneFactViewer.launchWithData(test.renderer, problem, result);
+		// }
 	}
 
 	private enum LoanwordStatus {
