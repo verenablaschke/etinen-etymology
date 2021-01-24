@@ -36,7 +36,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private Set<Entry> entryPool;
 	private Set<String> removedIsolates;
 
-	// TODO use (vbl)
 	private InferenceLogger logger;
 
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
@@ -50,32 +49,32 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
 		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
-		System.err.println("...Creating EtymologyIdeaGenerator.");
+		if (logger == null)
+			this.logger = new InferenceLogger(); // TODO can this even be called w/o an inferencelogger (vbl)
+		else
+			this.logger = logger;
+		logger.displayln("...Creating EtymologyIdeaGenerator.");
 		this.ideaGenConfig = ideaGenConfig;
 		if (ideaGenConfig == null) {
 			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig();
 		}
-		System.err.println("...Working with the following idea generation configuration:");
+		logger.displayln("...Working with the following idea generation configuration:");
 		this.ideaGenConfig.printConfig();
-		if (logger == null)
-			this.logger = new InferenceLogger();
-		else
-			this.logger = logger;
 		if (wordListDb == null) {
-			System.err.println("...No CLDF Wordlist Database given, loading database.");
+			logger.displayln("...No CLDF Wordlist Database given, loading database.");
 			this.wordListDb = LoadUtils.loadDatabase(ideaGenConfig.wordListDbDir, logger);
 		} else {
 			this.wordListDb = wordListDb;
 		}
 
 		if (objectStore == null) {
-			System.err.println("...No IndexedObjectStore given, loading the default version.");
+			logger.displayln("...No IndexedObjectStore given, loading the default version.");
 			this.objectStore = new IndexedObjectStore(this.wordListDb, null);
 		} else {
 			this.objectStore = objectStore;
 		}
 		if (phonSimHelper == null) {
-			System.err.println("...No Phonetic Similarity Helper given, using default version.");
+			logger.displayln("...No Phonetic Similarity Helper given, using default version.");
 			IPATokenizer tokenizer = new IPATokenizer();
 			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
 					LoadUtils.loadCorrModel(ideaGenConfig.correspondenceDbDir, false, tokenizer, this.logger),
@@ -84,7 +83,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			this.phonSimHelper = phonSimHelper;
 		}
 		if (ideaGenConfig.modernLanguages.isEmpty()) {
-			System.err.println(
+			logger.displayln(
 					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
 			// this.modernLanguages = new ArrayList<>();
 		} else {
@@ -92,10 +91,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			setTree();
 		}
 		entryPool = new HashSet<>();
-		
+
 		updateLanguagesAndTree();
 
-		System.err.println("Finished setting up the Etymology Idea Generator.");
+		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
 	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
@@ -426,8 +425,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			addSiblingLanguages();
 		}
 		removeIsolates();
+		logger.displayln("Language tree used for the inference:");
+		tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
 	}
-	
+
 	// Costly because this involves renaming the leaf nodes in the tree.
 	public void setLanguages(List<String> languages) {
 		ideaGenConfig.setLanguages(languages);
@@ -508,7 +509,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// impose size==1
 		// in the while loop only for the leaf nodes, and size==0 afterwards
 		Set<String> toBeRemoved = new HashSet<>();
-		tree.getTree().saveLayeredTreeToFile(System.err);
 		boolean removedAny = false;
 		for (String lang : ideaGenConfig.modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
@@ -521,7 +521,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				tree.getTree().children.get(parent).remove(lang);
 				tree.getTree().parents.remove(lang);
 				toBeRemoved.add(lang);
-				System.err.println("Removed " + lang + ".");
 				logger.displayln("- Removed " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
