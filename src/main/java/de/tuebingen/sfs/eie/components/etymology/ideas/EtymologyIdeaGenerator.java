@@ -427,6 +427,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		removeIsolates();
 		logger.displayln("Language tree used for the inference:");
 		tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+		tree.getTree().saveLayeredTreeToFile(System.err);
 		logger.displayln("");
 	}
 
