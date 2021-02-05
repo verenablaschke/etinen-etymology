@@ -167,19 +167,19 @@ public class EtymologyConfig extends PslProblemConfig {
 	public void print(PrintStream out) {
 		out.println("Etymology config");
 		if (ignoreRules == null || ignoreRules.isEmpty()) {
-			out.println("No rules to ignore.");
+			out.println("- No rules to ignore.");
 		} else {
-			out.println("Ignoring:");
+			out.println("- Ignoring:");
 			for (String rule : ignoreRules) {
-				out.println("- " + rule);
+				out.println("  - " + rule);
 			}
 		}
 		if (ruleWeights == null || ruleWeights.isEmpty()) {
-			out.println("No rule weights changed.");
+			out.println("- No rule weights changed.");
 		} else {
-			out.println("Updated rule weights:");
+			out.println("- Updated rule weights:");
 			for (Entry<String, Double> entry : ruleWeights.entrySet()) {
-				out.println("- " + entry.getKey() + " : " + entry.getValue());
+				out.println("  - " + entry.getKey() + " : " + entry.getValue());
 			}
 		}
 	}

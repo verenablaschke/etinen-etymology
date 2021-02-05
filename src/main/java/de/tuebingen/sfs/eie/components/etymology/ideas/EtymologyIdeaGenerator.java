@@ -58,6 +58,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (ideaGenConfig == null) {
 			this.ideaGenConfig = new EtymologyIdeaGeneratorConfig(logger);
 		}
+		ideaGenConfig.printConfig();
 		logger.displayln("...Working with the following idea generation configuration:");
 		this.ideaGenConfig.logConfig();
 		if (wordListDb == null) {

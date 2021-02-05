@@ -235,13 +235,14 @@ public class EtymologyIdeaGeneratorConfig {
 	}
 	
 	public void printConfig() {
+		System.out.println("Idea generator config");
 		System.out.println("- branchwiseBorrowing: " + branchwiseBorrowing);
 		System.out.println("- treeDepth: " + treeDepth);
 		System.out.println("- treeFile: " + treeFile);
 		System.out.println("- wordListDbDir: " + wordListDbDir);
 		System.out.println("- correspondenceDbDir: " + correspondenceDbDir);
-		System.out.println("- concepts (in config!): " + concepts);
-		System.out.println("- modernLanguages (in config!): " + modernLanguages);
+		System.out.println("- concepts: " + concepts);
+		System.out.println("- modernLanguages: " + modernLanguages);
 		System.out.println("- networkEdgesFile: " + semanticNet.getNetworkEdgesFile());
 		System.out.println("- networkIdsFile: " + semanticNet.getNetworkIdsFile());
 		System.out.println("- nelexConceptsFile: " + semanticNet.getNelexConceptsFile());
