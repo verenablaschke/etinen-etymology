@@ -421,13 +421,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	// Costly because this involves renaming the leaf nodes in the tree.
 	private void updateLanguagesAndTree() {
 		setTree();
-		if (ideaGenConfig.addSiblingLanguages) {
-			addSiblingLanguages();
-		}
-		removeIsolates();
-		logger.displayln("Language tree used for the inference:");
-		tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+		System.err.println("Initial tree:");
 		tree.getTree().saveLayeredTreeToFile(System.err);
+		if (ideaGenConfig.addSiblingLanguages)
+			addSiblingLanguages();
+		removeIsolates();
 		logger.displayln("");
 	}
 
@@ -464,6 +462,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private void addSiblingLanguages() {
 		logger.displayln("Adding sibling languages to the language set.");
+		System.err.println("Adding sibling languages to the language set.");
 		Set<String> parents = new HashSet<>();
 		for (String lang : ideaGenConfig.modernLanguages) {
 			parents.add(tree.getParent(lang));
@@ -491,39 +490,41 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						ideaGenConfig.modernLanguages.add(langId);
 						addedAny = true;
 						logger.displayln("- Added " + langId + ".");
+						System.err.println("- Added " + langId + ".");
 						break;
 					}
 				}
 			}
 		}
-		if (addedAny)
+		if (addedAny) {
 			logger.displayln("New language set: " + ideaGenConfig.modernLanguages);
-		else
-			logger.displayln("No sibling languages found.");
+			tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+			tree.getTree().saveLayeredTreeToFile(System.err);
+		} else {
+			logger.displayln("No missing sibling languages found. Tree unchanged.");
+			System.err.println("No missing sibling languages found. Tree unchanged.");
+		}
 	}
 
 	private void removeIsolates() {
 		logger.displayln("Removing isolates from the language set.");
-		// TODO check again (vbl). might be a bit overzealous and remove more nodes than
-		// intended.
-		// the parent==null check shouldn't be necessary
-		// since the children map gets updated each loop, it might be necessary to
-		// impose size==1
-		// in the while loop only for the leaf nodes, and size==0 afterwards
+		System.err.println("Removing isolates from the language set.");
 		Set<String> toBeRemoved = new HashSet<>();
 		boolean removedAny = false;
 		for (String lang : ideaGenConfig.modernLanguages) {
 			String parent = tree.getTree().parents.get(lang);
-			// no siblings ...or...
-			while (tree.getTree().children.get(parent).size() == 1
-					// ...no children (as intermediary node)
+			while (// Leaf node with no siblings
+			(tree.getLevel(lang) == ideaGenConfig.treeDepth && tree.getTree().children.get(parent).size() == 1)
+					// Intermediate node with no children
 					|| (tree.getLevel(lang) < ideaGenConfig.treeDepth && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
+
 				removedAny = true;
 				tree.getTree().children.get(parent).remove(lang);
 				tree.getTree().parents.remove(lang);
 				toBeRemoved.add(lang);
-				logger.displayln("- Removed " + lang + ".");
+				logger.displayln("- Removing " + lang + ".");
+				System.err.println("- Removing " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
 				if (parent == null || lang.equals(tree.getTree().root)) {
@@ -532,10 +533,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 		ideaGenConfig.modernLanguages.removeAll(toBeRemoved);
-		if (removedAny)
+		if (removedAny) {
 			logger.displayln("Remaining languages: " + ideaGenConfig.modernLanguages);
-		else
-			logger.displayln("No isolates found.");
+			tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+			tree.getTree().saveLayeredTreeToFile(System.err);
+		} else {
+			logger.displayln("No isolates found. Tree unchanged.");
+			System.err.println("No isolates found. Tree unchanged.");
+		}
 		this.removedIsolates = toBeRemoved;
 	}
 
