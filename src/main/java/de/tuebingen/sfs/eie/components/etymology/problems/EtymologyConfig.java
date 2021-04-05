@@ -239,37 +239,4 @@ public class EtymologyConfig extends PslProblemConfig {
 		}
 		return rootNode;
 	}
-
-	public void setGuiMessager(Consumer<String> messager) {
-		logger.setGuiStream(messager);
-	}
-
-	public Consumer<String> getGuiMessager() {
-		return logger.getGuiStream();
-	}
-
-	public boolean setLogfile(String logfilePath) {
-		this.logfilePath = logfilePath;
-		if (logfilePath.isEmpty())
-			logger.setLogStream(System.err);
-		else {
-			try {
-				PrintStream logStream = new PrintStream(logfilePath, "UTF-8");
-				logger.setLogStream(logStream);
-			} catch (FileNotFoundException | UnsupportedEncodingException e) {
-				e.printStackTrace();
-				return false;
-			}
-		}
-		return true;
-	}
-
-	public String getLogfilePath() {
-		return logfilePath;
-	}
-
-	public InferenceLogger getLogger() {
-		return logger;
-	}
-
 }
