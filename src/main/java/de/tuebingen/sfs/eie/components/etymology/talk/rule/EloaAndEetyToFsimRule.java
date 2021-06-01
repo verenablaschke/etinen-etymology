@@ -3,9 +3,9 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 import java.util.List;
 import java.util.Locale;
 
-import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.talk.pred.FsimPred;
-import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;

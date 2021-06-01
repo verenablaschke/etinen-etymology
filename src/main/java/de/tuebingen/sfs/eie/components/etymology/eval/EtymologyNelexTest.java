@@ -22,16 +22,16 @@ import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyConfig;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
-import de.tuebingen.sfs.eie.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.gui.facts.StandaloneFactViewer;
-import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.util.LoadUtils;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.ProblemManager;
 import de.tuebingen.sfs.psl.util.data.Multimap;
 import de.tuebingen.sfs.psl.util.data.Multimap.CollectionType;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-import de.tuebingen.sfs.util.LoadUtils;
 
 public class EtymologyNelexTest {
 

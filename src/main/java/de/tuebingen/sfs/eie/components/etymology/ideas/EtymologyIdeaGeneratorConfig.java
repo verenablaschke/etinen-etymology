@@ -17,7 +17,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-import de.tuebingen.sfs.util.SemanticNetwork;
+import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
 
 public class EtymologyIdeaGeneratorConfig {
 

@@ -5,12 +5,12 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.talk.pred.EtinenTalkingPredicate;
-import de.tuebingen.sfs.eie.talk.pred.EunkPred;
-import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingArithmeticRule;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
+import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
+import de.tuebingen.sfs.eie.shared.talk.pred.EtinenTalkingPredicate;
+import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;

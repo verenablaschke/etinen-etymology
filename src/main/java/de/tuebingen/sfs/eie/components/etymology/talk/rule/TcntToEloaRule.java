@@ -2,8 +2,8 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import java.util.List;
 
-import de.tuebingen.sfs.eie.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.talk.rule.EtinenTalkingLogicalRule;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.util.data.StringUtils;

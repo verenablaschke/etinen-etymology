@@ -17,13 +17,13 @@ import de.jdellert.iwsa.sequence.PhoneticString;
 import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
-import de.tuebingen.sfs.eie.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.util.LoadUtils;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-import de.tuebingen.sfs.util.LoadUtils;
-import de.tuebingen.sfs.util.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
@@ -41,8 +41,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore,
-			EtymologyIdeaGeneratorConfig ideaGenConfig, PhoneticSimilarityHelper phonSimHelper,
-			CLDFWordlistDatabase wordListDb, InferenceLogger logger) {
+								  EtymologyIdeaGeneratorConfig ideaGenConfig, PhoneticSimilarityHelper phonSimHelper,
+								  CLDFWordlistDatabase wordListDb, InferenceLogger logger) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);

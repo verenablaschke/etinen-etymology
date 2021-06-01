@@ -4,10 +4,9 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.TreeSet;
 
-import de.tuebingen.sfs.eie.components.phylogeny.LanguageTree;
+import de.tuebingen.sfs.eie.shared.components.phylogeny.LanguageTree;
 
 public class LevelBasedPhylogeny {
 
