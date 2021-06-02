@@ -1,7 +1,10 @@
 {
-  "ruleWeights" : {
-    "EloaPrior" : 5.0,
-    "EunkPrior" : 6.0
+  "ruleWeights": {
+    "EloaPrior": 5.0,
+    "EunkPrior": 6.0
   },
-  "ignoreRules" : [ "EloaPlusEloa", "FsimAndSsimToEety" ]
+  "ignoreRules": [
+    "EloaPlusEloa",
+    "FsimAndSsimToEety"
+  ]
 }
