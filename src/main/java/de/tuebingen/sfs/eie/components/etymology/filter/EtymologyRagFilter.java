@@ -1,16 +1,16 @@
 package de.tuebingen.sfs.eie.components.etymology.filter;
 
-import java.awt.Color;
+import de.tuebingen.sfs.psl.engine.RagFilter;
+import de.tuebingen.sfs.psl.util.color.HslColor;
+import de.tuebingen.sfs.psl.util.data.RankingEntry;
+
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-
-import de.tuebingen.sfs.psl.engine.RagFilter;
-import de.tuebingen.sfs.psl.util.color.HslColor;
-import de.tuebingen.sfs.psl.util.data.RankingEntry;
 
 public class EtymologyRagFilter extends RagFilter {
 
