@@ -78,9 +78,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (config.getModernLanguages().isEmpty()) {
 			logger.displayln(
 					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
-			// this.modernLanguages = new ArrayList<>();
 		} else {
-			// this.modernLanguages = languages;
 			setTree();
 		}
 		entryPool = new HashSet<>();
