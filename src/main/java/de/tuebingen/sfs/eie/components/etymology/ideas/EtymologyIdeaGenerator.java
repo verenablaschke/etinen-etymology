@@ -40,19 +40,16 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private EtymologyConfig config;
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore,
-			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb, InferenceLogger logger) {
+			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
 		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
 		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
 		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
 		super(problem);
-		if (logger == null)
-			this.logger = new InferenceLogger(); // TODO can this even be called w/o an inferencelogger (vbl)
-		else
-			this.logger = logger;
+		this.logger = problem.getLogger();
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
-		config = problem.getConfig();
+		config = problem.getEtymologyConfig();
 		config.print(System.out);
 		logger.displayln("...Working with the following idea generation configuration:");
 		config.logSettings();
@@ -93,9 +90,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
-	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore,
-			InferenceLogger logger) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null, logger);
+	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore) {
+		return new EtymologyIdeaGenerator(problem, objectStore, null, null);
 	}
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
@@ -113,15 +109,15 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
 			ObjectMapper mapper, InputStream in, InferenceLogger logger) {
 		IPATokenizer tokenizer = new IPATokenizer();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(problem.getConfig().getWordListDbDir(), logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(problem.getEtymologyConfig().getWordListDbDir(),
+				logger);
 		PhoneticSimilarityHelper phonSimHelper = null;
-		if (objectStore != null && problem.getConfig().getCorrespondenceDbDir() != null
-				&& !problem.getConfig().getCorrespondenceDbDir().isEmpty())
-			phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(problem.getConfig().getCorrespondenceDbDir(), false, tokenizer, logger),
-					objectStore);
+		if (objectStore != null && problem.getEtymologyConfig().getCorrespondenceDbDir() != null
+				&& !problem.getEtymologyConfig().getCorrespondenceDbDir().isEmpty())
+			phonSimHelper = new PhoneticSimilarityHelper(tokenizer, LoadUtils.loadCorrModel(
+					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), objectStore);
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb, null);
+		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
@@ -196,7 +192,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			languages.add("hrv");
 		}
 
-		InferenceLogger logger = new InferenceLogger();
+		InferenceLogger logger = problem.getConfig().getLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyConfig.DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
@@ -204,7 +200,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				LoadUtils.loadCorrModel(EtymologyConfig.DB_DIR, false, tokenizer, logger), objectStore);
 		int treeDepth = 4;
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb, logger);
+		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
@@ -243,14 +239,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		List<String> concepts = new ArrayList<>();
 		concepts.add("SpracheN");
 
-		InferenceLogger logger = new InferenceLogger();
+		InferenceLogger logger = problem.getConfig().getLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyConfig.TEST_DB_DIR, logger);
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyConfig.DB_DIR, false, tokenizer, logger);
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres, objectStore);
 		int treeDepth = 2;
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb, logger);
+		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
 	}
 
 	public void generateAtoms() {

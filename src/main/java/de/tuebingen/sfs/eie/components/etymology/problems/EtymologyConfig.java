@@ -9,7 +9,12 @@ import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 
+import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
+import de.jdellert.iwsa.tokenize.IPATokenizer;
+import de.tuebingen.sfs.eie.shared.components.phylogeny.LanguageTree;
+import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
+import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.PslProblemConfig;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
@@ -39,6 +44,11 @@ public class EtymologyConfig extends PslProblemConfig {
 	public static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
 	public static final int MAX_DIST = 2;
 
+	private static final double DEFAULT_THRESHOLD = 0.05;
+	private static final int DEFAULT_TREE_DEPTH = 4;
+	private static final String DEFAULT_TREE_FILE = DB_DIR + "/tree.nwk";
+	private static final String DEFAULT_LOGFILE_PATH = "src/test/resources/etym-inf-log.txt";
+
 	private Integer treeDepth = null;
 	private Boolean branchwiseBorrowing = null;
 	private Boolean addSiblingLanguages = null;
@@ -49,44 +59,50 @@ public class EtymologyConfig extends PslProblemConfig {
 	private List<String> concepts = null;
 	private List<String> modernLanguages = null;
 
-	private static final double DEFAULT_THRESHOLD = 0.05;
 	private Map<String, Double> ruleWeights;
 	private Set<String> ignoreRules;
 	private double persistenceThreshold;
-	private String logfilePath;
 	private InferenceLogger logger;
 
 	// --------------
 	// Constructors
 	// --------------
 
+	public EtymologyConfig() {
+		resetToDefaults();
+	}
+
+	public EtymologyConfig(String problemId, DatabaseManager dbManager) {
+		this();
+		setNonPersistableFeatures(problemId, dbManager);
+	}
+
 	public EtymologyConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
 			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, Boolean branchwiseBorrowing,
 			Boolean addSiblingLanguages, String correspondenceDbDir, Map<String, Double> ruleWeights,
 			Set<String> ignoreRules, Double persistenceThreshold, InferenceLogger logger) {
-		this.logger = logger;
+		resetToDefaults();
+		if (logger != null) {
+			this.logger = logger;
+		}
 		logger.displayln("Creating EtymologyIdeaGeneratorConfig.");
 		if (concepts == null) {
 			logger.displayln("...No concepts specified.");
-			this.concepts = new ArrayList<>();
 		} else {
 			this.concepts = concepts;
 		}
 		if (semanticNet == null) {
 			logger.displayln("...No semantic net given, using default network.");
-			this.setSemanticNet(new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, MAX_DIST));
 		} else {
 			this.setSemanticNet(semanticNet);
 		}
 		if (wordListDbDir == null) {
 			logger.displayln("...No CLDF Wordlist Database given, using default.");
-			this.wordListDbDir = DB_DIR;
 		} else {
 			this.wordListDbDir = wordListDbDir;
 		}
 		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty()) {
 			logger.displayln("...No Correspondence Database directory given, using default.");
-			this.correspondenceDbDir = DB_DIR;
 		} else {
 			this.correspondenceDbDir = correspondenceDbDir;
 		}
@@ -101,39 +117,38 @@ public class EtymologyConfig extends PslProblemConfig {
 			this.addSiblingLanguages = true;
 		}
 		if (treeDepth < 1) {
-			this.treeDepth = 4;
-			System.err
-					.println("...No phylogenetic tree depth specified, using default value (" + this.treeDepth + ").");
+			System.err.println(
+					"...No phylogenetic tree depth specified, using default value (" + DEFAULT_TREE_DEPTH + ").");
 		} else {
 			this.treeDepth = treeDepth;
 		}
 		if (treeFile == null || treeFile.trim().isEmpty()) {
-			this.treeFile = DB_DIR + "/tree.nwk";
-			logger.displayln("...No input file for the tree specified, using default: " + this.treeFile);
+			logger.displayln("...No input file for the tree specified, using default: " + DEFAULT_TREE_FILE);
 		} else {
 			this.treeFile = treeFile;
 		}
 		if (modernLanguages == null) {
 			logger.displayln(
 					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
-			this.setModernLanguages(new ArrayList<>());
 		} else {
 			this.setModernLanguages(modernLanguages);
 		}
-		defaultValues();
-		if (ruleWeights != null) {
+		if (ruleWeights == null) {
+			logger.displayln("...No rule weights specified.");
+		} else {
 			this.ruleWeights = ruleWeights;
 		}
-		if (ignoreRules != null) {
+		if (ignoreRules == null) {
+			logger.displayln("...No blacklist of rules specified.");
+		} else {
 			this.ignoreRules = ignoreRules;
 		}
-		if (persistenceThreshold != null) {
+		if (persistenceThreshold == null) {
+			logger.displayln(
+					"...No confidence threshold for persistence specified, using default: " + DEFAULT_THRESHOLD);
+		} else {
 			this.persistenceThreshold = persistenceThreshold;
 		}
-	}
-
-	public EtymologyConfig(InferenceLogger logger) {
-		this(null, null, null, null, null, -1, null, null, null, null, null, null, logger);
 	}
 
 	public static EtymologyConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
@@ -148,23 +163,63 @@ public class EtymologyConfig extends PslProblemConfig {
 		}
 	}
 
-	private void defaultValues() {
-		this.ruleWeights = new TreeMap<>();
-		this.ignoreRules = new TreeSet<>();
-		setLogfile("src/test/resources/etym-inf-log.txt");
-		persistenceThreshold = DEFAULT_THRESHOLD;
+	public EtymologyConfig copy() {
+		EtymologyConfig copy = new EtymologyConfig();
+		super.copyFields(copy);
+
+		copy.concepts = new ArrayList<>(concepts);
+		copy.modernLanguages = new ArrayList<>(modernLanguages);
+
+		copy.setSemanticNet(new SemanticNetwork(semanticNet.getNetworkEdgesFile(), semanticNet.getNetworkIdsFile(),
+				semanticNet.getNelexConceptsFile(), semanticNet.getMaxDist()));
+
+		copy.wordListDbDir = wordListDbDir;
+		copy.correspondenceDbDir = correspondenceDbDir;
+
+		copy.treeDepth = treeDepth;
+		copy.treeFile = treeFile;
+
+		copy.ruleWeights = new HashMap<>(ruleWeights);
+		copy.ignoreRules = new HashSet<>(ignoreRules);
+
+		copy.branchwiseBorrowing = branchwiseBorrowing;
+		copy.addSiblingLanguages = addSiblingLanguages;
+
+//		copy.logger = logger;
+		copy.setLogfile(super.getLogfilePath());
+		copy.persistenceThreshold = persistenceThreshold;
+
+		return copy;
 	}
-
-	// @Override
-	// @SuppressWarnings("unchecked")
-	// public void setFromJson(ObjectMapper mapper, JsonNode rootNode) {
-	// super.setFromJson(mapper, rootNode);
-
-	// }
 
 	// -------------
 	// Get/set/add
 	// -------------
+
+	public void resetToDefaults() {
+		super.resetToDefaults();
+
+		concepts = new ArrayList<>();
+		setModernLanguages(new ArrayList<>());
+
+		setSemanticNet(new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, MAX_DIST));
+
+		wordListDbDir = DB_DIR;
+		correspondenceDbDir = DB_DIR;
+
+		treeDepth = DEFAULT_TREE_DEPTH;
+		treeFile = DEFAULT_TREE_FILE;
+
+		ruleWeights = new TreeMap<>();
+		ignoreRules = new TreeSet<>();
+
+		branchwiseBorrowing = true;
+		addSiblingLanguages = true;
+
+		logger = new InferenceLogger();
+		setLogfile(DEFAULT_LOGFILE_PATH);
+		persistenceThreshold = DEFAULT_THRESHOLD;
+	}
 
 	public int getTreeDepth() {
 		return treeDepth;
@@ -279,6 +334,11 @@ public class EtymologyConfig extends PslProblemConfig {
 
 	public void setModernLanguages(List<String> modernLanguages) {
 		this.modernLanguages = modernLanguages;
+	}
+
+	public void setNonPersistableFeatures(String problemId, DatabaseManager dbManager) {
+		setName(problemId);
+		setDbManager(dbManager);
 	}
 
 	// ------------
@@ -463,4 +523,5 @@ public class EtymologyConfig extends PslProblemConfig {
 	public void setSemanticNet(SemanticNetwork semanticNet) {
 		this.semanticNet = semanticNet;
 	}
+
 }

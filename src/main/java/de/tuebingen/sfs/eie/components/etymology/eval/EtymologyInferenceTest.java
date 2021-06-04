@@ -42,7 +42,8 @@ public class EtymologyInferenceTest {
 		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
 		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, false,
 				false);
 		ideaGen.generateAtoms();
@@ -84,7 +85,8 @@ public class EtymologyInferenceTest {
 			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		String problemId = "TestDataEtymologyProblem";
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), problemId, config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, synonyms, moreLangsPerBranch, moreBranches,
 				branchwiseBorrowing).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
@@ -103,7 +105,8 @@ public class EtymologyInferenceTest {
 
 	private static void runTestLanguage(EtymologyConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(problem, largeConceptSet, largeLanguageSet)
 				.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
@@ -113,7 +116,8 @@ public class EtymologyInferenceTest {
 
 	private static void runTestHead(EtymologyConfig config, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(problem, largeLanguageSet).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
@@ -122,7 +126,8 @@ public class EtymologyInferenceTest {
 
 	private static void runTestMountain(EtymologyConfig config, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(problem, largeLanguageSet).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
@@ -132,7 +137,8 @@ public class EtymologyInferenceTest {
 	private static void serialize(ObjectMapper mapper, EtymologyConfig config) {
 		config.export(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false,
 				false, true);
 		ideaGen.generateAtoms();
@@ -147,7 +153,8 @@ public class EtymologyInferenceTest {
 		EtymologyConfig config = EtymologyConfig.fromJson(mapper,
 				"etinen-etymology/src/test/resources/serialization/config.json", new InferenceLogger());
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblem problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyProblem", config);
+		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
+		EtymologyProblem problem = new EtymologyProblem(config);
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, null, mapper,
 				"etinen-etymology/src/test/resources/serialization/ideas.json", new InferenceLogger());
 		ideaGen.generateAtoms();
@@ -191,7 +198,7 @@ public class EtymologyInferenceTest {
 		if (!configPath.isEmpty()) {
 			config = EtymologyConfig.fromJson(mapper, configPath, new InferenceLogger());
 		} else {
-			config = new EtymologyConfig(new InferenceLogger());
+			config = new EtymologyConfig();
 			config.addRuleWeight(EloaPriorRule.NAME, 5.0);
 			config.addRuleWeight(EunkPriorRule.NAME, 6.0);
 			config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);

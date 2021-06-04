@@ -170,11 +170,12 @@ public class EtymologyNelexTest {
     private InferenceResult run(String concept, PrintStream verboseOut, PrintStream out, boolean compare,
                                 boolean compareInherited) {
         ProblemManager problemManager = ProblemManager.defaultProblemManager();
-        problem = new EtymologyProblem(problemManager.getDbManager(), "EtymologyNelexProblem",
-                EtymologyConfig.fromJson(new ObjectMapper(),
-                        "etinen-etymology/src/test/resources/serialization/config-branchlvl.json",
-                        new InferenceLogger()));
-        EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios, logger);
+        EtymologyConfig config = EtymologyConfig.fromJson(new ObjectMapper(),
+                "etinen-etymology/src/test/resources/serialization/config-branchlvl.json",
+                new InferenceLogger());
+        config.setNonPersistableFeatures("EtymologyNelexProblem", problemManager.getDbManager());
+        problem = new EtymologyProblem(config);
+        EtymologyIdeaGenerator eig = EtymologyIdeaGenerator.initializeDefault(problem, ios);
         List<String> concepts = new ArrayList<>();
         concepts.add(concept);
         eig.setConcepts(concepts);
