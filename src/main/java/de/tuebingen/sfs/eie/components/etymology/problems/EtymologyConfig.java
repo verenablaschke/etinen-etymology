@@ -1,23 +1,5 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
-import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
-import de.jdellert.iwsa.tokenize.IPATokenizer;
-import de.tuebingen.sfs.eie.shared.components.phylogeny.LanguageTree;
-import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
-import de.tuebingen.sfs.psl.engine.DatabaseManager;
-import de.tuebingen.sfs.psl.engine.PslProblemConfig;
-import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -34,6 +16,20 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+
+import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
+import de.tuebingen.sfs.psl.engine.DatabaseManager;
+import de.tuebingen.sfs.psl.engine.PslProblemConfig;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyConfig extends PslProblemConfig {
 
@@ -163,6 +159,12 @@ public class EtymologyConfig extends PslProblemConfig {
 		}
 	}
 
+	public static EtymologyConfig fromJson(ObjectMapper mapper, JsonNode configJsonRoot) {
+		EtymologyConfig config = new EtymologyConfig();
+		config.setFromJson(mapper, configJsonRoot);
+		return config;
+	}
+
 	public EtymologyConfig copy() {
 		EtymologyConfig copy = new EtymologyConfig();
 		super.copyFields(copy);
@@ -185,7 +187,7 @@ public class EtymologyConfig extends PslProblemConfig {
 		copy.branchwiseBorrowing = branchwiseBorrowing;
 		copy.addSiblingLanguages = addSiblingLanguages;
 
-//		copy.logger = logger;
+		// copy.logger = logger;
 		copy.setLogfile(super.getLogfilePath());
 		copy.persistenceThreshold = persistenceThreshold;
 
@@ -295,12 +297,20 @@ public class EtymologyConfig extends PslProblemConfig {
 		this.setSemanticNet(new SemanticNetwork(networkEdgesFile, networkIdsFile, nelexConceptsFile, maxDist));
 	}
 
+	public void setIgnoreRules(Set<String> ignoreRules) {
+		this.ignoreRules = ignoreRules;
+	}
+
 	public void addRuleToIgnoreList(String rule) {
 		ignoreRules.add(rule);
 	}
 
 	public boolean include(String rule) {
 		return !ignoreRules.contains(rule);
+	}
+
+	public void setRuleWeights(Map<String, Double> ruleWeights) {
+		this.ruleWeights = ruleWeights;
 	}
 
 	public void addRuleWeight(String rule, double weight) {
@@ -334,6 +344,14 @@ public class EtymologyConfig extends PslProblemConfig {
 
 	public void setModernLanguages(List<String> modernLanguages) {
 		this.modernLanguages = modernLanguages;
+	}
+
+	public SemanticNetwork getSemanticNet() {
+		return semanticNet;
+	}
+
+	public void setSemanticNet(SemanticNetwork semanticNet) {
+		this.semanticNet = semanticNet;
 	}
 
 	public void setNonPersistableFeatures(String problemId, DatabaseManager dbManager) {
@@ -412,38 +430,106 @@ public class EtymologyConfig extends PslProblemConfig {
 	// ---------------
 
 	@SuppressWarnings("unchecked")
+	public void setFromJson(ObjectMapper mapper, JsonNode rootNode) {
+		super.setFromJson(mapper, rootNode);
+
+		try {
+			Object concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
+			if (concepts != null)
+				setConcepts((List<String>) concepts);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object modernLanguages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
+			if (modernLanguages != null)
+				setModernLanguages((List<String>) modernLanguages);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
+			if (treeDepth != null)
+				setTreeDepth((Integer) treeDepth);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object treeFile = mapper.treeToValue(rootNode.path("treeDepth"), String.class);
+			if (treeFile != null)
+				setTreeFile((String) treeFile);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
+			if (branchwiseBorrowing != null)
+				setBranchwiseBorrowing((Boolean) branchwiseBorrowing);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object addSiblingLanguages = mapper.treeToValue(rootNode.path("addSiblingLanguages"), Boolean.class);
+			if (addSiblingLanguages != null)
+				setAddSiblingLanguages((Boolean) addSiblingLanguages);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			HashMap<String, Object> semanticNetConfig = (HashMap<String, Object>) mapper
+					.treeToValue(rootNode.path("semanticNet"), HashMap.class);
+			if (semanticNetConfig != null) {
+				setSemanticNetworkConfig((String) semanticNetConfig.get("edges"), (String) semanticNetConfig.get("ids"),
+						(String) semanticNetConfig.get("nelexConcepts"), (Integer) semanticNetConfig.get("maxDist"));
+			}
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
+			if (wordListDbDir != null)
+				setWordListDbDir((String) wordListDbDir);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
+			if (correspondenceDbDir != null)
+				setCorrespondenceDbDir((String) correspondenceDbDir);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), HashMap.class);
+			if (ruleWeights != null) {
+				setRuleWeights((HashMap<String, Double>) ruleWeights);
+			}
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), HashSet.class);
+			if (ignoreRules != null) {
+				setIgnoreRules((HashSet<String>) ignoreRules);
+			}
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+		try {
+			Object persistenceThreshold = mapper.treeToValue(rootNode.path("persistenceThreshold"), Double.class);
+			if (persistenceThreshold != null)
+				setBeliefThreshold((Double) persistenceThreshold);
+		} catch (JsonProcessingException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
-		List<String> concepts = null;
-		List<String> modernLanguages = null;
-		Integer treeDepth = -1;
-		Boolean branchwiseBorrowing = null;
-		Boolean addSiblingLanguages = null;
-		String treeFile = null;
-		Map<String, Object> semanticNetConfig = null;
-		SemanticNetwork semanticNet = null;
-		String wordListDbDir = null;
-		String correspondenceDbDir = null;
-		Map<String, Double> ruleWeights = null;
-		Set<String> ignoreRules = null;
-		double persistenceThreshold = -1;
+		EtymologyConfig config = new EtymologyConfig();
 		try {
 			JsonNode rootNode = mapper.readTree(in);
-			concepts = (List<String>) loadJsonEntry("concepts", ArrayList.class, mapper, rootNode);
-			modernLanguages = (List<String>) loadJsonEntry("modernLanguages", ArrayList.class, mapper, rootNode);
-			treeDepth = (Integer) loadJsonEntry("treeDepth", Integer.class, mapper, rootNode);
-			branchwiseBorrowing = (Boolean) loadJsonEntry("branchwiseBorrowing", Boolean.class, mapper, rootNode);
-			addSiblingLanguages = (Boolean) loadJsonEntry("addSiblingLanguages", Boolean.class, mapper, rootNode);
-			treeFile = (String) loadJsonEntry("treeFile", String.class, mapper, rootNode);
-			semanticNetConfig = (Map<String, Object>) loadJsonEntry("semanticNet", HashMap.class, mapper, rootNode);
-			if (semanticNetConfig != null)
-				semanticNet = new SemanticNetwork((String) semanticNetConfig.get("edges"),
-						(String) semanticNetConfig.get("ids"), (String) semanticNetConfig.get("nelexConcepts"),
-						(Integer) semanticNetConfig.get("maxDist"));
-			wordListDbDir = (String) loadJsonEntry("wordListDbDir", String.class, mapper, rootNode);
-			correspondenceDbDir = (String) loadJsonEntry("correspondenceDbDir", String.class, mapper, rootNode);
-			ruleWeights = (Map<String, Double>) loadJsonEntry("ruleWeights", HashMap.class, mapper, rootNode);
-			ignoreRules = (Set<String>) loadJsonEntry("ignoreRules", HashSet.class, mapper, rootNode);
-			persistenceThreshold = (Double) loadJsonEntry("persistenceThreshold", Double.class, mapper, rootNode);
+			config.setFromJson(mapper, rootNode);
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -452,18 +538,7 @@ public class EtymologyConfig extends PslProblemConfig {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		return new EtymologyConfig(concepts, modernLanguages, treeFile, semanticNet, wordListDbDir, treeDepth,
-				branchwiseBorrowing, addSiblingLanguages, correspondenceDbDir, ruleWeights, ignoreRules,
-				persistenceThreshold, logger);
-	}
-
-	private static Object loadJsonEntry(String name, Class className, ObjectMapper mapper, JsonNode rootNode) {
-		try {
-			return mapper.treeToValue(rootNode.path(name), className);
-		} catch (JsonProcessingException e) {
-			e.printStackTrace();
-		}
-		return null;
+		return config;
 	}
 
 	public void export(ObjectMapper mapper, String path) {
@@ -514,14 +589,6 @@ public class EtymologyConfig extends PslProblemConfig {
 			e.printStackTrace();
 		}
 		return rootNode;
-	}
-
-	public SemanticNetwork getSemanticNet() {
-		return semanticNet;
-	}
-
-	public void setSemanticNet(SemanticNetwork semanticNet) {
-		this.semanticNet = semanticNet;
 	}
 
 }
