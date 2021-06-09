@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
 import com.fasterxml.jackson.databind.node.IntNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -145,12 +146,25 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		}
 	}
 
-	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
-		// if (! path.startsWith("/"))
-		// path = "/" + path;
-		// return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
+	public static EtymologyProblemConfig fromStream(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
+		EtymologyProblemConfig config = new EtymologyProblemConfig();
 		try {
-			return fromJson(mapper, new FileInputStream(path), logger);
+			JsonNode rootNode = mapper.readTree(in);
+			config.setFromJson(mapper, rootNode);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		try {
+			in.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return config;
+	}
+
+	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
+		try {
+			return fromStream(mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
@@ -523,22 +537,6 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	}
 
-	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
-		EtymologyProblemConfig config = new EtymologyProblemConfig();
-		try {
-			JsonNode rootNode = mapper.readTree(in);
-			config.setFromJson(mapper, rootNode);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		try {
-			in.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return config;
-	}
-
 	public void export(ObjectMapper mapper, String path) {
 		try {
 			export(mapper, new FileOutputStream(path));
@@ -549,7 +547,18 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	public void export(ObjectMapper mapper, OutputStream out) {
 		try {
-			ObjectNode rootNode = mapper.createObjectNode();
+			mapper.writerWithDefaultPrettyPrinter().writeValue(out, toJson(mapper));
+		} catch (NullPointerException | IOException e) {
+			System.err.println("Could not save the EtymologyProblemConfig.");
+			e.printStackTrace();
+		}
+	}
+
+	@Override
+	public ObjectNode toJson(ObjectMapper mapper) {
+		ObjectNode rootNode = null;
+		try {
+			rootNode = mapper.createObjectNode();
 			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
 			rootNode.set("modernLanguages",
 					(ArrayNode) mapper.readTree(mapper.writeValueAsString(getModernLanguages())));
@@ -569,20 +578,7 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			rootNode.set("ruleWeights", (ObjectNode) mapper.readTree(mapper.writeValueAsString(ruleWeights)));
 			rootNode.set("ignoreRules", (ArrayNode) mapper.readTree(mapper.writeValueAsString(ignoreRules)));
 			rootNode.set("persistenceThreshold",
-					(ArrayNode) mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
-			mapper.writerWithDefaultPrettyPrinter().writeValue(out, rootNode);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public ObjectNode toJson(ObjectMapper mapper) {
-		ObjectNode rootNode = super.toJson(mapper);
-		try {
-			rootNode.set("ruleWeights", mapper.readTree(mapper.writeValueAsString(ruleWeights)));
-			rootNode.set("ignoreRules", mapper.readTree(mapper.writeValueAsString(ignoreRules)));
-			rootNode.set("persistenceThreshold", mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
+					(DoubleNode) mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
