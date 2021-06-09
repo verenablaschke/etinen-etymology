@@ -212,6 +212,8 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	public void resetToDefaults() {
 		super.resetToDefaults();
+		super.setName("etymology");
+		super.setDeclareUserPrior(false); // TODO
 
 		concepts = new ArrayList<>();
 		setModernLanguages(new ArrayList<>());
@@ -443,49 +445,65 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	@SuppressWarnings("unchecked")
 	public void setFromJson(ObjectMapper mapper, JsonNode rootNode) {
+		System.err.println("Setting EtymologyProblemConfig from JSON");
 		super.setFromJson(mapper, rootNode);
 
 		try {
-			Object concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
+			String name = mapper.treeToValue(rootNode.path(PslProblemConfig.NAME_FIELD), String.class);
+			if (name != null)
+				super.setName(name);
+		} catch (JsonProcessingException e) {
+			System.err.println("No name given. (Using default.)");
+		}
+		try {
+			Boolean declareUserPrior = mapper.treeToValue(rootNode.path(PslProblemConfig.USER_PRIOR_FIELD),
+					Boolean.class);
+			if (declareUserPrior != null)
+				super.setDeclareUserPrior(declareUserPrior);
+		} catch (JsonProcessingException e) {
+			System.err.println("No value for declareUserPrior given. (Using default.)");
+		}
+		try {
+			List<String> concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
 			if (concepts != null)
-				setConcepts((List<String>) concepts);
+				setConcepts(concepts);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No concept list given. (Using default.)");
 		}
 		try {
-			Object modernLanguages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
+			List<String> modernLanguages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
 			if (modernLanguages != null)
-				setModernLanguages((List<String>) modernLanguages);
+				setModernLanguages(modernLanguages);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No language list given. (Using default.)");
 		}
 		try {
-			Object treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
+			Integer treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
 			if (treeDepth != null)
-				setTreeDepth((Integer) treeDepth);
+				setTreeDepth(treeDepth);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No tree depth given. (Using default.)");
 		}
 		try {
-			Object treeFile = mapper.treeToValue(rootNode.path("treeDepth"), String.class);
+			String treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
 			if (treeFile != null)
-				setTreeFile((String) treeFile);
+				setTreeFile(treeFile);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No tree file given. (Using default.)");
 		}
 		try {
-			Object branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
+			Boolean branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
 			if (branchwiseBorrowing != null)
-				setBranchwiseBorrowing((Boolean) branchwiseBorrowing);
+				setBranchwiseBorrowing(branchwiseBorrowing);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No value for branchwiseBorrowing given. (Using default.)");
 		}
 		try {
-			Object addSiblingLanguages = mapper.treeToValue(rootNode.path("addSiblingLanguages"), Boolean.class);
+			Boolean addSiblingLanguages = mapper.treeToValue(rootNode.path("addSiblingLanguages"), Boolean.class);
 			if (addSiblingLanguages != null)
-				setAddSiblingLanguages((Boolean) addSiblingLanguages);
+				setAddSiblingLanguages(addSiblingLanguages);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No value for addSiblingLanguages given. (Using default.)");
 		}
 		try {
 			HashMap<String, Object> semanticNetConfig = (HashMap<String, Object>) mapper
@@ -495,21 +513,21 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 						(String) semanticNetConfig.get("nelexConcepts"), (Integer) semanticNetConfig.get("maxDist"));
 			}
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No semantic network given. (Using default.)");
 		}
 		try {
-			Object wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
+			String wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
 			if (wordListDbDir != null)
-				setWordListDbDir((String) wordListDbDir);
+				setWordListDbDir(wordListDbDir);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No wordListDbDir given. (Using default.)");
 		}
 		try {
-			Object correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
+			String correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
 			if (correspondenceDbDir != null)
-				setCorrespondenceDbDir((String) correspondenceDbDir);
+				setCorrespondenceDbDir(correspondenceDbDir);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No correspondenceDbDir given. (Using default.)");
 		}
 		try {
 			Object ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), HashMap.class);
@@ -517,7 +535,7 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 				setRuleWeights((HashMap<String, Double>) ruleWeights);
 			}
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No ruleWeights given. (Using default.)");
 		}
 		try {
 			Object ignoreRules = mapper.treeToValue(rootNode.path("ignoreRules"), HashSet.class);
@@ -525,14 +543,14 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 				setIgnoreRules((HashSet<String>) ignoreRules);
 			}
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No rule blacklist given. (Using default.)");
 		}
 		try {
 			Object persistenceThreshold = mapper.treeToValue(rootNode.path("persistenceThreshold"), Double.class);
 			if (persistenceThreshold != null)
 				setBeliefThreshold((Double) persistenceThreshold);
 		} catch (JsonProcessingException e) {
-			e.printStackTrace();
+			System.err.println("No persistenceThreshold given. (Using default.)");
 		}
 
 	}
@@ -559,12 +577,17 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		ObjectNode rootNode = null;
 		try {
 			rootNode = mapper.createObjectNode();
+			rootNode.set(PslProblemConfig.NAME_FIELD, mapper.readTree(mapper.writeValueAsString(super.getName())));
+			rootNode.set(PslProblemConfig.USER_PRIOR_FIELD,
+					mapper.readTree(mapper.writeValueAsString(super.isDeclareUserPrior())));
 			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
 			rootNode.set("modernLanguages",
 					(ArrayNode) mapper.readTree(mapper.writeValueAsString(getModernLanguages())));
 			rootNode.set("treeDepth", new IntNode(treeDepth));
 			rootNode.set("branchwiseBorrowing",
 					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
+			rootNode.set("addSiblingLanguages",
+					(BooleanNode) mapper.readTree(mapper.writeValueAsString(addSiblingLanguages)));
 			rootNode.set("treeFile", new TextNode(treeFile));
 			rootNode.set("wordListDbDir", new TextNode(wordListDbDir));
 			rootNode.set("correspondenceDbDir", new TextNode(correspondenceDbDir));
