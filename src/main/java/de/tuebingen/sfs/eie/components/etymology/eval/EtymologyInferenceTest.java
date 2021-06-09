@@ -3,7 +3,7 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyConfig;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.DirectEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
@@ -37,7 +37,7 @@ public class EtymologyInferenceTest {
 
 	private static void run(Map<String, Double> ruleWeights, PrintStream out) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyConfig config = new EtymologyConfig(null, null, null, null, null, -1, null, null, null, ruleWeights,
+		EtymologyProblemConfig config = new EtymologyProblemConfig(null, null, null, null, null, -1, null, null, null, ruleWeights,
 				null, null, new InferenceLogger());
 		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
@@ -81,7 +81,7 @@ public class EtymologyInferenceTest {
 		}
 	}
 
-	private static EtymologyRagFilter runTestFictional(EtymologyConfig config, boolean synonyms,
+	private static EtymologyRagFilter runTestFictional(EtymologyProblemConfig config, boolean synonyms,
 			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing, boolean showAllEloa) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		String problemId = "TestDataEtymologyProblem";
@@ -103,7 +103,7 @@ public class EtymologyInferenceTest {
 		return (EtymologyRagFilter) rag.getRagFilter();
 	}
 
-	private static void runTestLanguage(EtymologyConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
+	private static void runTestLanguage(EtymologyProblemConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
@@ -114,7 +114,7 @@ public class EtymologyInferenceTest {
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 	}
 
-	private static void runTestHead(EtymologyConfig config, boolean largeLanguageSet) {
+	private static void runTestHead(EtymologyProblemConfig config, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
@@ -124,7 +124,7 @@ public class EtymologyInferenceTest {
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 	}
 
-	private static void runTestMountain(EtymologyConfig config, boolean largeLanguageSet) {
+	private static void runTestMountain(EtymologyProblemConfig config, boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
@@ -134,7 +134,7 @@ public class EtymologyInferenceTest {
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
 	}
 
-	private static void serialize(ObjectMapper mapper, EtymologyConfig config) {
+	private static void serialize(ObjectMapper mapper, EtymologyProblemConfig config) {
 		config.export(mapper, "etinen-etymology/src/test/resources/serialization/config.json");
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
@@ -150,7 +150,7 @@ public class EtymologyInferenceTest {
 	}
 
 	private static void deserialize(ObjectMapper mapper) {
-		EtymologyConfig config = EtymologyConfig.fromJson(mapper,
+		EtymologyProblemConfig config = EtymologyProblemConfig.fromJson(mapper,
 				"etinen-etymology/src/test/resources/serialization/config.json", new InferenceLogger());
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
@@ -193,12 +193,12 @@ public class EtymologyInferenceTest {
 		boolean head = false;
 
 		ObjectMapper mapper = new ObjectMapper();
-		EtymologyConfig config;
+		EtymologyProblemConfig config;
 
 		if (!configPath.isEmpty()) {
-			config = EtymologyConfig.fromJson(mapper, configPath, new InferenceLogger());
+			config = EtymologyProblemConfig.fromJson(mapper, configPath, new InferenceLogger());
 		} else {
-			config = new EtymologyConfig();
+			config = new EtymologyProblemConfig();
 			config.addRuleWeight(EloaPriorRule.NAME, 5.0);
 			config.addRuleWeight(EunkPriorRule.NAME, 6.0);
 			config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);

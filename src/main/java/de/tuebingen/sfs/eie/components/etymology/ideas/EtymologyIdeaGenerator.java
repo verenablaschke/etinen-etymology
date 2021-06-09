@@ -5,7 +5,7 @@ import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.jdellert.iwsa.sequence.PhoneticString;
 import de.jdellert.iwsa.tokenize.IPATokenizer;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyConfig;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
@@ -37,7 +37,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private Set<Entry> entryPool;
 	private Set<String> removedIsolates;
 	private InferenceLogger logger;
-	private EtymologyConfig config;
+	private EtymologyProblemConfig config;
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb) {
@@ -191,11 +191,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		InferenceLogger logger = problem.getConfig().getLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyConfig.DB_DIR, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(EtymologyConfig.DB_DIR, false, tokenizer, logger), objectStore);
+				LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger), objectStore);
 		int treeDepth = 4;
 
 		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
@@ -238,8 +238,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		concepts.add("SpracheN");
 
 		InferenceLogger logger = problem.getConfig().getLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyConfig.TEST_DB_DIR, logger);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyConfig.DB_DIR, false, tokenizer, logger);
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, logger);
+		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger);
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres, objectStore);
 		int treeDepth = 2;

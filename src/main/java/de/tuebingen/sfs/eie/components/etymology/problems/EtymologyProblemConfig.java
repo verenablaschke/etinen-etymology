@@ -31,7 +31,7 @@ import de.tuebingen.sfs.psl.engine.DatabaseManager;
 import de.tuebingen.sfs.psl.engine.PslProblemConfig;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
-public class EtymologyConfig extends PslProblemConfig {
+public class EtymologyProblemConfig extends PslProblemConfig {
 
 	public static final String DB_DIR = "src/test/resources/northeuralex-0.9";
 	public static final String TEST_DB_DIR = "etinen-etymology/src/test/resources/testdb";
@@ -64,23 +64,21 @@ public class EtymologyConfig extends PslProblemConfig {
 	// Constructors
 	// --------------
 
-	public EtymologyConfig() {
+	public EtymologyProblemConfig() {
 		resetToDefaults();
 	}
 
-	public EtymologyConfig(String problemId, DatabaseManager dbManager) {
+	public EtymologyProblemConfig(String problemId, DatabaseManager dbManager) {
 		this();
 		setNonPersistableFeatures(problemId, dbManager);
 	}
 
-	public EtymologyConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
+	public EtymologyProblemConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
 			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, Boolean branchwiseBorrowing,
 			Boolean addSiblingLanguages, String correspondenceDbDir, Map<String, Double> ruleWeights,
 			Set<String> ignoreRules, Double persistenceThreshold, InferenceLogger logger) {
 		resetToDefaults();
-		if (logger != null) {
-			this.logger = logger;
-		}
+		this.logger = logger;
 		logger.displayln("Creating EtymologyIdeaGeneratorConfig.");
 		if (concepts == null) {
 			logger.displayln("...No concepts specified.");
@@ -147,7 +145,7 @@ public class EtymologyConfig extends PslProblemConfig {
 		}
 	}
 
-	public static EtymologyConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
+	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, String path, InferenceLogger logger) {
 		// if (! path.startsWith("/"))
 		// path = "/" + path;
 		// return fromJson(mapper, EtymologyConfig.class.getClass().getResourceAsStream(path));
@@ -159,14 +157,14 @@ public class EtymologyConfig extends PslProblemConfig {
 		}
 	}
 
-	public static EtymologyConfig fromJson(ObjectMapper mapper, JsonNode configJsonRoot) {
-		EtymologyConfig config = new EtymologyConfig();
+	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, JsonNode configJsonRoot) {
+		EtymologyProblemConfig config = new EtymologyProblemConfig();
 		config.setFromJson(mapper, configJsonRoot);
 		return config;
 	}
 
-	public EtymologyConfig copy() {
-		EtymologyConfig copy = new EtymologyConfig();
+	public EtymologyProblemConfig copy() {
+		EtymologyProblemConfig copy = new EtymologyProblemConfig();
 		super.copyFields(copy);
 
 		copy.concepts = new ArrayList<>(concepts);
@@ -525,8 +523,8 @@ public class EtymologyConfig extends PslProblemConfig {
 
 	}
 
-	public static EtymologyConfig fromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
-		EtymologyConfig config = new EtymologyConfig();
+	public static EtymologyProblemConfig fromJson(ObjectMapper mapper, InputStream in, InferenceLogger logger) {
+		EtymologyProblemConfig config = new EtymologyProblemConfig();
 		try {
 			JsonNode rootNode = mapper.readTree(in);
 			config.setFromJson(mapper, rootNode);

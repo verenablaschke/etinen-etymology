@@ -35,7 +35,7 @@ public class EtymologyProblem extends PslProblem {
 			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME };
 
 	// TODO make sure the config sets the dbmanager and problemId when it's initialized
-	public EtymologyProblem(EtymologyConfig config) {
+	public EtymologyProblem(EtymologyProblemConfig config) {
 		super(config);
 		addInteractionRules();
 
@@ -45,7 +45,7 @@ public class EtymologyProblem extends PslProblem {
 		config.logSettings();
 	}
 
-	public EtymologyProblem fromConfig(EtymologyConfig config) {
+	public EtymologyProblem fromConfig(EtymologyProblemConfig config) {
 		return new EtymologyProblem(config);
 	}
 
@@ -83,7 +83,7 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void addInteractionRules() {
-		EtymologyConfig config = (EtymologyConfig) super.getConfig();
+		EtymologyProblemConfig config = (EtymologyProblemConfig) super.getConfig();
 		if (config.include(EunkPriorRule.NAME))
 			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
 		if (config.include(EloaPriorRule.NAME))
@@ -168,8 +168,8 @@ public class EtymologyProblem extends PslProblem {
 		return atomsToDelete;
 	}
 
-	public EtymologyConfig getEtymologyConfig() {
-		return (EtymologyConfig) super.getConfig();
+	public EtymologyProblemConfig getEtymologyConfig() {
+		return (EtymologyProblemConfig) super.getConfig();
 	}
 
 	public InferenceLogger getLogger() {
