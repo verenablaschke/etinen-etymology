@@ -519,7 +519,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		config.getModernLanguages().removeAll(toBeRemoved);
 		if (removedAny) {
 			logger.displayln("Remaining languages: " + config.getModernLanguages());
-			tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+			if (logger.getGuiStream() != null) {
+				// GUI stream is null when running offline inferences
+				tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+			}
 			tree.getTree().saveLayeredTreeToFile(System.err);
 		} else {
 			logger.displayln("No isolates found. Tree unchanged.");
