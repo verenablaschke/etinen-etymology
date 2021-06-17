@@ -1,6 +1,6 @@
 package de.tuebingen.sfs.eie.components.etymology.util;
 
-import de.tuebingen.sfs.eie.shared.components.phylogeny.LanguageTree;
+import de.tuebingen.sfs.eie.shared.core.LanguageTree;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
