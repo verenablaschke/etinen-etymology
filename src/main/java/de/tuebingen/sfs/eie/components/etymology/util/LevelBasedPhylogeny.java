@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.TreeSet;
 
 public class LevelBasedPhylogeny {
 
@@ -134,7 +133,7 @@ public class LevelBasedPhylogeny {
         String newNode = "Old_" + child;
         tree.children.get(parent).remove(child);
         tree.children.get(parent).add(newNode);
-        TreeSet<String> children = new TreeSet<>();
+        List<String> children = new ArrayList<>();
         children.add(child);
         tree.children.put(newNode, children);
         tree.parents.put(newNode, parent);
