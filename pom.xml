@@ -23,12 +23,19 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.0</version>
                 <configuration>
-                    <source>8</source>
-                    <target>8</target>
+                    <source>16</source>
+                    <target>16</target>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+    <dependencies>
+        <dependency>
+            <groupId>de.tuebingen.sfs</groupId>
+            <artifactId>shared</artifactId>
+            <version>0.0.1-beta</version>
+        </dependency>
+    </dependencies>
     <name>Etymology</name>
 
 
