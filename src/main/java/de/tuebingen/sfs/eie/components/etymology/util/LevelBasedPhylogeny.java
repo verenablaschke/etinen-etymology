@@ -1,6 +1,7 @@
 package de.tuebingen.sfs.eie.components.etymology.util;
 
 import de.tuebingen.sfs.eie.shared.core.LanguageTree;
+import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
@@ -26,7 +27,7 @@ public class LevelBasedPhylogeny {
 
     public LevelBasedPhylogeny(String pathToNwkFile) {
         try {
-            tree = LanguageTree.fromNewickFile(pathToNwkFile);
+            tree = LanguageTreeStorage.fromNewickFile(pathToNwkFile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
@@ -39,7 +40,7 @@ public class LevelBasedPhylogeny {
 
     public LevelBasedPhylogeny(int numAncestors, String pathToNwkFile, String[] languages) {
         try {
-            tree = LanguageTree.fromNewickFile(pathToNwkFile);
+            tree = LanguageTreeStorage.fromNewickFile(pathToNwkFile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
