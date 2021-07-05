@@ -55,8 +55,8 @@ public class LevelBasedPhylogeny {
 
     // Level 0 = ROOT
     // Level numAncestors = leaves (modern languages)
-    public int getLevel(String language) {
-        return tree.nodeToLayerPlacement.get(language);
+    public String getLevel(String language) {
+        return tree.layerPlacement.get(language);
 //		return (tree.pathToRoot(language)).size();
     }
 
@@ -119,12 +119,12 @@ public class LevelBasedPhylogeny {
 
     private void moveChildrenUp(String oldParent) {
         String newParent = tree.parents.get(oldParent);
-        Integer previousLayer = tree.nodeToLayerPlacement.remove(oldParent);
+        String previousLayer = tree.layerPlacement.remove(oldParent);
         for (String child : tree.children.get(oldParent)) {
             tree.children.get(newParent).add(child);
             tree.parents.put(child, newParent);
             System.out.println("Moved " + child + " from " + oldParent + " to " + newParent);
-            tree.nodeToLayerPlacement.put(child, previousLayer);
+            tree.layerPlacement.put(child, previousLayer);
         }
         tree.children.remove(oldParent);
         tree.children.get(newParent).remove(oldParent);
@@ -139,11 +139,12 @@ public class LevelBasedPhylogeny {
         tree.children.put(newNode, children);
         tree.parents.put(newNode, parent);
         tree.parents.put(child, newNode);
-        Integer previousLayer = tree.nodeToLayerPlacement.get(child);
-        tree.nodeToLayerPlacement.put(newNode, previousLayer);
+        String previousLayer = tree.layerPlacement.get(child);
+        tree.layerPlacement.put(newNode, previousLayer);
+        int posInLayerList = tree.layersUnderNode.get("ROOT").indexOf(previousLayer);
         while (children != null) {
             for (String curChild : children) {
-                tree.nodeToLayerPlacement.put(curChild, ++previousLayer);
+                tree.layerPlacement.put(curChild, tree.layersUnderNode.get("ROOT").get(++posInLayerList));
                 children = tree.children.get(curChild);
             }
         }

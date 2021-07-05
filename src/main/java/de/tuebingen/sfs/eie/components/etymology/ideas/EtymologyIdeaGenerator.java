@@ -470,7 +470,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					if (ancestor.equals(parent)) {
 						tree.getTree().children.get(parent).add(langId);
 						tree.getTree().parents.put(langId, parent);
-						tree.getTree().nodeToLayerPlacement.put(langId, config.getTreeDepth());
+						tree.getTree().layerPlacement.put(langId, "ROOT+" + config.getTreeDepth());
 						config.getModernLanguages().add(langId);
 						addedAny = true;
 						logger.displayln("- Added " + langId + ".");
@@ -499,9 +499,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (String lang : config.getModernLanguages()) {
 			String parent = tree.getTree().parents.get(lang);
 			while (// Leaf node with no siblings
-			(tree.getLevel(lang) == treeDepth && tree.getTree().children.get(parent).size() == 1)
+			(tree.getLevel(lang).equals("LEAVES") && tree.getTree().children.get(parent).size() == 1)
 					// Intermediate node with no children
-					|| (tree.getLevel(lang) < treeDepth && (tree.getTree().children.get(lang) == null
+					|| (!tree.getLevel(lang).equals("LEAVES") && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
 
 				removedAny = true;
