@@ -9,6 +9,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
 import de.tuebingen.sfs.eie.shared.util.LoadUtils;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
@@ -405,7 +406,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private void updateLanguagesAndTree() {
 		setTree();
 		System.err.println("Initial tree:");
-		tree.getTree().saveLayeredTreeToFile(System.err);
+		LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
 		if (config.addSiblingLanguages())
 			addSiblingLanguages();
 		removeIsolates();
@@ -481,8 +482,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 		if (addedAny) {
 			logger.displayln("New language set: " + config.getModernLanguages());
-			tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
-			tree.getTree().saveLayeredTreeToFile(System.err);
+			LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
+			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
 		} else {
 			logger.displayln("No missing sibling languages found. Tree unchanged.");
 			System.err.println("No missing sibling languages found. Tree unchanged.");
@@ -521,9 +522,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			logger.displayln("Remaining languages: " + config.getModernLanguages());
 			if (logger.getGuiStream() != null) {
 				// GUI stream is null when running offline inferences
-				tree.getTree().saveLayeredTreeToFile(logger.getGuiStream());
+				LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
 			}
-			tree.getTree().saveLayeredTreeToFile(System.err);
+			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
 		} else {
 			logger.displayln("No isolates found. Tree unchanged.");
 			System.err.println("No isolates found. Tree unchanged.");
