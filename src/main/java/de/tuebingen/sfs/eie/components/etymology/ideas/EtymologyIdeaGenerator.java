@@ -9,6 +9,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.core.TreeLayer;
 import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
 import de.tuebingen.sfs.eie.shared.util.LoadUtils;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
@@ -305,13 +306,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
+				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1).equals(tree.getLevel(lang2))) {
 					// TODO: borrowing from e.g. Latin
 					// TODO: geographical distance etc.
 					// TODO: make this open instead? e.g.
 					// pslProblem.addTarget
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
+				} else if (branchwiseBorrowing && tree.getLevel(lang1).getFocusNode().equals(tree.getLevel(lang1).getFocusNode())
+						&& tree.getLevel(lang1).getIndex().equals(tree.getLevel(lang2).getIndex() + 1)) {
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
 			}
@@ -341,7 +343,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 			}
 		} else if (config.branchwiseBorrowing()
-				&& tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
+				&& tree.getLevel(entry1.language).getFocusNode().equals(tree.getLevel(entry2.language).getFocusNode())
+				&& tree.getLevel(entry1.language).getIndex().equals(tree.getLevel(entry2.language).getIndex() + 1)) {
 			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 		} else {
 			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
@@ -470,7 +473,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					if (ancestor.equals(parent)) {
 						tree.getTree().children.get(parent).add(langId);
 						tree.getTree().parents.put(langId, parent);
-						String layer = "ROOT+" + config.getTreeDepth();
+						TreeLayer layer = new TreeLayer("ROOT", config.getTreeDepth());
 						tree.getTree().nodesToLayers.put(langId, layer);
 						config.getModernLanguages().add(langId);
 						addedAny = true;

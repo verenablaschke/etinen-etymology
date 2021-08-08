@@ -1,6 +1,7 @@
 package de.tuebingen.sfs.eie.components.etymology.util;
 
 import de.tuebingen.sfs.eie.shared.core.LanguageTree;
+import de.tuebingen.sfs.eie.shared.core.TreeLayer;
 import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
 
 import java.io.FileNotFoundException;
@@ -55,7 +56,7 @@ public class LevelBasedPhylogeny {
 
 	// Level 0 = ROOT
 	// Level numAncestors = leaves (modern languages)
-	public String getLevel(String language) {
+	public TreeLayer getLevel(String language) {
 		return tree.nodesToLayers.get(language);
 //		return (tree.pathToRoot(language)).size();
 	}
@@ -119,12 +120,12 @@ public class LevelBasedPhylogeny {
 
 	private void moveChildrenUp(String oldParent) {
 		String newParent = tree.parents.get(oldParent);
-		String previousLayer = tree.nodesToLayers.remove(oldParent);
+		TreeLayer previousLayer = tree.nodesToLayers.remove(oldParent);
 		for (String child : tree.children.get(oldParent)) {
 			tree.children.get(newParent).add(child);
 			tree.parents.put(child, newParent);
 			System.out.println("Moved " + child + " from " + oldParent + " to " + newParent);
-			String oldChildLayer = tree.nodesToLayers.get(child);
+			TreeLayer oldChildLayer = tree.nodesToLayers.get(child);
 			tree.nodesToLayers.put(child, previousLayer);
 		}
 		tree.children.remove(oldParent);
@@ -140,12 +141,12 @@ public class LevelBasedPhylogeny {
 		tree.children.put(newNode, children);
 		tree.parents.put(newNode, parent);
 		tree.parents.put(child, newNode);
-		String previousLayer = tree.nodesToLayers.get(child);
+		TreeLayer previousLayer = tree.nodesToLayers.get(child);
 		tree.nodesToLayers.put(newNode, previousLayer);
 		int posInLayerList = tree.layersUnderNode.get("ROOT").indexOf(previousLayer);
 		while (children != null) {
 			for (String curChild : children) {
-				String layer = tree.layersUnderNode.get("ROOT").get(++posInLayerList);
+				TreeLayer layer = tree.layersUnderNode.get("ROOT").get(++posInLayerList);
 				tree.nodesToLayers.put(curChild, layer);
 				children = tree.children.get(curChild);
 			}
