@@ -120,15 +120,12 @@ public class LevelBasedPhylogeny {
 	private void moveChildrenUp(String oldParent) {
 		String newParent = tree.parents.get(oldParent);
 		String previousLayer = tree.nodesToLayers.remove(oldParent);
-		tree.layersToNodes.removeFromOrDeleteCollection(previousLayer, oldParent);
 		for (String child : tree.children.get(oldParent)) {
 			tree.children.get(newParent).add(child);
 			tree.parents.put(child, newParent);
 			System.out.println("Moved " + child + " from " + oldParent + " to " + newParent);
 			String oldChildLayer = tree.nodesToLayers.get(child);
 			tree.nodesToLayers.put(child, previousLayer);
-			tree.layersToNodes.removeFromOrDeleteCollection(oldChildLayer, child);
-			tree.layersToNodes.put(previousLayer, child);
 		}
 		tree.children.remove(oldParent);
 		tree.children.get(newParent).remove(oldParent);
@@ -145,16 +142,11 @@ public class LevelBasedPhylogeny {
 		tree.parents.put(child, newNode);
 		String previousLayer = tree.nodesToLayers.get(child);
 		tree.nodesToLayers.put(newNode, previousLayer);
-		tree.layersToNodes.removeFromOrDeleteCollection(previousLayer, child);
-		tree.layersToNodes.put(previousLayer, newNode);
 		int posInLayerList = tree.layersUnderNode.get("ROOT").indexOf(previousLayer);
 		while (children != null) {
 			for (String curChild : children) {
-				tree.layersToNodes.removeFromOrDeleteCollection(tree.layersUnderNode.get("ROOT").get(posInLayerList),
-						curChild);
 				String layer = tree.layersUnderNode.get("ROOT").get(++posInLayerList);
 				tree.nodesToLayers.put(curChild, layer);
-				tree.layersToNodes.put(layer, curChild);
 				children = tree.children.get(curChild);
 			}
 		}
