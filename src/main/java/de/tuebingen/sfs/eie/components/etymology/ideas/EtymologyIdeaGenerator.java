@@ -499,13 +499,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		System.err.println("Removing isolates from the language set.");
 		Set<String> toBeRemoved = new HashSet<>();
 		boolean removedAny = false;
-		int treeDepth = config.getTreeDepth();
 		for (String lang : config.getModernLanguages()) {
 			String parent = tree.getTree().parents.get(lang);
+			//System.err.println("lang: " + lang + ", level: " + tree.getLevel(lang) + ", parent: " + parent + ", siblings: " + tree.getTree().children.get(parent));
 			while (// Leaf node with no siblings
-			(tree.getLevel(lang).equals("LEAVES") && tree.getTree().children.get(parent).size() == 1)
+			(tree.getLevel(lang).equals(TreeLayer.leaves()) && tree.getTree().children.get(parent).size() == 1)
 					// Intermediate node with no children
-					|| (!tree.getLevel(lang).equals("LEAVES") && (tree.getTree().children.get(lang) == null
+					|| (!tree.getLevel(lang).equals(TreeLayer.leaves()) && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
 
 				removedAny = true;
