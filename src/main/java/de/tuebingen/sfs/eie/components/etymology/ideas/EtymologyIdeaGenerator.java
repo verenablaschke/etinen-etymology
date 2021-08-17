@@ -473,7 +473,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					if (ancestor.equals(parent)) {
 						tree.getTree().children.get(parent).add(langId);
 						tree.getTree().parents.put(langId, parent);
-						TreeLayer layer = new TreeLayer("ROOT", config.getTreeDepth());
+						TreeLayer layer = tree.getTree().getLayer("ROOT", config.getTreeDepth());
 						tree.getTree().nodesToLayers.put(langId, layer);
 						config.getModernLanguages().add(langId);
 						addedAny = true;
