@@ -1,5 +1,19 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
+import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
+import de.tuebingen.sfs.psl.engine.DatabaseManager;
+import de.tuebingen.sfs.psl.engine.PslProblemConfig;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -16,21 +30,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
-import de.tuebingen.sfs.psl.engine.DatabaseManager;
-import de.tuebingen.sfs.psl.engine.PslProblemConfig;
-import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyProblemConfig extends PslProblemConfig {
 
