@@ -112,7 +112,7 @@ public class LevelBasedPhylogeny {
 				ancestors.remove(0);
 			}
 		}
-		tree.assignAllLeavesToFinalLayer();
+		tree.initializeLeafLayer();
 		List<String> desc = new ArrayList<String>();
 		tree.collectDescendants("ROOT", desc);
 		System.err.println(tree.toNewickStringWithBranchLengths());
