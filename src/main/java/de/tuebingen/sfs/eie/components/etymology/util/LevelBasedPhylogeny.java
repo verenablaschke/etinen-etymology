@@ -115,7 +115,7 @@ public class LevelBasedPhylogeny {
 		tree.initializeLeafLayer();
 		List<String> desc = new ArrayList<String>();
 		tree.collectDescendants("ROOT", desc);
-		System.err.println(tree.toNewickStringWithBranchLengths());
+		System.err.println(tree.toNewickString());
 	}
 
 	private void moveChildrenUp(String oldParent) {
