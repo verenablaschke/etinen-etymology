@@ -276,13 +276,16 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 			}
 			for (Integer cldfFormID : cldfForms) {
-				if (concepts.contains(objectStore.getConceptForForm(cldfFormID))) {
-					entryPool.add(new Entry(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID)));
-					// TODO only add these for proto modernLanguages that don't
-					// have
-					// these yet, retrieve existing F-atoms from db and pass
-					// them on
-					addFormAtoms(cldfFormID, lang, objectStore.getConceptForForm(cldfFormID), cldfFormID);
+				List<String> conceptsForForm = objectStore.getConceptsForForm(cldfFormID);
+				for (String concept : conceptsForForm) {
+					if (concepts.contains(concept)) {
+						entryPool.add(new Entry(cldfFormID, lang, concept));
+						// TODO only add these for proto modernLanguages that don't
+						// have
+						// these yet, retrieve existing F-atoms from db and pass
+						// them on
+						addFormAtoms(cldfFormID, lang, concept, cldfFormID);
+					}
 				}
 			}
 		}
