@@ -1,23 +1,5 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
-import de.jdellert.iwsa.sequence.PhoneticString;
-import de.jdellert.iwsa.tokenize.IPATokenizer;
-import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
-import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
-import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
-import de.tuebingen.sfs.eie.shared.core.TreeLayer;
-import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
-import de.tuebingen.sfs.eie.shared.util.LoadUtils;
-import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
-import de.tuebingen.sfs.psl.engine.IdeaGenerator;
-import de.tuebingen.sfs.psl.engine.PslProblem;
-import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -28,20 +10,41 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
+import de.jdellert.iwsa.sequence.PhoneticString;
+import de.jdellert.iwsa.tokenize.IPATokenizer;
+import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
+import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
+import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
+import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.core.TreeLayer;
+import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
+import de.tuebingen.sfs.eie.shared.util.LoadUtils;
+import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
+import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
+import de.tuebingen.sfs.psl.engine.IdeaGenerator;
+import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
+	private EtymologicalTheory theory;
+	private IndexedObjectStore objectStore;
 	private PhoneticSimilarityHelper phonSimHelper;
 	private LevelBasedPhylogeny tree;
 	private CLDFWordlistDatabase wordListDb;
-	private IndexedObjectStore objectStore;
 	private List<String> ancestors;
 	private Set<Entry> entryPool;
 	private Set<String> removedIsolates;
 	private InferenceLogger logger;
 	private EtymologyProblemConfig config;
 
-	public EtymologyIdeaGenerator(EtymologyProblem problem, IndexedObjectStore objectStore,
+	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb) {
 		// For proper serialization, the wordListDb and the phonSimHelper need
 		// to be default versions of these objects,
@@ -62,18 +65,18 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			this.wordListDb = wordListDb;
 		}
 
-		if (objectStore == null) {
-			logger.displayln("...No IndexedObjectStore given, loading the default version.");
-			this.objectStore = new IndexedObjectStore(this.wordListDb, null);
+		if (theory == null) {
+			logger.displayln("...No EtymologicalTheory given, loading the default version.");
+			this.theory = new EtymologicalTheory(this.wordListDb);
 		} else {
-			this.objectStore = objectStore;
+			this.theory = theory;
 		}
+		objectStore = this.theory.getIndexedObjectStore();
 		if (phonSimHelper == null) {
 			logger.displayln("...No Phonetic Similarity Helper given, using default version.");
 			IPATokenizer tokenizer = new IPATokenizer();
-			this.phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-					LoadUtils.loadCorrModel(config.getCorrespondenceDbDir(), false, tokenizer, this.logger),
-					this.objectStore);
+			this.phonSimHelper = new PhoneticSimilarityHelper(
+					LoadUtils.loadCorrModel(config.getCorrespondenceDbDir(), false, tokenizer, this.logger), theory);
 		} else {
 			this.phonSimHelper = phonSimHelper;
 		}
@@ -90,77 +93,77 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
-	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, IndexedObjectStore objectStore) {
-		return new EtymologyIdeaGenerator(problem, objectStore, null, null);
+	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, EtymologicalTheory theory) {
+		return new EtymologyIdeaGenerator(problem, theory, null, null);
 	}
 
-	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
+	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, EtymologicalTheory theory,
 			ObjectMapper mapper, String path, InferenceLogger logger) {
 		// return fromJson(problem, mapper,
 		// EtymologyIdeaGenerator.class.getResourceAsStream(path));
 		try {
-			return fromJson(problem, objectStore, mapper, new FileInputStream(path), logger);
+			return fromJson(problem, theory, mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 			return null;
 		}
 	}
 
-	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, IndexedObjectStore objectStore,
+	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, EtymologicalTheory theory,
 			ObjectMapper mapper, InputStream in, InferenceLogger logger) {
 		IPATokenizer tokenizer = new IPATokenizer();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(problem.getEtymologyConfig().getWordListDbDir(),
 				logger);
 		PhoneticSimilarityHelper phonSimHelper = null;
-		if (objectStore != null && problem.getEtymologyConfig().getCorrespondenceDbDir() != null
+		if (theory != null && problem.getEtymologyConfig().getCorrespondenceDbDir() != null
 				&& !problem.getEtymologyConfig().getCorrespondenceDbDir().isEmpty())
-			phonSimHelper = new PhoneticSimilarityHelper(tokenizer, LoadUtils.loadCorrModel(
-					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), objectStore);
+			phonSimHelper = new PhoneticSimilarityHelper(LoadUtils.loadCorrModel(
+					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), theory);
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
+		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
-			boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingMountain(problem, largeLanguageSet, false);
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingMountain(theory, problem, largeLanguageSet, false);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologyProblem problem,
-			boolean largeLanguageSet, boolean branchwiseBorrowing) {
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> concepts = new ArrayList<>();
 		concepts.add("BergN");
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
+		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
-			boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingHead(problem, largeLanguageSet, false);
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingHead(theory, problem, largeLanguageSet, false);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologyProblem problem,
-			boolean largeLanguageSet, boolean branchwiseBorrowing) {
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> concepts = new ArrayList<>();
 		concepts.add("KopfN");
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
+		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
-			boolean largeConceptSet, boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingLanguage(problem, largeConceptSet, largeLanguageSet, false);
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeConceptSet, boolean largeLanguageSet) {
+		return getIdeaGeneratorForTestingLanguage(theory, problem, largeConceptSet, largeLanguageSet, false);
 	}
 
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologyProblem problem,
-			boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
+	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologicalTheory theory,
+			EtymologyProblem problem, boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> concepts = new ArrayList<>();
 		concepts.add("SpracheN");
 		if (largeConceptSet) {
 			concepts.add("ZungeN");
 		}
-		return getIdeaGeneratorForTesting(problem, concepts, largeLanguageSet, branchwiseBorrowing);
+		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
 	}
 
-	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologyProblem problem, List<String> concepts,
-			boolean largeLanguageSet, boolean branchwiseBorrowing) {
+	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologicalTheory theory,
+			EtymologyProblem problem, List<String> concepts, boolean largeLanguageSet, boolean branchwiseBorrowing) {
 		List<String> languages = new ArrayList<>();
 		languages.add("eng");
 		languages.add("deu");
@@ -196,11 +199,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
 		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(tokenizer,
-				LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger), objectStore);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(
+				LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger), theory);
 		int treeDepth = 4;
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
+		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
 
 	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
@@ -242,11 +245,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = problem.getConfig().getLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, logger);
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger);
-		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(), corres, objectStore);
+		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
+		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(corres, theory);
 		int treeDepth = 2;
 
-		return new EtymologyIdeaGenerator(problem, objectStore, phonSimHelper, wordListDb);
+		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
 
 	public void generateAtoms() {
@@ -315,7 +318,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					// TODO: make this open instead? e.g.
 					// pslProblem.addTarget
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing && tree.getLevel(lang1).getFocusNode().equals(tree.getLevel(lang1).getFocusNode())
+				} else if (branchwiseBorrowing
+						&& tree.getLevel(lang1).getFocusNode().equals(tree.getLevel(lang1).getFocusNode())
 						&& tree.getLevel(lang1).getIndex().equals(tree.getLevel(lang2).getIndex() + 1)) {
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
@@ -356,12 +360,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		String ipa1 = "";
 		String ipa2 = "";
-		ipa1 = objectStore.getFormForFormId(entry1.formId);
+		ipa1 = objectStore.getRawFormForFormId(entry1.formId);
 		if (ipa1 == null || ipa1.isEmpty()) {
 			return;
 		}
 
-		ipa2 = objectStore.getFormForFormId(entry2.formId);
+		ipa2 = objectStore.getRawFormForFormId(entry2.formId);
 		if (ipa2 == null || ipa2.isEmpty()) {
 			return;
 		}
@@ -382,7 +386,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private void addFormAtoms(int formId, String doculectId, String concept, int cldfForm) {
 		pslProblem.addObservation("Flng", 1.0, formId + "", doculectId);
 		pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
-		String ipa = objectStore.getFormForFormId(cldfForm);
+		String ipa = objectStore.getRawFormForFormId(cldfForm);
 		if (ipa != null && !ipa.isEmpty()) {
 			// TODO add XFufo also for imported Fufo atoms!!
 			pslProblem.addObservation(F_UFO_EX, 1.0, formId + "");
@@ -504,7 +508,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		boolean removedAny = false;
 		for (String lang : config.getModernLanguages()) {
 			String parent = tree.getTree().parents.get(lang);
-			//System.err.println("lang: " + lang + ", level: " + tree.getLevel(lang) + ", parent: " + parent + ", siblings: " + tree.getTree().children.get(parent));
+			// System.err.println("lang: " + lang + ", level: " + tree.getLevel(lang) + ",
+			// parent: " + parent + ", siblings: " + tree.getTree().children.get(parent));
 			while (// Leaf node with no siblings
 			(tree.getLevel(lang).equals(TreeLayer.leaves()) && tree.getTree().children.get(parent).size() == 1)
 					// Intermediate node with no children
