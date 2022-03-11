@@ -33,6 +33,8 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
+	public static boolean PRINT_LOG = true;
+
 	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
 	private EtymologicalTheory theory;
 	private IndexedObjectStore objectStore;
@@ -58,7 +60,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.logger = problem.getLogger();
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
 		config = problem.getEtymologyConfig();
-		config.print(System.out);
+		if (PRINT_LOG) {
+			config.print(System.err);
+		}
 		logger.displayln("...Working with the following idea generation configuration:");
 		config.logSettings();
 		if (wordListDb == null) {
@@ -102,8 +106,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, EtymologicalTheory theory,
 			ObjectMapper mapper, String path, InferenceLogger logger) {
-		// return fromJson(problem, mapper,
-		// EtymologyIdeaGenerator.class.getResourceAsStream(path));
 		try {
 			return fromJson(problem, theory, mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
@@ -201,10 +203,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		InferenceLogger logger = problem.getConfig().getLogger();
 		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.DB_DIR, logger);
 		IPATokenizer tokenizer = new IPATokenizer();
-		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(
 				LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger), theory);
-		int treeDepth = 4;
+		((EtymologyProblemConfig) problem.getConfig()).setTreeDepth(4);
 
 		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
@@ -250,7 +251,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger);
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
 		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(corres, theory);
-		int treeDepth = 2;
+		((EtymologyProblemConfig) problem.getConfig()).setTreeDepth(2);
 
 		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
@@ -287,8 +288,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					if (concepts.contains(concept)) {
 						entryPool.add(new Entry(cldfFormID, lang, concept));
 						// TODO only add these for proto modernLanguages that don't
-						// have
-						// these yet, retrieve existing F-atoms from db and pass
+						// have these yet, retrieve existing F-atoms from db and pass
 						// them on
 						addFormAtoms(cldfFormID, lang, concept, cldfFormID);
 					}
@@ -316,12 +316,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				// TODO: borrowing from e.g. Latin
 				// TODO: geographical distance etc.
 				// TODO: make Tcnt open instead? -> pslProblem.addTarget
-
-				System.err.println("----");
-				System.err.println(lang1);
-				System.err.println(tree.getLevel(lang1));
-				System.err.println(lang2);
-				System.err.println(tree.getLevel(lang2));
 
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
@@ -389,8 +383,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		sim = phonSimHelper.similarity(form1, form2);
 		sim = logistic(sim);
 		pslProblem.addObservation("Fsim", sim, entry1.formIdAsString, entry2.formIdAsString);
-		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/"
-				+ form2 + ") " + sim);
+		if (PRINT_LOG) {
+			System.err.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2
+					+ "/" + form2 + ") " + sim);
+		}
 
 	}
 
@@ -426,8 +422,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	// Costly because this involves renaming the leaf nodes in the tree.
 	private void updateLanguagesAndTree() {
 		setTree();
-		System.err.println("Initial tree:");
-		LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+		if (PRINT_LOG) {
+			System.err.println("Initial tree:");
+			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+		}
 		if (config.addSiblingLanguages())
 			addSiblingLanguages();
 		removeIsolates();
@@ -467,7 +465,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 	private void addSiblingLanguages() {
 		logger.displayln("Adding sibling languages to the language set.");
-		System.err.println("Adding sibling languages to the language set.");
+		if (PRINT_LOG) {
+			System.err.println("Adding sibling languages to the language set.");
+		}
 		Set<String> parents = new HashSet<>();
 		for (String lang : config.getModernLanguages()) {
 			parents.add(tree.getParent(lang));
@@ -496,7 +496,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						config.getModernLanguages().add(langId);
 						addedAny = true;
 						logger.displayln("- Added " + langId + ".");
-						System.err.println("- Added " + langId + ".");
+						if (PRINT_LOG) {
+							System.err.println("- Added " + langId + ".");
+						}
 						break;
 					}
 				}
@@ -505,16 +507,22 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (addedAny) {
 			logger.displayln("New language set: " + config.getModernLanguages());
 			LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
-			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+			if (PRINT_LOG) {
+				LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+			}
 		} else {
 			logger.displayln("No missing sibling languages found. Tree unchanged.");
-			System.err.println("No missing sibling languages found. Tree unchanged.");
+			if (PRINT_LOG) {
+				System.err.println("No missing sibling languages found. Tree unchanged.");
+			}
 		}
 	}
 
 	private void removeIsolates() {
 		logger.displayln("Removing isolates from the language set.");
-		System.err.println("Removing isolates from the language set.");
+		if (PRINT_LOG) {
+			System.err.println("Removing isolates from the language set.");
+		}
 		Set<String> toBeRemoved = new HashSet<>();
 		boolean removedAny = false;
 		for (String lang : config.getModernLanguages()) {
@@ -532,7 +540,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				tree.getTree().parents.remove(lang);
 				toBeRemoved.add(lang);
 				logger.displayln("- Removing " + lang + ".");
-				System.err.println("- Removing " + lang + ".");
+				if (PRINT_LOG) {
+					System.err.println("- Removing " + lang + ".");
+				}
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
 				if (parent == null || lang.equals(LanguageTree.root)) {
@@ -547,10 +557,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				// GUI stream is null when running offline inferences
 				LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
 			}
-			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+			if (PRINT_LOG) {
+				LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
+			}
 		} else {
 			logger.displayln("No isolates found. Tree unchanged.");
-			System.err.println("No isolates found. Tree unchanged.");
+			if (PRINT_LOG) {
+				System.err.println("No isolates found. Tree unchanged.");
+			}
 		}
 		this.removedIsolates = toBeRemoved;
 	}
