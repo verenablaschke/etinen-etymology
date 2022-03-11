@@ -56,9 +56,16 @@ public class LevelBasedPhylogeny {
 
 	// Level 0 = ROOT
 	// Level numAncestors = leaves (modern languages)
-	public TreeLayer getLevel(String language) {
-		return tree.nodesToLayers.get(language);
-//		return (tree.pathToRoot(language)).size();
+	public int getLevel(String language) {
+		TreeLayer layer = tree.nodesToLayers.get(language);
+		if (layer.getIndex() == null) {
+			return numAncestors;
+		}
+		return layer.getIndex();
+	}
+
+	public boolean isLeaf(String language) {
+		return tree.nodesToLayers.get(language).equals(TreeLayer.leaves());
 	}
 
 	public List<String> getAncestors(String language) {

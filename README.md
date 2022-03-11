@@ -12,3 +12,28 @@ The most important classes are:
 The code for the etymology component is currently slightly outdated, after several major changes to the `etinen-shared` module.
 
 The GUI classes for this component can be found in https://github.com/jdellert/etinen/tree/master/src/main/java/de/tuebingen/sfs/eie/gui/etymology.
+
+# Predicates
+
+## Closed predicates
+
+(F = form; S = semantics; X = exists; T = tree)
+
+About language forms:
+- **Flng**(form ID, language): form--language pairs
+- **Fufo**(form ID, phon. form): underlying form
+- **Fsem**(form ID, concept): semantics of a form
+- **XFufo**(form ID): helper predicate: an underlying form for this ID exists
+
+Similarity measures:
+- **Fsim**(phon. form 1, phon. form 2): phonetic similarity
+- **Ssim**(concept 1, concept 2): semantic similarity
+
+Phylogenetic information:
+- **Tanc**(language 1, language 2): language 2 is an ancestor of language 1
+- **Tcnt**(language 1, language 2): contact between the two languages
+
+## Open predicates
+- **Einh**(form ID 1, form ID 2): form 1 is inherited from form 2
+- **Eloa**(form ID 1, form ID 2): form 1 was loaned from form 2
+- **Eunk**(form ID): unknown etymology

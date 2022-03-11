@@ -21,6 +21,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig
 import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.core.LanguageTree;
 import de.tuebingen.sfs.eie.shared.core.TreeLayer;
 import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
 import de.tuebingen.sfs.eie.shared.util.LoadUtils;
@@ -43,6 +44,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private Set<String> removedIsolates;
 	private InferenceLogger logger;
 	private EtymologyProblemConfig config;
+
+	// TODO upgrade this to the new, more complex version of the LanguageTree
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory,
 			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb) {
@@ -310,17 +313,26 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				if (lang1.equals(lang2)) {
 					continue;
 				}
+				// TODO: borrowing from e.g. Latin
+				// TODO: geographical distance etc.
+				// TODO: make Tcnt open instead? -> pslProblem.addTarget
+
+				System.err.println("----");
+				System.err.println(lang1);
+				System.err.println(tree.getLevel(lang1));
+				System.err.println(lang2);
+				System.err.println(tree.getLevel(lang2));
+
 				if (tree.distanceToAncestor(lang1, lang2) == 1) {
 					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1).equals(tree.getLevel(lang2))) {
-					// TODO: borrowing from e.g. Latin
-					// TODO: geographical distance etc.
-					// TODO: make this open instead? e.g.
-					// pslProblem.addTarget
+				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
+					// If branchwiseBorrowing is turned off: contact happens between language spoken
+					// at the same time in history
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing
-						&& tree.getLevel(lang1).getFocusNode().equals(tree.getLevel(lang1).getFocusNode())
-						&& tree.getLevel(lang1).getIndex().equals(tree.getLevel(lang2).getIndex() + 1)) {
+				} else if (branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
+					// If branchwisewiseBorrowing is on: contact happens between a language and the
+					// branch to which other contemporaneous languages belong (-> lang2 has to be
+					// the parent of a contemporaneous language of lang1)
 					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
 				}
 			}
@@ -350,8 +362,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 			}
 		} else if (config.branchwiseBorrowing()
-				&& tree.getLevel(entry1.language).getFocusNode().equals(tree.getLevel(entry2.language).getFocusNode())
-				&& tree.getLevel(entry1.language).getIndex().equals(tree.getLevel(entry2.language).getIndex() + 1)) {
+				&& tree.getLevel(entry1.language) == tree.getLevel(entry2.language) + 1) {
 			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
 		} else {
 			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
@@ -511,9 +522,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			// System.err.println("lang: " + lang + ", level: " + tree.getLevel(lang) + ",
 			// parent: " + parent + ", siblings: " + tree.getTree().children.get(parent));
 			while (// Leaf node with no siblings
-			(tree.getLevel(lang).equals(TreeLayer.leaves()) && tree.getTree().children.get(parent).size() == 1)
+			(tree.isLeaf(lang) && tree.getTree().children.get(parent).size() == 1)
 					// Intermediate node with no children
-					|| (!tree.getLevel(lang).equals(TreeLayer.leaves()) && (tree.getTree().children.get(lang) == null
+					|| (!tree.isLeaf(lang) && (tree.getTree().children.get(lang) == null
 							|| tree.getTree().children.get(lang).isEmpty()))) {
 
 				removedAny = true;
@@ -524,7 +535,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				System.err.println("- Removing " + lang + ".");
 				lang = parent;
 				parent = tree.getTree().parents.get(parent);
-				if (parent == null || lang.equals(tree.getTree().root)) {
+				if (parent == null || lang.equals(LanguageTree.root)) {
 					break;
 				}
 			}
