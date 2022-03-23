@@ -37,3 +37,17 @@ Phylogenetic information:
 - **Einh**(form ID 1, form ID 2): form 1 is inherited from form 2
 - **Eloa**(form ID 1, form ID 2): form 1 was loaned from form 2
 - **Eunk**(form ID): unknown etymology
+
+# PSL Rules
+
+| Name | Rule | Explanation |
+|---|---|---|
+| EunkPrior | ~Eunk(X) | By default, we do not assume that words are of unknown origin. |
+| EloaPrior | ~Eloa(X, Y) | By default, we do not assume that a word is a loanword. |
+| EinhOrEloaOrEunk | Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 . | The possible explanations for a word's origin follow a probability distribution. |
+| EloaPlusEloa | Eloa(X, Y) + Eloa(Y, X) <= 1 . | Borrowing cannot happen in a circular fashion. |
+| TancToEinh | Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y) | A word can be inherited from its direct ancestor language. |
+| TcntToEloa | Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y) | A word can be loaned from a contact language. |
+| EetyToFsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2) | Words derived from the same source should be phonetically similar. |
+| EetyToSsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2) | Words derived from the same source should be semantically similar. |
+| DirectEetyToFsim | Einh/Eloa(X, Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2) | A word should be phonetically similar to its source form. |

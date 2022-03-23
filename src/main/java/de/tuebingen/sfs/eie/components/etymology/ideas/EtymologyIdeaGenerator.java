@@ -38,7 +38,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	private EtymologicalTheory theory;
 	private IndexedObjectStore objectStore;
 	private PhoneticSimilarityHelper phonSimHelper;
-	private LevelBasedPhylogeny tree;
+	private LevelBasedPhylogeny tree; // TODO remove this
 	private CLDFWordlistDatabase wordListDb;
 	private List<String> ancestors;
 	private Set<Entry> entryPool;
@@ -95,7 +95,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		entryPool = new HashSet<>();
 
 		updateLanguagesAndTree();
-		
+
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
@@ -126,8 +126,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
 	}
-
-	
 
 	public void generateAtoms() {
 		// 1. Determine and retrieve/generate the relevant F-atoms.
@@ -180,28 +178,12 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// 3. Generate language ancestry/contact atoms.
 
-		boolean branchwiseBorrowing = config.branchwiseBorrowing();
-		for (String lang1 : tree.getAllLanguages()) {
-			for (String lang2 : tree.getAllLanguages()) {
-				if (lang1.equals(lang2)) {
-					continue;
-				}
-				// TODO: borrowing from e.g. Latin
-				// TODO: geographical distance etc.
-				// TODO: make Tcnt open instead? -> pslProblem.addTarget
-
-				if (tree.distanceToAncestor(lang1, lang2) == 1) {
-					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1) == tree.getLevel(lang2)) {
-					// If branchwiseBorrowing is turned off: contact happens between language spoken
-					// at the same time in history
-					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing && tree.getLevel(lang1) == tree.getLevel(lang2) + 1) {
-					// If branchwisewiseBorrowing is on: contact happens between a language and the
-					// branch to which other contemporaneous languages belong (-> lang2 has to be
-					// the parent of a contemporaneous language of lang1)
-					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				}
+		// TODO remove branchwiseBorrowing (config)
+		for (String lang : tree.getAllLanguages()) { // TODO new lang source
+			pslProblem.addObservation("Tanc", 1.0, lang, theory.getLanguagePhylogeny().parents.get(lang));
+			for (String contactSrc : theory.getLanguagePhylogeny().getIncomingInfluences(lang)) {
+				// TODO exclude "external" contacts
+				pslProblem.addObservation("Tcnt", 1.0, lang, contactSrc);
 			}
 		}
 
