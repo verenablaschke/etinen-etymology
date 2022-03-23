@@ -1,13 +1,22 @@
 package de.tuebingen.sfs.eie.components.etymology.eval;
 
+import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
+
+import java.io.FileNotFoundException;
+import java.io.PrintStream;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
-import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
+import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.DirectEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPlusEloaRule;
@@ -26,33 +35,24 @@ import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
-import java.io.FileNotFoundException;
-import java.io.PrintStream;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
-
-import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
-
 public class EtymologyInferenceTest {
 	// For debugging with a GUI, use the EtymologyFactViewer in the etinen
 	// repository.
 
 	private static void run(Map<String, Double> ruleWeights, PrintStream out) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
-		EtymologyProblemConfig config = new EtymologyProblemConfig(null, null, null, null, null, -1, null, null, null, ruleWeights,
-				null, null, new InferenceLogger());
+		EtymologyProblemConfig config = new EtymologyProblemConfig(null, null, null, null, null, -1, null, null, null,
+				ruleWeights, null, null, new InferenceLogger());
 		config.addRuleToIgnoreList(EloaPlusEloaRule.NAME);
 		config.addRuleToIgnoreList(FsimAndSsimToEetyRule.NAME);
 		config.addRuleToIgnoreList(DirectEetyToFsimRule.NAME);
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, new InferenceLogger());
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR,
+				new InferenceLogger());
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(theory, problem, false,
-				false);
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGeneratorsForTesting.getIdeaGeneratorForTestingLanguage(theory,
+				problem, false, false);
 		ideaGen.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		problem.printRules(out);
@@ -94,8 +94,8 @@ public class EtymologyInferenceTest {
 		String problemId = "TestDataEtymologyProblem";
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, synonyms, moreLangsPerBranch, moreBranches,
-				branchwiseBorrowing).generateAtoms();
+		EtymologyIdeaGeneratorsForTesting.getIdeaGeneratorWithFictionalData(problem, synonyms, moreLangsPerBranch,
+				moreBranches, branchwiseBorrowing).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		if (showAllEloa) {
@@ -110,14 +110,16 @@ public class EtymologyInferenceTest {
 		return (EtymologyRagFilter) rag.getRagFilter();
 	}
 
-	private static void runTestLanguage(EtymologyProblemConfig config, boolean largeConceptSet, boolean largeLanguageSet) {
+	private static void runTestLanguage(EtymologyProblemConfig config, boolean largeConceptSet,
+			boolean largeLanguageSet) {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, new InferenceLogger());
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR,
+				new InferenceLogger());
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
-		EtymologyIdeaGenerator.getIdeaGeneratorForTestingLanguage(theory, problem, largeConceptSet, largeLanguageSet)
-				.generateAtoms();
+		EtymologyIdeaGeneratorsForTesting
+				.getIdeaGeneratorForTestingLanguage(theory, problem, largeConceptSet, largeLanguageSet).generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
@@ -127,9 +129,11 @@ public class EtymologyInferenceTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, new InferenceLogger());
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR,
+				new InferenceLogger());
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
-		EtymologyIdeaGenerator.getIdeaGeneratorForTestingHead(theory, problem, largeLanguageSet).generateAtoms();
+		EtymologyIdeaGeneratorsForTesting.getIdeaGeneratorForTestingHead(theory, problem, largeLanguageSet)
+				.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
@@ -139,9 +143,11 @@ public class EtymologyInferenceTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, new InferenceLogger());
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR,
+				new InferenceLogger());
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
-		EtymologyIdeaGenerator.getIdeaGeneratorForTestingMountain(theory, problem, largeLanguageSet).generateAtoms();
+		EtymologyIdeaGeneratorsForTesting.getIdeaGeneratorForTestingMountain(theory, problem, largeLanguageSet)
+				.generateAtoms();
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
 		RuleAtomGraph rag = result.getRag();
 		EtymologyResultChecker.checkTestAnalysis((EtymologyRagFilter) rag.getRagFilter());
@@ -152,8 +158,8 @@ public class EtymologyInferenceTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.getIdeaGeneratorWithFictionalData(problem, false, false,
-				false, true);
+		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGeneratorsForTesting.getIdeaGeneratorWithFictionalData(problem,
+				false, false, false, true);
 		ideaGen.generateAtoms();
 		ideaGen.export(mapper, "etinen-etymology/src/test/resources/serialization/ideas.json");
 		InferenceResult result = problemManager.registerAndRunProblem(problem);
@@ -168,7 +174,8 @@ public class EtymologyInferenceTest {
 		ProblemManager problemManager = ProblemManager.defaultProblemManager();
 		config.setNonPersistableFeatures("EtymologyProblem", problemManager.getDbManager());
 		EtymologyProblem problem = new EtymologyProblem(config);
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, new InferenceLogger());
+		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR,
+				new InferenceLogger());
 		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
 		EtymologyIdeaGenerator ideaGen = EtymologyIdeaGenerator.fromJson(problem, theory, mapper,
 				"etinen-etymology/src/test/resources/serialization/ideas.json", new InferenceLogger());
@@ -194,7 +201,8 @@ public class EtymologyInferenceTest {
 		// gridSearch();
 
 		// String configPath = "";
-		// String configPath = "etinen-etymology/src/test/resources/serialization/config-languagelvl.json";
+		// String configPath =
+		// "etinen-etymology/src/test/resources/serialization/config-languagelvl.json";
 		String configPath = "etinen-etymology/src/test/resources/serialization/config-branchlvl.json";
 		boolean branchwiseBorrowing = true;
 
