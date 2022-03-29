@@ -35,7 +35,8 @@ public class EtymologyProblem extends PslProblem {
 			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME };
 
 	// TODO make sure the config sets the dbmanager and problemId when it's
-	// initialized
+	// initialized 
+	// (old to-do)
 	public EtymologyProblem(EtymologyProblemConfig config) {
 		super(config);
 		addInteractionRules();

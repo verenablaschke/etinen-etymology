@@ -4,16 +4,19 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.Stack;
 
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.util.Pair;
+import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
+
+	public static boolean PRINT_LOG = true;
 
 	private EtymologicalTheory theory;
 	private EtymologyProblemConfig config;
@@ -26,27 +29,36 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
 		logger.displayln("...Working with the following idea generation configuration:");
 		// TODO:
-//		config = problem.getConfig();
-//		config.logSettings();
+		config = (EtymologyProblemConfig) problem.getConfig();
+		if (PRINT_LOG) {
+			config.logSettings();
+		}
 
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
 	public void generateAtoms() {
+		// Current assumption:
+		// - all relevant forms are selected, including protoforms!
+		// - this also includes all relevant protolanguages
+
 		IndexedObjectStore objectStore = theory.getIndexedObjectStore();
 		Set<String> concepts = new HashSet<>();
-		Stack<String> langs = new Stack<>();
+		Set<String> langsAdded = new HashSet<>();
+		Set<Pair<Integer, String>> formsAndLangs = new HashSet<>();
 
 		// 1. Atoms about the word forms.
 		for (int formId : config.getFormIds()) {
 			String lang = objectStore.getLangForForm(formId);
 			pslProblem.addObservation("Flng", 1.0, formId + "", lang);
-			langs.push(lang);
+			formsAndLangs.add(new Pair<Integer, String>(formId, lang));
+			langsAdded.add(lang);
 			for (String concept : objectStore.getConceptsForForm(formId)) {
 				pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
 				concepts.add(concept);
 			}
 			pslProblem.addObservation("XFufo", 1.0, formId + "");
+			pslProblem.addTarget("Eunk", formId + "");
 		}
 		// TODO relevant (non-selected) forms of proto languages
 
@@ -61,31 +73,51 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		// 3. Language ancestry/contact atoms.
-		while (!langs.isEmpty()) {
-			String lang = langs.pop();
+		for (String lang : langsAdded) {
 			for (String contact : theory.getLanguagePhylogeny().getIncomingInfluences(lang)) {
-				// TODO only add contact languages with forms in the input data!
-				pslProblem.addObservation("Tcnt", 1.0, lang, contact);
+				if (langsAdded.contains(contact)) {
+					pslProblem.addObservation("Tcnt", 1.0, lang, contact);
+				}
 			}
 			String parent = theory.getLanguagePhylogeny().parents.get(lang);
-			langs.push(parent); // TODO determine when to stop
-			pslProblem.addObservation("Tanc", 1.0, lang, parent);
-			// TODO:
-//			for (String formId : theory.getIndexedObjectStore().getFormsForLangAndConcepts(parent, concept)) {
-//				pslProblem.addObservation("Flng", 1.0, formId + "", parent);
-//				pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
-//				pslProblem.addObservation("XFufo", 1.0, formId + "");
-//			}
+			if (langsAdded.contains(parent)) {
+				pslProblem.addObservation("Tanc", 1.0, lang, parent);
+			}
 		}
 
-		// TODO:
-		// 4. Generate etymology atoms.
-//		for (Entry entry1 : entryPool) {
-//			pslProblem.addTarget("Eunk", entry1.formIdAsString);
-//			for (Entry entry2 : entryPool) {
-//				addAtomsForFormPair(entry1, entry2);
-//			}
-//		}
+		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(theory.getIndexedObjectStore().getCorrModel(),
+				theory);
+
+		for (Pair<Integer, String> formAndLang1 : formsAndLangs) {
+			for (Pair<Integer, String> formAndLang2 : formsAndLangs) {
+				if (formAndLang1.equals(formAndLang2)) {
+					continue;
+				}
+
+				double fSim = phonSim.similarity(formAndLang1.first, formAndLang2.first);
+				pslProblem.addObservation("Fsim", fSim, formAndLang1.first + "", formAndLang2.first + "");
+				pslProblem.addObservation("Fsim", fSim, formAndLang2.first + "", formAndLang1.first + "");
+
+				if (theory.getLanguagePhylogeny().parents.get(formAndLang1.second).equals(formAndLang2.second)) {
+					pslProblem.addTarget("Einh", formAndLang1.first + "", formAndLang2.first + "");
+				} else if (theory.getLanguagePhylogeny().parents.get(formAndLang2.second).equals(formAndLang1.second)) {
+					pslProblem.addTarget("Einh", formAndLang2.first + "", formAndLang1.first + "");
+				}
+				// allow cross-temporal borrowing (?)
+				if (theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang1.second)
+						.contains(formAndLang2.second)) {
+					pslProblem.addTarget("Eloa", formAndLang1.first + "", formAndLang2.first + "");
+				}
+				if (theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang2.second)
+						.contains(formAndLang1.second)) {
+					pslProblem.addTarget("Eloa", formAndLang2.first + "", formAndLang1.first + "");
+				}
+			}
+		}
+
+		if (PRINT_LOG) {
+			super.pslProblem.printAtomsToConsole();
+		}
 	}
 
 	private double getSemanticSimilarity(String concept1, String concept2) {

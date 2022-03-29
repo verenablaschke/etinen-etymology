@@ -35,7 +35,7 @@ import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.util.data.RankingEntry;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
-public class EtymologyInferenceTest {
+public class EtymologyInferenceTestDEPRECATED {
 	// For debugging with a GUI, use the EtymologyFactViewer in the etinen
 	// repository.
 
