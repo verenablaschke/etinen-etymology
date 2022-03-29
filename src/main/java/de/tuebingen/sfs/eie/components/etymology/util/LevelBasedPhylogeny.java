@@ -1,6 +1,6 @@
 package de.tuebingen.sfs.eie.components.etymology.util;
 
-import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
+import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGeneratorDEPRECATED;
 import de.tuebingen.sfs.eie.shared.core.LanguageTree;
 import de.tuebingen.sfs.eie.shared.core.TreeLayer;
 import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
@@ -123,7 +123,7 @@ public class LevelBasedPhylogeny {
 		tree.initializeLeafLayer();
 		List<String> desc = new ArrayList<String>();
 		tree.collectDescendants("ROOT", desc);
-		if (EtymologyIdeaGenerator.PRINT_LOG) {
+		if (EtymologyIdeaGeneratorDEPRECATED.PRINT_LOG) {
 			System.err.println(tree.toNewickString());
 		}
 	}
@@ -134,7 +134,7 @@ public class LevelBasedPhylogeny {
 		for (String child : tree.children.get(oldParent)) {
 			tree.children.get(newParent).add(child);
 			tree.parents.put(child, newParent);
-			if (EtymologyIdeaGenerator.PRINT_LOG) {
+			if (EtymologyIdeaGeneratorDEPRECATED.PRINT_LOG) {
 				System.err.println("Moved " + child + " from " + oldParent + " to " + newParent);
 			}
 			TreeLayer oldChildLayer = tree.nodesToLayers.get(child);
@@ -163,7 +163,7 @@ public class LevelBasedPhylogeny {
 				children = tree.children.get(curChild);
 			}
 		}
-		if (EtymologyIdeaGenerator.PRINT_LOG) {
+		if (EtymologyIdeaGeneratorDEPRECATED.PRINT_LOG) {
 			System.err.println("Added " + newNode + " between " + child + " and " + parent);
 		}
 		return newNode;
