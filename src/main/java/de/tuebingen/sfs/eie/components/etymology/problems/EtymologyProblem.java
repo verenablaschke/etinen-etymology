@@ -34,7 +34,20 @@ public class EtymologyProblem extends PslProblem {
 			EinhOrEloaOrEunkRule.NAME, EloaPlusEloaRule.NAME, TancToEinhRule.NAME, TcntToEloaRule.NAME,
 			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME };
 
-	// TODO make sure the config sets the dbmanager and problemId when it's initialized
+	// TODO make sure the config sets the dbmanager and problemId when it's
+	// initialized
+	public EtymologyProblem(EtymologyProblemConfig config) {
+		super(config);
+		addInteractionRules();
+
+		InferenceLogger logger = config.getLogger();
+		logger.displayAndLogLn("==========");
+		logger.displayAndLog("Initializing etymology model with the following configuration:");
+		config.logSettings();
+	}
+
+	// TODO make sure the config sets the dbmanager and problemId when it's
+	// initialized
 	public EtymologyProblem(EtymologyProblemConfigDEPRECATED config) {
 		super(config);
 		addInteractionRules();
@@ -45,7 +58,7 @@ public class EtymologyProblem extends PslProblem {
 		config.logSettings();
 	}
 
-	public EtymologyProblem fromConfig(EtymologyProblemConfigDEPRECATED config) {
+	public EtymologyProblem fromConfig(EtymologyProblemConfig config) {
 		return new EtymologyProblem(config);
 	}
 
