@@ -74,9 +74,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// 3. Language ancestry/contact atoms.
 		for (String lang : langsAdded) {
-			for (String contact : theory.getLanguagePhylogeny().getIncomingInfluences(lang)) {
-				if (langsAdded.contains(contact)) {
-					pslProblem.addObservation("Tcnt", 1.0, lang, contact);
+			if (theory.getLanguagePhylogeny().hasIncomingInfluences(lang)) {
+				for (String contact : theory.getLanguagePhylogeny().getIncomingInfluences(lang)) {
+					if (langsAdded.contains(contact)) {
+						pslProblem.addObservation("Tcnt", 1.0, lang, contact);
+					}
 				}
 			}
 			String parent = theory.getLanguagePhylogeny().parents.get(lang);
@@ -104,12 +106,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					pslProblem.addTarget("Einh", formAndLang2.first + "", formAndLang1.first + "");
 				}
 				// allow cross-temporal borrowing (?)
-				if (theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang1.second)
-						.contains(formAndLang2.second)) {
+				if (theory.getLanguagePhylogeny().hasIncomingInfluences(formAndLang1.second)
+						&& theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang1.second)
+								.contains(formAndLang2.second)) {
 					pslProblem.addTarget("Eloa", formAndLang1.first + "", formAndLang2.first + "");
 				}
-				if (theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang2.second)
-						.contains(formAndLang1.second)) {
+				if (theory.getLanguagePhylogeny().hasIncomingInfluences(formAndLang2.second)
+						&& theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang2.second)
+								.contains(formAndLang1.second)) {
 					pslProblem.addTarget("Eloa", formAndLang2.first + "", formAndLang1.first + "");
 				}
 			}
