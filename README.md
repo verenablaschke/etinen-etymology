@@ -21,13 +21,9 @@ The GUI classes for this component can be found in https://github.com/jdellert/e
 
 About language forms:
 - **Flng**(form ID, language): form--language pairs
-- **Fufo**(form ID, phon. form): underlying form
 - **Fsem**(form ID, concept): semantics of a form
 - **XFufo**(form ID): helper predicate: an underlying form for this ID exists
-
-Similarity measures:
-- **Fsim**(phon. form 1, phon. form 2): phonetic similarity
-- **Ssim**(concept 1, concept 2): semantic similarity
+- **Fsim**(form ID, form ID): phonetic similarity
 
 Phylogenetic information:
 - **Tanc**(language 1, language 2): language 2 is an ancestor of language 1
@@ -48,6 +44,5 @@ Phylogenetic information:
 | EloaPlusEloa | Eloa(X, Y) + Eloa(Y, X) <= 1 . | Borrowing cannot happen in a circular fashion. |
 | TancToEinh | Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y) | A word can be inherited from its direct ancestor language. |
 | TcntToEloa | Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y) | A word can be loaned from a contact language. |
-| EetyToFsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2) | Words derived from the same source should be phonetically similar. |
-| EetyToSsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & Fsem(X, C1) & Fsem(Y, C2) -> Ssim(C1, C2) | Words derived from the same source should be semantically similar. |
-| DirectEetyToFsim | Einh/Eloa(X, Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2) | A word should be phonetically similar to its source form. |
+| EetyToFsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) -> Fsim(X, Y) | Words derived from the same source should be phonetically similar. |
+| DirectEetyToFsim | Einh/Eloa(X, Y) & XFufo(X) & XFufo(Y) -> Fsim(X, Y) | A word should be phonetically similar to its source form. |

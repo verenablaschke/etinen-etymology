@@ -136,12 +136,12 @@ public class EtymologyProblem extends PslProblem {
 
 		
 		// TODO add and debug
-//		if (config.include(DirectEetyToFsimRule.NAME)) {
-//			addRule(new DirectEetyToFsimRule("Eloa", this,
-//					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-//			addRule(new DirectEetyToFsimRule("Einh", this,
-//					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-//		}
+		if (config.include(DirectEetyToFsimRule.NAME)) {
+			addRule(new DirectEetyToFsimRule("Eloa", this,
+					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+			addRule(new DirectEetyToFsimRule("Einh", this,
+					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+		}
 
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));

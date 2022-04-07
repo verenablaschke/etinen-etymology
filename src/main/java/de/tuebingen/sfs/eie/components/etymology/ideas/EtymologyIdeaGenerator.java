@@ -126,6 +126,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 								pslProblem.addTarget("Eloa", formId + "", contactFormId + "");
 								if (xfufo && objectStore.hasUnderlyingForm(contactFormId)) {
 									double fSim = phonSim.similarity(formId, contactFormId);
+									System.err.println("!!! Fsim(" + theory.normalize(formId) + ", "
+											+ theory.normalize(contactFormId) + ") " + fSim); // TODO del
 									pslProblem.addObservation("Fsim", fSim, formId + "", contactFormId + "");
 									pslProblem.addObservation("Fsim", fSim, contactFormId + "", formId + "");
 								}
@@ -139,6 +141,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						pslProblem.addTarget("Einh", formId + "", parentFormId + "");
 						if (xfufo && objectStore.hasUnderlyingForm(parentFormId)) {
 							double fSim = phonSim.similarity(formId, parentFormId);
+							System.err.println("!!! Fsim(" + theory.normalize(formId) + ", "
+									+ theory.normalize(parentFormId) + ") " + fSim); // TODO del
 							pslProblem.addObservation("Fsim", fSim, formId + "", parentFormId + "");
 							pslProblem.addObservation("Fsim", fSim, parentFormId + "", formId + "");
 						}
