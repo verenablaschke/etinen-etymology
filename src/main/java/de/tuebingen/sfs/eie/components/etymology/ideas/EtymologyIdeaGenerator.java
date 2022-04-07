@@ -63,6 +63,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Language atoms
 		Set<String> langsAdded = new HashSet<>();
+		List<Integer> allForms = new ArrayList<>();
 		String anc = phylo.lowestCommonAncestor(langStack);
 		if (anc.equals(LanguagePhylogeny.root)) {
 			// TODO if there are contact links: go up to oldest contact
@@ -77,7 +78,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				langsAdded.add(lang);
 				String parent = phylo.parents.get(lang);
 				pslProblem.addObservation("Tanc", 1.0, lang, parent);
-				if (!langsToForms.containsKey(lang)) {
+				if (langsToForms.containsKey(lang)) {
+					allForms.addAll(langsToForms.get(lang));
+				} else {
 					Set<Integer> forms = objectStore.getFormsForLangAndConcepts(lang, concept);
 					if (forms == null) {
 						int formId = objectStore.createFormId();
@@ -86,6 +89,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						langsToForms.put(lang, formId);
 					} else {
 						langsToForms.putAll(lang, forms);
+						allForms.addAll(forms);
 					}
 				}
 				if (!parent.equals(anc) && !langsAdded.contains(parent)) {
@@ -124,13 +128,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 						if (langsToForms.containsKey(contact)) {
 							for (int contactFormId : langsToForms.get(contact)) {
 								pslProblem.addTarget("Eloa", formId + "", contactFormId + "");
-								if (xfufo && objectStore.hasUnderlyingForm(contactFormId)) {
-									double fSim = phonSim.similarity(formId, contactFormId);
-									System.err.println("!!! Fsim(" + theory.normalize(formId) + ", "
-											+ theory.normalize(contactFormId) + ") " + fSim); // TODO del
-									pslProblem.addObservation("Fsim", fSim, formId + "", contactFormId + "");
-									pslProblem.addObservation("Fsim", fSim, contactFormId + "", formId + "");
-								}
 							}
 						}
 					}
@@ -139,15 +136,18 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				if (langsToForms.containsKey(parent)) {
 					for (int parentFormId : langsToForms.get(parent)) {
 						pslProblem.addTarget("Einh", formId + "", parentFormId + "");
-						if (xfufo && objectStore.hasUnderlyingForm(parentFormId)) {
-							double fSim = phonSim.similarity(formId, parentFormId);
-							System.err.println("!!! Fsim(" + theory.normalize(formId) + ", "
-									+ theory.normalize(parentFormId) + ") " + fSim); // TODO del
-							pslProblem.addObservation("Fsim", fSim, formId + "", parentFormId + "");
-							pslProblem.addObservation("Fsim", fSim, parentFormId + "", formId + "");
-						}
 					}
 				}
+			}
+		}
+
+		for (int i = 0; i < allForms.size() - 1; i++) {
+			int formIdI = allForms.get(i);
+			for (int j = i + 1; j < allForms.size(); j++) {
+				int formIdJ = allForms.get(j);
+				double fSim = phonSim.similarity(formIdI, formIdJ);
+				pslProblem.addObservation("Fsim", fSim, formIdI + "", formIdJ + "");
+				pslProblem.addObservation("Fsim", fSim, formIdJ + "", formIdI + "");
 			}
 		}
 
