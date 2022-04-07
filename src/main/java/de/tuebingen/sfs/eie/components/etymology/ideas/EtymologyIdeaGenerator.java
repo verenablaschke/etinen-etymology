@@ -1,17 +1,23 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
+import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
 import de.tuebingen.sfs.eie.shared.util.Pair;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
+import de.tuebingen.sfs.psl.util.data.Multimap;
+import de.tuebingen.sfs.psl.util.data.Multimap.CollectionType;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
@@ -38,83 +44,105 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	}
 
 	public void generateAtoms() {
-		// Current assumption:
-		// - all relevant forms are selected, including protoforms!
-		// - this also includes all relevant protolanguages
-
 		IndexedObjectStore objectStore = theory.getIndexedObjectStore();
-		Set<String> concepts = new HashSet<>();
-		Set<String> langsAdded = new HashSet<>();
-		Set<Pair<Integer, String>> formsAndLangs = new HashSet<>();
+		LanguagePhylogeny phylo = theory.getLanguagePhylogeny();
 
-		// 1. Atoms about the word forms.
+		Stack<String> langStack = new Stack<>();
+		Set<String> conceptsAdded = new HashSet<>();
+
+		Multimap<String, Integer> langsToForms = new Multimap<>(CollectionType.SET);
+
 		for (int formId : config.getFormIds()) {
 			String lang = objectStore.getLangForForm(formId);
-			pslProblem.addObservation("Flng", 1.0, formId + "", lang);
-			formsAndLangs.add(new Pair<Integer, String>(formId, lang));
-			langsAdded.add(lang);
-			for (String concept : objectStore.getConceptsForForm(formId)) {
-				pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
-				concepts.add(concept);
-			}
-			pslProblem.addObservation("XFufo", 1.0, formId + "");
-			pslProblem.addTarget("Eunk", formId + "");
+			langStack.add(lang);
+			langsToForms.put(lang, formId);
+			List<String> concepts = objectStore.getConceptsForForm(formId);
+			conceptsAdded.addAll(concepts);
 		}
-		// TODO relevant (non-selected) forms of proto languages
+		String concept = conceptsAdded.iterator().next(); // TODO
 
-		// 2. Semantic similarity atoms.
-		List<String> conceptList = new ArrayList<>(concepts);
-		for (int i = 0; i < conceptList.size() - 1; i++) {
-			String concept1 = conceptList.get(i);
-			for (int j = i; j < conceptList.size(); j++) {
-				String concept2 = conceptList.get(j);
-				pslProblem.addObservation("Ssim", getSemanticSimilarity(concept1, concept2), concept1, concept2);
+		// Language atoms
+		Set<String> langsAdded = new HashSet<>();
+		String anc = phylo.lowestCommonAncestor(langStack);
+		if (anc.equals(LanguagePhylogeny.root)) {
+			// TODO if there are contact links: go up to oldest contact
+			// if not: treat as multiple intra-family inferences? warn user?
+		} else {
+			// TODO message about skipped family members?
+			while (!langStack.isEmpty()) {
+				String lang = langStack.pop();
+				if (langsAdded.contains(lang)) {
+					continue;
+				}
+				langsAdded.add(lang);
+				String parent = phylo.parents.get(lang);
+				pslProblem.addObservation("Tanc", 1.0, lang, parent);
+				if (!langsToForms.containsKey(lang)) {
+					Set<Integer> forms = objectStore.getFormsForLangAndConcepts(lang, concept);
+					if (forms == null) {
+						int formId = objectStore.createFormId();
+						objectStore.addFormIdWithConcept(formId, concept);
+						objectStore.addFormIdWithLanguage(formId, lang);
+						langsToForms.put(lang, formId);
+					} else {
+						langsToForms.putAll(lang, forms);
+					}
+				}
+				if (!parent.equals(anc) && !langsAdded.contains(parent)) {
+					langStack.push(parent);
+				}
 			}
 		}
-
-		// 3. Language ancestry/contact atoms.
 		for (String lang : langsAdded) {
-			if (theory.getLanguagePhylogeny().hasIncomingInfluences(lang)) {
-				for (String contact : theory.getLanguagePhylogeny().getIncomingInfluences(lang)) {
+			if (phylo.hasIncomingInfluences(lang)) {
+				for (String contact : phylo.getIncomingInfluences(lang)) {
 					if (langsAdded.contains(contact)) {
 						pslProblem.addObservation("Tcnt", 1.0, lang, contact);
 					}
 				}
 			}
-			String parent = theory.getLanguagePhylogeny().parents.get(lang);
-			if (langsAdded.contains(parent)) {
-				pslProblem.addObservation("Tanc", 1.0, lang, parent);
-			}
 		}
 
-		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(theory.getIndexedObjectStore().getCorrModel(),
-				theory);
+		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
 
-		for (Pair<Integer, String> formAndLang1 : formsAndLangs) {
-			for (Pair<Integer, String> formAndLang2 : formsAndLangs) {
-				if (formAndLang1.equals(formAndLang2)) {
-					continue;
+		// Form atoms
+		for (String lang : langsToForms.keySet()) {
+			for (int formId : langsToForms.get(lang)) {
+				pslProblem.addObservation("Flng", 1.0, formId + "", lang);
+				for (String conc : objectStore.getConceptsForForm(formId)) {
+					pslProblem.addObservation("Fsem", 1.0, formId + "", conc);
 				}
 
-				double fSim = phonSim.similarity(formAndLang1.first, formAndLang2.first);
-				pslProblem.addObservation("Fsim", fSim, formAndLang1.first + "", formAndLang2.first + "");
-				pslProblem.addObservation("Fsim", fSim, formAndLang2.first + "", formAndLang1.first + "");
+				boolean xfufo = objectStore.hasUnderlyingForm(formId);
+				if (xfufo) {
+					pslProblem.addObservation("XFufo", 1.0, formId + "");
+				}
 
-				if (theory.getLanguagePhylogeny().parents.get(formAndLang1.second).equals(formAndLang2.second)) {
-					pslProblem.addTarget("Einh", formAndLang1.first + "", formAndLang2.first + "");
-				} else if (theory.getLanguagePhylogeny().parents.get(formAndLang2.second).equals(formAndLang1.second)) {
-					pslProblem.addTarget("Einh", formAndLang2.first + "", formAndLang1.first + "");
+				pslProblem.addTarget("Eunk", formId + "");
+				if (phylo.hasIncomingInfluences(lang)) {
+					for (String contact : phylo.getIncomingInfluences(lang)) {
+						if (langsToForms.containsKey(contact)) {
+							for (int contactFormId : langsToForms.get(contact)) {
+								pslProblem.addTarget("Eloa", formId + "", contactFormId + "");
+								if (xfufo && objectStore.hasUnderlyingForm(contactFormId)) {
+									double fSim = phonSim.similarity(formId, contactFormId);
+									pslProblem.addObservation("Fsim", fSim, formId + "", contactFormId + "");
+									pslProblem.addObservation("Fsim", fSim, contactFormId + "", formId + "");
+								}
+							}
+						}
+					}
 				}
-				// allow cross-temporal borrowing (?)
-				if (theory.getLanguagePhylogeny().hasIncomingInfluences(formAndLang1.second)
-						&& theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang1.second)
-								.contains(formAndLang2.second)) {
-					pslProblem.addTarget("Eloa", formAndLang1.first + "", formAndLang2.first + "");
-				}
-				if (theory.getLanguagePhylogeny().hasIncomingInfluences(formAndLang2.second)
-						&& theory.getLanguagePhylogeny().getIncomingInfluences(formAndLang2.second)
-								.contains(formAndLang1.second)) {
-					pslProblem.addTarget("Eloa", formAndLang2.first + "", formAndLang1.first + "");
+				String parent = phylo.parents.get(lang);
+				if (langsToForms.containsKey(parent)) {
+					for (int parentFormId : langsToForms.get(parent)) {
+						pslProblem.addTarget("Einh", formId + "", parentFormId + "");
+						if (xfufo && objectStore.hasUnderlyingForm(parentFormId)) {
+							double fSim = phonSim.similarity(formId, parentFormId);
+							pslProblem.addObservation("Fsim", fSim, formId + "", parentFormId + "");
+							pslProblem.addObservation("Fsim", fSim, parentFormId + "", formId + "");
+						}
+					}
 				}
 			}
 		}
@@ -158,6 +186,18 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// TODO rethink the dist --> sim conversion
 		return 1.0 / nestingLvl;
+	}
+
+	private class EtymologyEntry {
+		int formId;
+		List<String> concepts;
+		String language;
+
+		EtymologyEntry(int formId, List<String> concepts, String language) {
+			this.formId = formId;
+			this.concepts = concepts;
+			this.language = language;
+		}
 	}
 
 }

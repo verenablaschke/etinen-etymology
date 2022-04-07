@@ -60,7 +60,7 @@ public class EtymologyIdeaGeneratorDEPRECATED extends IdeaGenerator {
 		super(problem);
 		this.logger = problem.getLogger();
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
-		config = problem.getEtymologyConfig();
+//		config = problem.getEtymologyConfig();
 		if (PRINT_LOG) {
 			config.print(System.err);
 		}
@@ -118,13 +118,14 @@ public class EtymologyIdeaGeneratorDEPRECATED extends IdeaGenerator {
 	public static EtymologyIdeaGeneratorDEPRECATED fromJson(EtymologyProblem problem, EtymologicalTheory theory,
 			ObjectMapper mapper, InputStream in, InferenceLogger logger) {
 		IPATokenizer tokenizer = new IPATokenizer();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(problem.getEtymologyConfig().getWordListDbDir(),
-				logger);
+		CLDFWordlistDatabase wordListDb = null; // LoadUtils.loadDatabase(problem.getEtymologyConfig().getWordListDbDir(),
+//				logger);
 		PhoneticSimilarityHelper phonSimHelper = null;
-		if (theory != null && problem.getEtymologyConfig().getCorrespondenceDbDir() != null
-				&& !problem.getEtymologyConfig().getCorrespondenceDbDir().isEmpty())
-			phonSimHelper = new PhoneticSimilarityHelper(LoadUtils.loadCorrModel(
-					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), theory);
+//		if (theory != null && 
+//				problem.getEtymologyConfig().getCorrespondenceDbDir() != null
+//				&& !problem.getEtymologyConfig().getCorrespondenceDbDir().isEmpty())
+//			phonSimHelper = new PhoneticSimilarityHelper(LoadUtils.loadCorrModel(
+//					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), theory);
 
 		return new EtymologyIdeaGeneratorDEPRECATED(problem, theory, phonSimHelper, wordListDb);
 	}

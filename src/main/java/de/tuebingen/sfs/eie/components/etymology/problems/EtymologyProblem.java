@@ -10,6 +10,7 @@ import java.util.Set;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
+import de.tuebingen.sfs.eie.components.etymology.talk.pred.EetydistPred;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.DirectEetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToFsimRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EetyToSsimRule;
@@ -70,25 +71,24 @@ public class EtymologyProblem extends PslProblem {
 		// Information about the forms
 		// Flng(ID, language)
 		declareClosedPredicate("Flng", 2);
-		declareClosedPredicate("Fufo", 2);
+//		declareClosedPredicate("Fufo", 2);
 		declareClosedPredicate("Fsem", 2);
 		declareClosedPredicate("XFufo", 1);
 
 		// Similarity measures
 		declareClosedPredicate("Fsim", 2);
-		declareClosedPredicate("Ssim", 2);
+//		declareClosedPredicate("Ssim", 2);
 
 		// Etymological information
 		// Eety(ID1, ID2) -- ID1 comes from ID2
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
 		declareOpenPredicate(new EunkPred());
+		declareOpenPredicate(new EetydistPred());
 
 		// Phylogenetic information.
 		declareClosedPredicate("Tanc", 2);
 		declareClosedPredicate("Tcnt", 2);
-
-		// declareClosedPredicate("Fsimorig", 2);
 	}
 
 	@Override
@@ -118,6 +118,7 @@ public class EtymologyProblem extends PslProblem {
 			addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
 			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
 			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+			addRule(new EetyToFsimRule("Eetydist", "Eetydist", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
 
 			// addRule(new TalkingArithmeticRule("EetyFsimArith",
 			// "Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
@@ -126,19 +127,21 @@ public class EtymologyProblem extends PslProblem {
 			// this));
 		}
 
-		if (config.include(EetyToSsimRule.NAME)) {
-			addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-		}
+//		if (config.include(EetyToSsimRule.NAME)) {
+//			addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+//			addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+//			addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+//			addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
+//		}
 
-		if (config.include(DirectEetyToFsimRule.NAME)) {
-			addRule(new DirectEetyToFsimRule("Eloa", this,
-					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-			addRule(new DirectEetyToFsimRule("Einh", this,
-					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-		}
+		
+		// TODO add and debug
+//		if (config.include(DirectEetyToFsimRule.NAME)) {
+//			addRule(new DirectEetyToFsimRule("Eloa", this,
+//					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+//			addRule(new DirectEetyToFsimRule("Einh", this,
+//					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
+//		}
 
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
 		// addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
@@ -182,8 +185,8 @@ public class EtymologyProblem extends PslProblem {
 		return atomsToDelete;
 	}
 
-	public EtymologyProblemConfigDEPRECATED getEtymologyConfig() {
-		return (EtymologyProblemConfigDEPRECATED) super.getConfig();
+	public EtymologyProblemConfig getEtymologyConfig() {
+		return (EtymologyProblemConfig) super.getConfig();
 	}
 
 	public InferenceLogger getLogger() {
