@@ -131,8 +131,14 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		// Compare all available phonetic forms.
 		for (int i = 0; i < allForms.size() - 1; i++) {
 			int formIdI = allForms.get(i);
+			if (!objectStore.hasUnderlyingForm(formIdI)) {
+				continue;
+			}
 			for (int j = i + 1; j < allForms.size(); j++) {
 				int formIdJ = allForms.get(j);
+				if (!objectStore.hasUnderlyingForm(formIdJ)) {
+					continue;
+				}
 				double fSim = phonSim.similarity(formIdI, formIdJ);
 				pslProblem.addObservation("Fsim", fSim, formIdI + "", formIdJ + "");
 				pslProblem.addObservation("Fsim", fSim, formIdJ + "", formIdI + "");
@@ -158,10 +164,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			langsAdded.add(lang);
 			String parent = phylo.parents.get(lang);
 			pslProblem.addObservation("Tanc", 1.0, lang, parent);
-			if (langsToForms.containsKey(lang)) {
-				allForms.addAll(langsToForms.get(lang));
-			} else {
-				Set<Integer> forms = objectStore.getFormsForLangAndConcepts(lang, concept);
+			Collection<Integer> forms = langsToForms.get(lang);
+			if (forms == null) {
+				forms = objectStore.getFormsForLangAndConcepts(lang, concept);
 				if (forms == null) {
 					int formId = objectStore.createFormId();
 					objectStore.addFormIdWithConcept(formId, concept);
@@ -171,6 +176,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					langsToForms.putAll(lang, forms);
 					allForms.addAll(forms);
 				}
+			} else {
+				allForms.addAll(forms);
 			}
 			if (!parent.equals(lowestCommonAnc) && !langsAdded.contains(parent)) {
 				langStack.push(parent);
