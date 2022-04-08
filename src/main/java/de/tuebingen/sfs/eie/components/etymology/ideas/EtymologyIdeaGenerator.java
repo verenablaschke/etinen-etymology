@@ -1,10 +1,9 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 
@@ -13,7 +12,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
-import de.tuebingen.sfs.eie.shared.util.Pair;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -34,7 +33,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		this.logger = problem.getLogger();
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
 		logger.displayln("...Working with the following idea generation configuration:");
-		// TODO:
 		config = (EtymologyProblemConfig) problem.getConfig();
 		if (PRINT_LOG) {
 			config.logSettings();
@@ -43,15 +41,15 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
-	public void generateAtoms() {
+	public void generateAtoms(EtinenConstantRenderer renderer) {
+		// TODO warn user about missing homologue members if applicable?
+
 		IndexedObjectStore objectStore = theory.getIndexedObjectStore();
 		LanguagePhylogeny phylo = theory.getLanguagePhylogeny();
 
 		Stack<String> langStack = new Stack<>();
 		Set<String> conceptsAdded = new HashSet<>();
-
 		Multimap<String, Integer> langsToForms = new Multimap<>(CollectionType.SET);
-
 		for (int formId : config.getFormIds()) {
 			String lang = objectStore.getLangForForm(formId);
 			langStack.add(lang);
@@ -59,6 +57,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			List<String> concepts = objectStore.getConceptsForForm(formId);
 			conceptsAdded.addAll(concepts);
 		}
+		// TODO semantic change (-> multiple concepts)
 		String concept = conceptsAdded.iterator().next(); // TODO
 
 		// Language atoms
@@ -66,36 +65,25 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		List<Integer> allForms = new ArrayList<>();
 		String anc = phylo.lowestCommonAncestor(langStack);
 		if (anc.equals(LanguagePhylogeny.root)) {
-			// TODO if there are contact links: go up to oldest contact
-			// if not: treat as multiple intra-family inferences? warn user?
-		} else {
-			// TODO message about skipped family members?
-			while (!langStack.isEmpty()) {
-				String lang = langStack.pop();
-				if (langsAdded.contains(lang)) {
-					continue;
-				}
-				langsAdded.add(lang);
-				String parent = phylo.parents.get(lang);
-				pslProblem.addObservation("Tanc", 1.0, lang, parent);
-				if (langsToForms.containsKey(lang)) {
-					allForms.addAll(langsToForms.get(lang));
-				} else {
-					Set<Integer> forms = objectStore.getFormsForLangAndConcepts(lang, concept);
-					if (forms == null) {
-						int formId = objectStore.createFormId();
-						objectStore.addFormIdWithConcept(formId, concept);
-						objectStore.addFormIdWithLanguage(formId, lang);
-						langsToForms.put(lang, formId);
-					} else {
-						langsToForms.putAll(lang, forms);
-						allForms.addAll(forms);
-					}
-				}
-				if (!parent.equals(anc) && !langsAdded.contains(parent)) {
-					langStack.push(parent);
-				}
+			// If the selection contains languages from multiple different families,
+			// add languages + word forms from up to the earliest established contact.
+			// TODO warn user if there are no relevant contacts
+			Multimap<String, String> familyAncestorToLangs = new Multimap<>(CollectionType.SET);
+			for (String lang : langStack) {
+				familyAncestorToLangs.put(phylo.getPathFor(lang).get(0), lang);
 			}
+			for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
+				langStack.clear();
+				langStack.addAll(relatedLangs);
+				anc = phylo.lowestCommonAncestor(langStack);
+				addLanguageFamily(phylo, objectStore, renderer, concept, anc, langStack, langsAdded, langsToForms,
+						allForms);
+			}
+		} else {
+			// If there is a (non-root) common ancestor,
+			// add languages + word forms up to the lowest common ancestor.
+			addLanguageFamily(phylo, objectStore, renderer, concept, anc, langStack, langsAdded, langsToForms,
+					allForms);
 		}
 		for (String lang : langsAdded) {
 			if (phylo.hasIncomingInfluences(lang)) {
@@ -107,9 +95,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 
-		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
-
 		// Form atoms
+		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
 		for (String lang : langsToForms.keySet()) {
 			for (int formId : langsToForms.get(lang)) {
 				pslProblem.addObservation("Flng", 1.0, formId + "", lang);
@@ -141,6 +128,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 
+		// Compare all available phonetic forms.
 		for (int i = 0; i < allForms.size() - 1; i++) {
 			int formIdI = allForms.get(i);
 			for (int j = i + 1; j < allForms.size(); j++) {
@@ -153,6 +141,40 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		if (PRINT_LOG) {
 			super.pslProblem.printAtomsToConsole();
+		}
+	}
+
+	private void addLanguageFamily(LanguagePhylogeny phylo, IndexedObjectStore objectStore,
+			EtinenConstantRenderer renderer, String concept, String lowestCommonAnc, Stack<String> langStack,
+			Set<String> langsAdded, Multimap<String, Integer> langsToForms, List<Integer> allForms) {
+		logger.displayln(
+				"Adding languages descended from " + renderer.getLanguageRepresentation(lowestCommonAnc) + ":");
+		while (!langStack.isEmpty()) {
+			String lang = langStack.pop();
+			if (langsAdded.contains(lang)) {
+				continue;
+			}
+			logger.displayln("- " + renderer.getLanguageRepresentation(lang));
+			langsAdded.add(lang);
+			String parent = phylo.parents.get(lang);
+			pslProblem.addObservation("Tanc", 1.0, lang, parent);
+			if (langsToForms.containsKey(lang)) {
+				allForms.addAll(langsToForms.get(lang));
+			} else {
+				Set<Integer> forms = objectStore.getFormsForLangAndConcepts(lang, concept);
+				if (forms == null) {
+					int formId = objectStore.createFormId();
+					objectStore.addFormIdWithConcept(formId, concept);
+					objectStore.addFormIdWithLanguage(formId, lang);
+					langsToForms.put(lang, formId);
+				} else {
+					langsToForms.putAll(lang, forms);
+					allForms.addAll(forms);
+				}
+			}
+			if (!parent.equals(lowestCommonAnc) && !langsAdded.contains(parent)) {
+				langStack.push(parent);
+			}
 		}
 	}
 
