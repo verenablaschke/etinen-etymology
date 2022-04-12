@@ -16,23 +16,15 @@ The GUI classes for this component can be found in https://github.com/jdellert/e
 # Predicates
 
 ## Closed predicates
-
-(F = form; S = semantics; X = exists; T = tree)
-
-About language forms:
-- **Flng**(form ID, language): form--language pairs
-- **Fsem**(form ID, concept): semantics of a form
-- **XFufo**(form ID): helper predicate: an underlying form for this ID exists
-- **Fsim**(form ID, form ID): phonetic similarity
-
-Phylogenetic information:
-- **Tanc**(language 1, language 2): language 2 is an ancestor of language 1
-- **Tcnt**(language 1, language 2): contact between the two languages
+- **Xinh**(form1, form2): an inheritance relation is possible, i.e. language of form 2 is direct ancestor of language of form 1
+- **Xloa**(form1, form2): a contact relation is possible, i.e. language of form 1 has an incoming contact link from language 2
 
 ## Open predicates
-- **Einh**(form ID 1, form ID 2): form 1 is inherited from form 2
-- **Eloa**(form ID 1, form ID 2): form 1 was loaned from form 2
-- **Eunk**(form ID): unknown etymology
+- **Fhom**(form, homset): the (hypothetical) form exists for the homologue set; fixed to 1 or 0 for attested data, to 1 for confirmed reconstructions, loose otherwise
+- **Fsim**(form1, form2): phonetic similarity; fixed to (1 - IWSA distance) for attested data and reconstructions, loose otherwise
+- **Einh**(form1, form2): form 1 is inherited from form 2
+- **Eloa**(form1, form2): form 1 was borrowed from form 2
+- **Eunk**(form): unknown etymology
 
 # PSL Rules
 
@@ -42,7 +34,7 @@ Phylogenetic information:
 | EloaPrior | ~Eloa(X, Y) | By default, we do not assume that a word is a loanword. |
 | EinhOrEloaOrEunk | Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 . | The possible explanations for a word's origin follow a probability distribution. |
 | EloaPlusEloa | Eloa(X, Y) + Eloa(Y, X) <= 1 . | Borrowing cannot happen in a circular fashion. |
-| TancToEinh | Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y) | A word can be inherited from its direct ancestor language. |
-| TcntToEloa | Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y) | A word can be loaned from a contact language. |
-| EetyToFsim | Einh/Eloa(X, Z) & Einh/Eloa(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) -> Fsim(X, Y) | Words derived from the same source should be phonetically similar. |
-| DirectEetyToFsim | Einh/Eloa(X, Y) & XFufo(X) & XFufo(Y) -> Fsim(X, Y) | A word should be phonetically similar to its source form. |
+| FhomToFhom | Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H) | |
+| FsimToEinh | Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z) | |
+| FsimToFsim | Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & W != Z -> Fsim(W,Z) | |
+| FsimPlusFsim | Fsim(X,Y) = Fsim(Y,X) . | |

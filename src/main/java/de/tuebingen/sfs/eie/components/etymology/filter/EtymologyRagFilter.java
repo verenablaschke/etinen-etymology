@@ -25,41 +25,23 @@ public class EtymologyRagFilter extends RagFilter {
     }
 
     private void initializeIgnoreInGui() {
-        ignoreInGui.add("Flng");
-        ignoreInGui.add("Fsem");
-        ignoreInGui.add("Fufo");
-        ignoreInGui.add("XFufo");
-        ignoreInGui.add("Fsim");
-        ignoreInGui.add("Ssim");
-        ignoreInGui.add("Tanc");
-        ignoreInGui.add("Tcnt");
+        ignoreInGui.add("Xinh");
+        ignoreInGui.add("Xloa");
         ignoreInGui.add("#equal");
         ignoreInGui.add("#notequal");
-        ignoreInGui.add("FLNG");
-        ignoreInGui.add("FSEM");
-        ignoreInGui.add("FUFO");
-        ignoreInGui.add("XFUFO");
-        ignoreInGui.add("FSIM");
-        ignoreInGui.add("SSIM");
-        ignoreInGui.add("TANC");
-        ignoreInGui.add("TCNT");
+        ignoreInGui.add("XINH");
+        ignoreInGui.add("XLOA");
         ignoreInGui.add("#EQUAL");
         ignoreInGui.add("#NOTEQUAL");
     }
 
     private void initializePreventUserInteraction() {
-        preventUserInteraction.add("Flng");
-        preventUserInteraction.add("Fsem");
-        preventUserInteraction.add("Fufo");
-        preventUserInteraction.add("XFufo");
-        preventUserInteraction.add("Tanc");
+        preventUserInteraction.add("Xinh");
+        preventUserInteraction.add("Xloa");
         preventUserInteraction.add("#equal");
         preventUserInteraction.add("#notequal");
-        preventUserInteraction.add("FLNG");
-        preventUserInteraction.add("FSEM");
-        preventUserInteraction.add("FUFO");
-        preventUserInteraction.add("XFUFO");
-        preventUserInteraction.add("TANC");
+        preventUserInteraction.add("XINH");
+        preventUserInteraction.add("XLOA");
         preventUserInteraction.add("#EQUAL");
         preventUserInteraction.add("#NOTEQUAL");
     }
