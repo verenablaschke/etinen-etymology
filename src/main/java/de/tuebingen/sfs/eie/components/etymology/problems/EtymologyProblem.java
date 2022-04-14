@@ -82,8 +82,12 @@ public class EtymologyProblem extends PslProblem {
 
 		addRule("FhomToFhom", "Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H)");
 		addRule("FsimToEinh", "Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
-		addRule("FsimToFsim", "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & W != Z -> Fsim(W,Z)");
-		addRule("FsimPlusFsim", "Fsim(X,Y) = Fsim(Y,X) .");
+		addRule("FsimToFsim", "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
+		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
+		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z)");
+		addRule("FsimTriangle", "Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 1 - Fsim(X,Y).");
+		addRule("EinhToFsim", "Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y).");
+		addRule("EloaAndFsim", "Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z).");
 
 		System.out.println("Rules added:");
 		super.printRules(System.out);

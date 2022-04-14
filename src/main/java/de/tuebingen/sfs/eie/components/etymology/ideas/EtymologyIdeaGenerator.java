@@ -121,6 +121,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		langsToForms.values().forEach(allForms::addAll);
 		for (int i = 0; i < allForms.size() - 1; i++) {
 			int formIdI = allForms.get(i);
+			pslProblem.addObservation("Fsim", 1.0, formIdI + "", formIdI + "");
 			addHomsetInfo(objectStore, formIdI, homPegs);
 
 			// Compare phonetic forms.
@@ -137,7 +138,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 				}
 			}
 		}
-		addHomsetInfo(objectStore, allForms.get(allForms.size() - 1), homPegs);
+		int lastForm = allForms.get(allForms.size() - 1);
+		addHomsetInfo(objectStore, lastForm, homPegs);
+		pslProblem.addObservation("Fsim", 1.0, lastForm + "", lastForm + "");
 
 		for (int form : allForms) {
 			System.err.println("Form: " + form + " " + objectStore.getLangForForm(form) + " "
