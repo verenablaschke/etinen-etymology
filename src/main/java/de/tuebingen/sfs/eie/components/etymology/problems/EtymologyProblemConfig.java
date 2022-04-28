@@ -108,8 +108,8 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		try {
 			return fromStream(mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
+			System.err.println("File not found, using default configuration file (" + path + ")");
+			return new EtymologyProblemConfig();
 		}
 	}
 

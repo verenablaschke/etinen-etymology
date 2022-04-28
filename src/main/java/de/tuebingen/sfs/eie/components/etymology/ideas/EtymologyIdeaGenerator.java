@@ -24,8 +24,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 	public static boolean PRINT_LOG = true;
 
 	private EtymologicalTheory theory;
-	private EtymologyProblemConfig config;
-	private InferenceLogger logger;
+	protected EtymologyProblemConfig config;
+	protected InferenceLogger logger;
 
 	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory) {
 		super(problem);
@@ -37,7 +37,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		if (PRINT_LOG) {
 			config.logSettings();
 		}
-
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
@@ -90,9 +89,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		// Form atoms
-		// TODO check EtymologicalTheory to see if confirm Einh/Eloa/Eety belief values
+		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief values
 		// from previous inferences can be used here
-		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
 		for (String lang : langsToForms.keySet()) {
 			for (int formId : langsToForms.get(lang)) {
 				pslProblem.addTarget("Eunk", formId + "");
@@ -119,6 +117,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		List<Integer> allForms = new ArrayList<>();
 		langsToForms.values().forEach(allForms::addAll);
+		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
 		for (int i = 0; i < allForms.size() - 1; i++) {
 			int formIdI = allForms.get(i);
 			pslProblem.addObservation("Fsim", 1.0, formIdI + "", formIdI + "");
