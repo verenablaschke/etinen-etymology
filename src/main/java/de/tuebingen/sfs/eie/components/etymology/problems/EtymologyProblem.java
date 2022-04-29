@@ -56,7 +56,10 @@ public class EtymologyProblem extends PslProblem {
 		declareClosedPredicate("Xinh", 2);
 		declareClosedPredicate("Xloa", 2);
 
-		declareOpenPredicate("Fhom", 2);
+		declareClosedPredicate("Xsth", 2);
+		declareClosedPredicate("Xdst", 3);
+
+		declareOpenPredicate("Fhom", 3);
 		declareOpenPredicate("Fsim", 2);
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
@@ -80,14 +83,44 @@ public class EtymologyProblem extends PslProblem {
 		if (config.include(EloaPlusEloaRule.NAME))
 			addRule(new EloaPlusEloaRule(this));
 
-		addRule("FhomToFhom", "Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H)");
-		addRule("FsimToEinh", "Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
-		addRule("FsimToFsim", "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
+		// Form similarity is symmetric:
 		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
+		// Form similarity is (partially) transitive (?):
 		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z)");
-		addRule("FsimTriangle", "Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 1 - Fsim(X,Y).");
-		addRule("EinhToFsim", "Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y).");
+
+		// If two forms are inherited from the same form, they should be similar:
+		addRule("EinhToFsim", "Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)");
+		// If two forms are similar and might be inherited from a common source, it's
+		// likely that they really were.
+		addRule("FsimToEinh", "Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
+		// If two forms are similar and inherited from different sources, those source
+		// words should be similar to one another too.
+		addRule("FsimToFsim", "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
+
+		// If a word is more similar to a word in a contact language than to its
+		// reconstructed ancestor, that makes it more likely to be a loan:
 		addRule("EloaAndFsim", "Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z).");
+
+		// Sister forms should be less similar than either is to their common parent
+		// form:
+		addRule("FsimFamily", "(X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z).");
+		// The distance between two sister words must not exceed the sum of distances to
+		// the common ancestor, reusing the grounding atoms to create the constant 2:
+		addRule("FsimTriangle", "(X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y).");
+		// Smaller tree distances -> higher similarity
+		addRule("XdstToFsim", "Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fsim(X,Z) -> Fsim(X,Y)");
+
+		// Every pair of sister languages in which a homologue set is reconstructed or
+		// attested makes it more likely to have existed in the common parent language:
+		addRule("FhomReconstruction", "Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H,C)");
+		// Also a reasonable assumption for unary branches
+		// TODO give these two similar rules different weights
+		addRule("FhomSingleReconstruction", "Fhom(X,H,C) & Xinh(X,Z) -> Fhom(Z,H,C)");
+		// Also distribute evidence of the presence of homologue sets downwards?
+		addRule("FhomChild", "Fhom(Z,H,C) & Xinh(X,Z) -> Fhom(X,H,C)");
+		// Limit the number of homologues for each concept at each reconstructed
+		// languages (express bias against synonyms)
+		addRule("FhomSynonyms", "0.5: Fhom(Z,+H,C) <= 2");
 
 		System.out.println("Rules added:");
 		super.printRules(System.out);

@@ -40,6 +40,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
+	// TODO this needs to be updated. current experiments are happening in the
+	// sample idea generator
 	public void generateAtoms(EtinenConstantRenderer renderer) {
 		// TODO warn user about missing homologue members if applicable?
 
@@ -49,11 +51,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		Stack<String> langStack = new Stack<>();
 		Multimap<String, Integer> langsToForms = new Multimap<>(CollectionType.SET);
 		Set<Integer> homPegs = new HashSet<>();
+		Set<String> concepts = new HashSet<>(); // TODO also get concepts of confirmed protoforms
 		for (int formId : config.getFormIds()) {
 			String lang = objectStore.getLangForForm(formId);
 			langStack.add(lang);
 			langsToForms.put(lang, formId);
 			homPegs.add(objectStore.getPegOrSingletonForFormId(formId));
+			concepts.addAll(objectStore.getConceptsForForm(formId));
 		}
 
 		// Language atoms
@@ -89,7 +93,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 
 		// Form atoms
-		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief values
+		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief
+		// values
 		// from previous inferences can be used here
 		for (String lang : langsToForms.keySet()) {
 			for (int formId : langsToForms.get(lang)) {
@@ -121,7 +126,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		for (int i = 0; i < allForms.size() - 1; i++) {
 			int formIdI = allForms.get(i);
 			pslProblem.addObservation("Fsim", 1.0, formIdI + "", formIdI + "");
-			addHomsetInfo(objectStore, formIdI, homPegs);
+			addHomsetInfo(objectStore, formIdI, homPegs, concepts);
 
 			// Compare phonetic forms.
 			boolean hasUnderlyingForm1 = objectStore.hasUnderlyingForm(formIdI);
@@ -138,7 +143,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 			}
 		}
 		int lastForm = allForms.get(allForms.size() - 1);
-		addHomsetInfo(objectStore, lastForm, homPegs);
+		addHomsetInfo(objectStore, lastForm, homPegs, concepts);
 		pslProblem.addObservation("Fsim", 1.0, lastForm + "", lastForm + "");
 
 		for (int form : allForms) {
@@ -194,25 +199,37 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 		}
 	}
 
-	private void addHomsetInfo(IndexedObjectStore objectStore, int formId, Set<Integer> homPegs) {
+	private void addHomsetInfo(IndexedObjectStore objectStore, int formId, Set<Integer> homPegs,
+			Set<String> allConcepts) {
+		// TODO add relevant 0-belief atoms for other concepts
 		int pegForForm = objectStore.getPegForFormIdIfRegistered(formId);
+		Collection<String> concepts = objectStore.getConceptsForForm(formId);
 		System.err.println("PEG: " + formId + " " + objectStore.getLangForForm(formId) + " " + pegForForm);
 		if (pegForForm < 0) {
+			if (concepts == null) {
+				concepts = allConcepts;
+			}
 			for (int homPeg : homPegs) {
-				pslProblem.addTarget("Fhom", formId + "", homPeg + "");
-				System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-						+ objectStore.getRawFormForFormId(homPeg) + ")");
+				for (String concept : concepts) {
+					pslProblem.addTarget("Fhom", formId + "", homPeg + "", concept);
+					System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+							+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ")");
+				}
 			}
 		} else {
 			for (Integer homPeg : homPegs) {
 				if (homPeg.equals(pegForForm)) {
-					pslProblem.addObservation("Fhom", 1.0, formId + "", homPeg + "");
-					System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-							+ objectStore.getRawFormForFormId(homPeg) + ") 1.0");
+					for (String concept : concepts) {
+						pslProblem.addObservation("Fhom", 1.0, formId + "", homPeg + "", concept);
+						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 1.0");
+					}
 				} else {
-					pslProblem.addObservation("Fhom", 0.0, formId + "", homPeg + "");
-					System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-							+ objectStore.getRawFormForFormId(homPeg) + ") 0.0");
+					for (String concept : concepts) {
+						pslProblem.addObservation("Fhom", 0.0, formId + "", homPeg + "", concept);
+						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 0.0");
+					}
 				}
 			}
 		}
