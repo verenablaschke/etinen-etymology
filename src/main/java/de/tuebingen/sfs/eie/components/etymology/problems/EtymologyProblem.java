@@ -75,53 +75,60 @@ public class EtymologyProblem extends PslProblem {
 	public void addInteractionRules() {
 		EtymologyProblemConfig config = (EtymologyProblemConfig) super.getConfig();
 		// TODO add config checks for the new rules, like before:
-		if (config.include(EunkPriorRule.NAME))
-			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
-		if (config.include(EloaPriorRule.NAME))
-			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
+
+		// --- CONSTRAINTS ---
 		if (config.include(EinhOrEloaOrEunkRule.NAME))
 			addRule(new EinhOrEloaOrEunkRule(this));
 		if (config.include(EloaPlusEloaRule.NAME))
 			addRule(new EloaPlusEloaRule(this));
-
 		// Form similarity is symmetric:
 		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
 		// Form similarity is (partially) transitive (?):
 		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z) .");
+		// -------------------
+
+		// WEIGHTED RULES
+
+		// Biases against borrowing and against unknown etymologies
+		if (config.include(EunkPriorRule.NAME))
+			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
+		if (config.include(EloaPriorRule.NAME))
+			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
 
 		// If two forms are inherited from the same form, they should be similar:
-		addRule("EinhToFsim", "Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y) .");
+		addRule("EinhToFsim", "2: Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)");
 		// If two forms are similar and might be inherited from a common source, it's
 		// likely that they really were.
-		addRule("FsimToEinh", "Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z) .");
+		addRule("FsimToEinh", "1: Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
 		// If two forms are similar and inherited from different sources, those source
 		// words should be similar to one another too.
-		addRule("FsimToFsim", "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z) .");
+		addRule("FsimToFsim", "1: Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
 
 		// If a word is more similar to a word in a contact language than to its
 		// reconstructed ancestor, that makes it more likely to be a loan:
-		addRule("EloaAndFsim", "Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z).");
+		addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
 
 		// Sister forms should be less similar than either is to their common parent
 		// form:
-		addRule("FsimFamily", "(X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z).");
+		addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
 		// The distance between two sister words must not exceed the sum of distances to
 		// the common ancestor, reusing the grounding atoms to create the constant 2:
-		addRule("FsimTriangle", "(X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y).");
+		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
 		// Smaller tree distances -> higher similarity
-		addRule("XdstToFsim", "Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fsim(X,Z) -> Fsim(X,Y) .");
+		addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fsim(X,Z) -> Fsim(X,Y)");
 
 		// Every pair of sister languages in which a homologue set is reconstructed or
 		// attested makes it more likely to have existed in the common parent language:
-		addRule("FhomReconstruction", "Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H,C) .");
+		addRule("FhomReconstruction", "1: Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H,C)");
 		// Also a reasonable assumption for unary branches
-		// TODO give these two similar rules different weights
-		addRule("FhomSingleReconstruction", "Fhom(X,H,C) & Xinh(X,Z) -> Fhom(Z,H,C) .");
+		addRule("FhomSingleReconstruction", "0.5: Fhom(X,H,C) & Xinh(X,Z) -> Fhom(Z,H,C)");
 		// Also distribute evidence of the presence of homologue sets downwards?
-		addRule("FhomChild", "Fhom(Z,H,C) & Xinh(X,Z) -> Fhom(X,H,C) .");
+		addRule("FhomChild", "1: Fhom(Z,H,C) & Xinh(X,Z) -> Fhom(X,H,C)");
 		// Limit the number of homologues for each concept at each reconstructed
 		// languages (express bias against synonyms)
 		addRule("FhomSynonyms", "0.5: Fhom(Z,+H,C) <= 2");
+
+		// -------------------
 
 		System.out.println("Rules added:");
 		super.printRules(System.out);
