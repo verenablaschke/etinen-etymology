@@ -13,79 +13,73 @@ import java.util.TreeSet;
 
 public class EtymologyRagFilter extends RagFilter {
 
-    public EtymologyRagFilter() {
-        super();
-        initializeIgnoreInGui();
-    }
+	static String[] staticPreds = new String[] { "Xinh", "Xloa", "Xsth", "Xdst", "#equal", "#notequal" };
 
-    public EtymologyRagFilter(Map<String, Double> transparencyMap) {
-        super(transparencyMap);
-        initializeIgnoreInGui();
-        initializePreventUserInteraction();
-    }
+	public EtymologyRagFilter() {
+		super();
+		initializeIgnoreInGui();
+	}
 
-    private void initializeIgnoreInGui() {
-        ignoreInGui.add("Xinh");
-        ignoreInGui.add("Xloa");
-        ignoreInGui.add("#equal");
-        ignoreInGui.add("#notequal");
-        ignoreInGui.add("XINH");
-        ignoreInGui.add("XLOA");
-        ignoreInGui.add("#EQUAL");
-        ignoreInGui.add("#NOTEQUAL");
-    }
+	public EtymologyRagFilter(Map<String, Double> transparencyMap) {
+		super(transparencyMap);
+		initializeIgnoreInGui();
+		initializePreventUserInteraction();
+	}
 
-    private void initializePreventUserInteraction() {
-        preventUserInteraction.add("Xinh");
-        preventUserInteraction.add("Xloa");
-        preventUserInteraction.add("#equal");
-        preventUserInteraction.add("#notequal");
-        preventUserInteraction.add("XINH");
-        preventUserInteraction.add("XLOA");
-        preventUserInteraction.add("#EQUAL");
-        preventUserInteraction.add("#NOTEQUAL");
-    }
+	private void initializeIgnoreInGui() {
+		for (String pred : staticPreds) {
+			ignoreInGui.add(pred);
+			ignoreInGui.add(pred.toUpperCase());
+		}
+	}
 
-    @Override
-    public HslColor atomToBaseColor(String name) {
-        if (name.startsWith("Eloa")) {
-            return new HslColor(new Color(219, 74, 255));
-        }
-        if (name.startsWith("Einh")) {
-            return new HslColor(new Color(50, 130, 250));
-        }
-        return BASECOLOR;
-    }
+	private void initializePreventUserInteraction() {
+		for (String pred : staticPreds) {
+			preventUserInteraction.add(pred);
+			preventUserInteraction.add(pred.toUpperCase());
+		}
+	}
 
-    public List<RankingEntry<String>> getEetyForArgument(String argument) {
-        List<RankingEntry<String>> entries = new ArrayList<>();
-        for (String atom : beliefValues.keySet()) {
-            if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument)
-                    || atom.startsWith("Eunk(" + argument)) {
-                entries.add(new RankingEntry<String>(atom, beliefValues.get(atom)));
-            }
-        }
-        Collections.sort(entries, Collections.reverseOrder());
-        return entries;
-    }
+	@Override
+	public HslColor atomToBaseColor(String name) {
+		if (name.startsWith("Eloa")) {
+			return new HslColor(new Color(219, 74, 255));
+		}
+		if (name.startsWith("Einh")) {
+			return new HslColor(new Color(50, 130, 250));
+		}
+		return BASECOLOR;
+	}
 
-    public RankingEntry<String> getHighestEetyForArgument(String argument) {
-        return getEetyForArgument(argument).get(0);
-    }
+	public List<RankingEntry<String>> getEetyForArgument(String argument) {
+		List<RankingEntry<String>> entries = new ArrayList<>();
+		for (String atom : beliefValues.keySet()) {
+			if (atom.startsWith("Eloa(" + argument) || atom.startsWith("Einh(" + argument)
+					|| atom.startsWith("Eunk(" + argument)) {
+				entries.add(new RankingEntry<String>(atom, beliefValues.get(atom)));
+			}
+		}
+		Collections.sort(entries, Collections.reverseOrder());
+		return entries;
+	}
 
-    public List<RankingEntry<String>> getHighestEetyPerArgument() {
-        Set<String> arguments = new TreeSet<>();
-        for (String atom : beliefValues.keySet()) {
-            if (atom.startsWith("Eloa(") || atom.startsWith("Einh(") || atom.startsWith("Eunk(")) {
-                arguments.add(atom.replace(")", "").split("\\(")[1].split(",")[0]);
-            }
-        }
-        List<RankingEntry<String>> atoms = new ArrayList<>();
-        for (String arg : arguments) {
-            atoms.add(getHighestEetyForArgument(arg));
-        }
-        Collections.sort(atoms, Collections.reverseOrder());
-        return atoms;
-    }
+	public RankingEntry<String> getHighestEetyForArgument(String argument) {
+		return getEetyForArgument(argument).get(0);
+	}
+
+	public List<RankingEntry<String>> getHighestEetyPerArgument() {
+		Set<String> arguments = new TreeSet<>();
+		for (String atom : beliefValues.keySet()) {
+			if (atom.startsWith("Eloa(") || atom.startsWith("Einh(") || atom.startsWith("Eunk(")) {
+				arguments.add(atom.replace(")", "").split("\\(")[1].split(",")[0]);
+			}
+		}
+		List<RankingEntry<String>> atoms = new ArrayList<>();
+		for (String arg : arguments) {
+			atoms.add(getHighestEetyForArgument(arg));
+		}
+		Collections.sort(atoms, Collections.reverseOrder());
+		return atoms;
+	}
 
 }

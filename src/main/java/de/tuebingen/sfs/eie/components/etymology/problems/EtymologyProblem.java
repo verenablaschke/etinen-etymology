@@ -22,6 +22,7 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
+import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -60,7 +61,7 @@ public class EtymologyProblem extends PslProblem {
 		declareClosedPredicate("Xdst", 3);
 
 		declareOpenPredicate("Fhom", 3);
-		declareOpenPredicate("Fsim", 2);
+		declareOpenPredicate(new FsimPred());
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
 		declareOpenPredicate(new EunkPred());
