@@ -43,7 +43,7 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 	private static final double DEFAULT_THRESHOLD = 0.05;
 	private static final int DEFAULT_TREE_DEPTH = 4;
 	private static final String DEFAULT_TREE_FILE = DB_DIR + "/tree.nwk";
-	private static final String DEFAULT_LOGFILE_PATH = "src/test/resources/etym-inf-log.txt";
+	private static final String DEFAULT_LOGFILE_PATH = System.getProperty("user.home") + "/.etinen/"+"etym-inf-log.txt";
 
 	private Integer treeDepth = null;
 	private Boolean branchwiseBorrowing = null;

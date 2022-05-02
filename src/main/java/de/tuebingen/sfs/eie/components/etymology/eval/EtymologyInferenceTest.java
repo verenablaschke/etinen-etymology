@@ -2,7 +2,6 @@ package de.tuebingen.sfs.eie.components.etymology.eval;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
 import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
