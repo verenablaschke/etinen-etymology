@@ -20,8 +20,8 @@ public class EtymologyRagFilter extends RagFilter {
 		initializeIgnoreInGui();
 	}
 
-	public EtymologyRagFilter(Map<String, Double> transparencyMap) {
-		super(transparencyMap);
+	public EtymologyRagFilter(Map<String, Double> transparencyMap, Set<String> fixedAtoms) {
+		super(transparencyMap, fixedAtoms);
 		initializeIgnoreInGui();
 		initializePreventUserInteraction();
 	}

@@ -31,9 +31,13 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyProblem extends PslProblem {
 
+	public static boolean verbose = true;
+
 	public static final String[] RULES = new String[] { EunkPriorRule.NAME, EloaPriorRule.NAME,
 			EinhOrEloaOrEunkRule.NAME, EloaPlusEloaRule.NAME, TancToEinhRule.NAME, TcntToEloaRule.NAME,
 			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME };
+
+	Set<String> fixedAtoms = new HashSet<>();
 
 	// TODO make sure the config sets the dbmanager and problemId when it's
 	// initialized
@@ -158,6 +162,14 @@ public class EtymologyProblem extends PslProblem {
 		return super.getConfig().getLogger();
 	}
 
+	public void addFixedAtom(String atom) {
+		fixedAtoms.add(atom);
+	}
+
+	public void addFixedAtom(String pred, String... args) {
+		fixedAtoms.add(pred + "(" + String.join(",", args) + ")");
+	}
+
 	@Override
 	public InferenceResult call() throws Exception {
 		addInteractionRules();
@@ -165,7 +177,9 @@ public class EtymologyProblem extends PslProblem {
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
 		Map<String, Double> valueMap = extractResultsForAllPredicates(false);
-		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap), groundRules);
+		if (verbose)
+			System.err.println("FIXED: " + fixedAtoms);
+		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms), groundRules);
 		return new InferenceResult(rag, valueMap, getEtymologyConfig().copy());
 	}
 

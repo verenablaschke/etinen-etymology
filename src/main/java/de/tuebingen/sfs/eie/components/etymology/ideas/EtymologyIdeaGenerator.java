@@ -94,8 +94,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
 		// Form atoms
 		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief
-		// values
-		// from previous inferences can be used here
+		// values from previous inferences can be used here
+		// -> as observations and as fixed atoms (RAG filter)
 		for (String lang : langsToForms.keySet()) {
 			for (int formId : langsToForms.get(lang)) {
 				pslProblem.addTarget("Eunk", formId + "");
