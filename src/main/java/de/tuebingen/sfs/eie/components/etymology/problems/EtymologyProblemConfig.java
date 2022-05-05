@@ -33,6 +33,7 @@ import java.util.TreeSet;
 
 public class EtymologyProblemConfig extends PslProblemConfig {
 
+	//TODO: move files to the main resources, add / in front of each path, referenc
 	public static final String DB_DIR = "src/test/resources/northeuralex-0.9";
 	public static final String TEST_DB_DIR = "etinen-etymology/src/test/resources/testdb";
 	public static final String NETWORK_EDGES_FILE = "src/test/resources/etymology/clics2-network-edges.txt";
