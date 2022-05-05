@@ -120,6 +120,8 @@ public class EtymologyProblem extends PslProblem {
 		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
 		// Smaller tree distances -> higher similarity
 		addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fsim(X,Z) -> Fsim(X,Y)");
+		// We need to further push up low-tree-distance similarities:
+		addRule("XdstOneToFsim", "0.3: Xdst(X,Y,'1') -> Fsim(X,Y)");
 
 		// Every pair of sister languages in which a homologue set is reconstructed or
 		// attested makes it more likely to have existed in the common parent language:
