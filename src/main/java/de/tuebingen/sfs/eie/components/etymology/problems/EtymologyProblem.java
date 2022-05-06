@@ -22,6 +22,7 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
+import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -30,11 +31,17 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyProblem extends PslProblem {
 
+	public static boolean verbose = true;
+
 	public static final String[] RULES = new String[] { EunkPriorRule.NAME, EloaPriorRule.NAME,
 			EinhOrEloaOrEunkRule.NAME, EloaPlusEloaRule.NAME, TancToEinhRule.NAME, TcntToEloaRule.NAME,
 			EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME };
 
-	// TODO make sure the config sets the dbmanager and problemId when it's initialized
+	Set<String> fixedAtoms = new HashSet<>();
+
+	// TODO make sure the config sets the dbmanager and problemId when it's
+	// initialized
+	// (old to-do)
 	public EtymologyProblem(EtymologyProblemConfig config) {
 		super(config);
 		addInteractionRules();
@@ -51,30 +58,17 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void declarePredicates() {
-		// TODO use predicate classes here
+		declareClosedPredicate("Xinh", 2);
+		declareClosedPredicate("Xloa", 2);
 
-		// Information about the forms
-		// Flng(ID, language)
-		declareClosedPredicate("Flng", 2);
-		declareClosedPredicate("Fufo", 2);
-		declareClosedPredicate("Fsem", 2);
-		declareClosedPredicate("XFufo", 1);
+		declareClosedPredicate("Xsth", 2);
+		declareClosedPredicate("Xdst", 3);
 
-		// Similarity measures
-		declareClosedPredicate("Fsim", 2);
-		declareClosedPredicate("Ssim", 2);
-
-		// Etymological information
-		// Eety(ID1, ID2) -- ID1 comes from ID2
+		declareOpenPredicate("Fhom", 3);
+		declareOpenPredicate(new FsimPred());
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
 		declareOpenPredicate(new EunkPred());
-
-		// Phylogenetic information.
-		declareClosedPredicate("Tanc", 2);
-		declareClosedPredicate("Tcnt", 2);
-
-		// declareClosedPredicate("Fsimorig", 2);
 	}
 
 	@Override
@@ -84,76 +78,70 @@ public class EtymologyProblem extends PslProblem {
 	@Override
 	public void addInteractionRules() {
 		EtymologyProblemConfig config = (EtymologyProblemConfig) super.getConfig();
+		// TODO add config checks for the new rules, like before:
+
+		// --- CONSTRAINTS ---
+		if (config.include(EinhOrEloaOrEunkRule.NAME))
+			addRule(new EinhOrEloaOrEunkRule(this));
+		if (config.include(EloaPlusEloaRule.NAME))
+			addRule(new EloaPlusEloaRule(this));
+		// Form similarity is symmetric:
+		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
+		// Form similarity is (partially) transitive (?):
+		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z) .");
+		// -------------------
+
+		// WEIGHTED RULES
+
+		// Biases against borrowing and against unknown etymologies
 		if (config.include(EunkPriorRule.NAME))
 			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
 		if (config.include(EloaPriorRule.NAME))
 			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
 
-		if (config.include(EinhOrEloaOrEunkRule.NAME))
-			addRule(new EinhOrEloaOrEunkRule(this));
-		if (config.include(EloaPlusEloaRule.NAME))
-			addRule(new EloaPlusEloaRule(this));
+		// If two forms are inherited from the same form, they should be similar:
+		addRule("EinhToFsim", "2: Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)");
+		// If two forms are similar and might be inherited from a common source, it's
+		// likely that they really were.
+		addRule("FsimToEinh", "1: Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
+		// If two forms are similar and inherited from different sources, those source
+		// words should be similar to one another too.
+		addRule("FsimToFsim", "1: Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
 
-		if (config.include(TancToEinhRule.NAME))
-			addRule(new TancToEinhRule(this, config.getRuleWeightOrDefault(TancToEinhRule.NAME, 1.0)));
-		if (config.include(TcntToEloaRule.NAME))
-			addRule(new TcntToEloaRule(this, config.getRuleWeightOrDefault(TcntToEloaRule.NAME, 1.0)));
+		// If a word is more similar to a word in a contact language than to its
+		// reconstructed ancestor, that makes it more likely to be a loan:
+		addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
 
-		if (config.include(EetyToFsimRule.NAME)) {
-			addRule(new EetyToFsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-			addRule(new EetyToFsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-			addRule(new EetyToFsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
-			addRule(new EetyToFsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToFsimRule.NAME, 5.0)));
+		// Sister forms should be less similar than either is to their common parent
+		// form:
+		addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
+		// The distance between two sister words must not exceed the sum of distances to
+		// the common ancestor, reusing the grounding atoms to create the constant 2:
+		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
+		// Smaller tree distances -> higher similarity
+		addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fsim(X,Z) -> Fsim(X,Y)");
+		// We need to further push up low-tree-distance similarities:
+		addRule("XdstOneToFsim", "0.3: Xdst(X,Y,'1') -> Fsim(X,Y)");
 
-			// addRule(new TalkingArithmeticRule("EetyFsimArith",
-			// "Fsim(F1, +F2) >= Einh(X, Z) + Einh(+Y, Z)"
-			// + "{Y: XFufo(Y) & XFufo(X) & Fufo(X, F1)} & (X != Y)", //
-			//// + "{F2: Fufo(Y, F2)}",
-			// this));
-		}
+		// Every pair of sister languages in which a homologue set is reconstructed or
+		// attested makes it more likely to have existed in the common parent language:
+		addRule("FhomReconstruction", "1: Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Z) & Xinh(Y,Z) -> Fhom(Z,H,C)");
+		// Also a reasonable assumption for unary branches
+		addRule("FhomSingleReconstruction", "0.5: Fhom(X,H,C) & Xinh(X,Z) -> Fhom(Z,H,C)");
+		// Also distribute evidence of the presence of homologue sets downwards?
+		addRule("FhomChild", "1: Fhom(Z,H,C) & Xinh(X,Z) -> Fhom(X,H,C)");
+		// Limit the number of homologues for each concept at each reconstructed
+		// languages (express bias against synonyms)
+		addRule("FhomSynonyms", "0.5: Fhom(Z,+H,C) <= 2");
 
-		if (config.include(EetyToSsimRule.NAME)) {
-			addRule(new EetyToSsimRule("Einh", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Einh", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Eloa", "Einh", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-			addRule(new EetyToSsimRule("Eloa", "Eloa", this, config.getRuleWeightOrDefault(EetyToSsimRule.NAME, 5.0)));
-		}
+		// -------------------
 
-		if (config.include(DirectEetyToFsimRule.NAME)) {
-			addRule(new DirectEetyToFsimRule("Eloa", this,
-					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-			addRule(new DirectEetyToFsimRule("Einh", this,
-					config.getRuleWeightOrDefault(DirectEetyToFsimRule.NAME, 8.0)));
-		}
-
-		// addRule(new EloaAndEetyToFsimRule("Einh", "Einh", this, 3.0));
-		// addRule(new EloaAndEetyToFsimRule("Einh", "Eloa", this, 3.0));
-		// addRule(new EloaAndEetyToFsimRule("Eloa", "Einh", this, 3.0));
-		// addRule(new EloaAndEetyToFsimRule("Eloa", "Eloa", this, 3.0));
-
-		// TODO Is this rule necessary? If yes: how to prevent this rule from
-		// being essentially grounded twice?
-		// e.g. A,B + B,A <= 1 and B,A + A,B <= 1
-		// addRule(new FsimAndSsimToEetyRule("Eloa", this,
-		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-		// addRule(new FsimAndSsimToEetyRule("Einh", this,
-		// config.getRuleWeightOrDefault(FsimAndSsimToEetyRule.NAME, 8.0)));
-		// addRule(new TalkingLogicalRule("FsimAndSsimToEety1",
-		// "Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y,
-		// C2) & Ssim(C1, C2) &"
-		// + "Einh(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
-		// + "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
-		// this));
-		// addRule(new TalkingLogicalRule("FsimAndSsimToEety2",
-		// "Fufo(X, F1) & Fufo(Y, F2) & Fsim(F1, F2) &" + "Fsem(X, C1) & Fsem(Y,
-		// C2) & Ssim(C1, C2) &"
-		// + "Eloa(X, Z) & (X != Y) & (Y != Z) &" + "Einh(Z, W) & (Y != W)"
-		// + "-> Einh(Y, Z) | Eloa(Y, Z) | Einh(Y, W) | Eloa(Y, W)",
-		// this));
 		System.out.println("Rules added:");
 		super.printRules(System.out);
 	}
 
+	// TODO this needs a general overhaul, on the full project level, based on
+	// changed assumptions about the centrality of PSL
 	@Override
 	public Set<AtomTemplate> declareAtomsForCleanUp() {
 		// TODO (outside this class)
@@ -161,9 +149,9 @@ public class EtymologyProblem extends PslProblem {
 		// high-belief E-atoms
 		// - delete low-belief E-atoms
 		Set<AtomTemplate> atomsToDelete = new HashSet<>();
-		atomsToDelete.add(new AtomTemplate("Tanc", ANY_CONST, ANY_CONST));
-		atomsToDelete.add(new AtomTemplate("Tcnt", ANY_CONST, ANY_CONST));
-		atomsToDelete.add(new AtomTemplate("XFufo", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("Xinh", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("Xloa", ANY_CONST, ANY_CONST));
+		atomsToDelete.add(new AtomTemplate("Fhom", ANY_CONST, ANY_CONST));
 		atomsToDelete.add(new AtomTemplate("Fsim", ANY_CONST, ANY_CONST));
 		return atomsToDelete;
 	}
@@ -176,6 +164,14 @@ public class EtymologyProblem extends PslProblem {
 		return super.getConfig().getLogger();
 	}
 
+	public void addFixedAtom(String atom) {
+		fixedAtoms.add(atom);
+	}
+
+	public void addFixedAtom(String pred, String... args) {
+		fixedAtoms.add(pred + "(" + String.join(",", args) + ")");
+	}
+
 	@Override
 	public InferenceResult call() throws Exception {
 		addInteractionRules();
@@ -183,7 +179,9 @@ public class EtymologyProblem extends PslProblem {
 		RuleAtomGraph.GROUNDING_OUTPUT = true;
 		RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
 		Map<String, Double> valueMap = extractResultsForAllPredicates(false);
-		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap), groundRules);
+		if (verbose)
+			System.err.println("FIXED: " + fixedAtoms);
+		RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms), groundRules);
 		return new InferenceResult(rag, valueMap, getEtymologyConfig().copy());
 	}
 

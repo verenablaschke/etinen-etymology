@@ -19,7 +19,7 @@ public class EetyToFsimRule extends EtinenTalkingLogicalRule {
     public static final String NAME = "EetyToFsim";
     // Only Eety and Fsim can have a value other than 0 or 1.
     // Eety is the only open predicate.
-    private static final String RULE = "%.1f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) & Fufo(X, F1) & Fufo(Y, F2) -> Fsim(F1, F2)";
+    private static final String RULE = "%.1f: %s(X, Z) & %s(Y, Z) & (X != Y) & XFufo(X) & XFufo(Y) -> Fsim(X, Y)";
     private static final String VERBALIZATION = "Words derived from the same source should be phonetically similar.";
     private String eetyType1;
     private String eetyType2;

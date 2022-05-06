@@ -1,571 +1,238 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.Stack;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import de.jdellert.iwsa.corrmodel.CorrespondenceModel;
-import de.jdellert.iwsa.sequence.PhoneticString;
-import de.jdellert.iwsa.tokenize.IPATokenizer;
-import de.tuebingen.sfs.cldfjava.data.CLDFWordlistDatabase;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
-import de.tuebingen.sfs.eie.components.etymology.util.LevelBasedPhylogeny;
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
-import de.tuebingen.sfs.eie.shared.core.TreeLayer;
-import de.tuebingen.sfs.eie.shared.io.LanguageTreeStorage;
-import de.tuebingen.sfs.eie.shared.util.LoadUtils;
+import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
+import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
-import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.util.data.Multimap;
+import de.tuebingen.sfs.psl.util.data.Multimap.CollectionType;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
-	public static final String F_UFO_EX = PslProblem.existentialAtomName("Fufo");
-	private EtymologicalTheory theory;
-	private IndexedObjectStore objectStore;
-	private PhoneticSimilarityHelper phonSimHelper;
-	private LevelBasedPhylogeny tree;
-	private CLDFWordlistDatabase wordListDb;
-	private List<String> ancestors;
-	private Set<Entry> entryPool;
-	private Set<String> removedIsolates;
-	private InferenceLogger logger;
-	private EtymologyProblemConfig config;
+	public static boolean PRINT_LOG = true;
 
-	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory,
-			PhoneticSimilarityHelper phonSimHelper, CLDFWordlistDatabase wordListDb) {
-		// For proper serialization, the wordListDb and the phonSimHelper need
-		// to be default versions of these objects,
-		// e.g. wordListDb = LoadUtils.loadDatabase(DB_DIR, logger);
-		// phonSimHelper = new PhoneticSimilarityHelper(new IPATokenizer(),
-		// LoadUtils.loadCorrModel(DB_DIR, false, tokenizer, logger));
+	private EtymologicalTheory theory;
+	protected EtymologyProblemConfig config;
+	protected InferenceLogger logger;
+
+	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory) {
 		super(problem);
+		this.theory = theory;
 		this.logger = problem.getLogger();
 		logger.displayln("...Creating EtymologyIdeaGenerator.");
-		config = problem.getEtymologyConfig();
-		config.print(System.out);
 		logger.displayln("...Working with the following idea generation configuration:");
-		config.logSettings();
-		if (wordListDb == null) {
-			logger.displayln("...No CLDF Wordlist Database given, loading database.");
-			this.wordListDb = LoadUtils.loadDatabase(config.getWordListDbDir(), logger);
-		} else {
-			this.wordListDb = wordListDb;
+		config = (EtymologyProblemConfig) problem.getConfig();
+		if (PRINT_LOG) {
+			config.logSettings();
 		}
-
-		if (theory == null) {
-			logger.displayln("...No EtymologicalTheory given, loading the default version.");
-			this.theory = new EtymologicalTheory(this.wordListDb);
-		} else {
-			this.theory = theory;
-		}
-		objectStore = this.theory.getIndexedObjectStore();
-		if (phonSimHelper == null) {
-			logger.displayln("...No Phonetic Similarity Helper given, using default version.");
-			IPATokenizer tokenizer = new IPATokenizer();
-			this.phonSimHelper = new PhoneticSimilarityHelper(
-					LoadUtils.loadCorrModel(config.getCorrespondenceDbDir(), false, tokenizer, this.logger), theory);
-		} else {
-			this.phonSimHelper = phonSimHelper;
-		}
-		if (config.getModernLanguages().isEmpty()) {
-			logger.displayln(
-					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
-		} else {
-			setTree();
-		}
-		entryPool = new HashSet<>();
-
-		updateLanguagesAndTree();
-
 		logger.displayln("Finished setting up the Etymology Idea Generator.");
 	}
 
-	public static EtymologyIdeaGenerator initializeDefault(EtymologyProblem problem, EtymologicalTheory theory) {
-		return new EtymologyIdeaGenerator(problem, theory, null, null);
-	}
+	// TODO this needs to be updated. current experiments are happening in the
+	// sample idea generator
+	public void generateAtoms(EtinenConstantRenderer renderer) {
+		// TODO warn user about missing homologue members if applicable?
 
-	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, EtymologicalTheory theory,
-			ObjectMapper mapper, String path, InferenceLogger logger) {
-		// return fromJson(problem, mapper,
-		// EtymologyIdeaGenerator.class.getResourceAsStream(path));
-		try {
-			return fromJson(problem, theory, mapper, new FileInputStream(path), logger);
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
+		IndexedObjectStore objectStore = theory.getIndexedObjectStore();
+		LanguagePhylogeny phylo = theory.getLanguagePhylogeny();
 
-	public static EtymologyIdeaGenerator fromJson(EtymologyProblem problem, EtymologicalTheory theory,
-			ObjectMapper mapper, InputStream in, InferenceLogger logger) {
-		IPATokenizer tokenizer = new IPATokenizer();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(problem.getEtymologyConfig().getWordListDbDir(),
-				logger);
-		PhoneticSimilarityHelper phonSimHelper = null;
-		if (theory != null && problem.getEtymologyConfig().getCorrespondenceDbDir() != null
-				&& !problem.getEtymologyConfig().getCorrespondenceDbDir().isEmpty())
-			phonSimHelper = new PhoneticSimilarityHelper(LoadUtils.loadCorrModel(
-					problem.getEtymologyConfig().getCorrespondenceDbDir(), false, tokenizer, logger), theory);
-
-		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingMountain(theory, problem, largeLanguageSet, false);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingMountain(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		List<String> concepts = new ArrayList<>();
-		concepts.add("BergN");
-		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingHead(theory, problem, largeLanguageSet, false);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingHead(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		List<String> concepts = new ArrayList<>();
-		concepts.add("KopfN");
-		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeConceptSet, boolean largeLanguageSet) {
-		return getIdeaGeneratorForTestingLanguage(theory, problem, largeConceptSet, largeLanguageSet, false);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorForTestingLanguage(EtymologicalTheory theory,
-			EtymologyProblem problem, boolean largeConceptSet, boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		List<String> concepts = new ArrayList<>();
-		concepts.add("SpracheN");
-		if (largeConceptSet) {
-			concepts.add("ZungeN");
-		}
-		return getIdeaGeneratorForTesting(theory, problem, concepts, largeLanguageSet, branchwiseBorrowing);
-	}
-
-	private static EtymologyIdeaGenerator getIdeaGeneratorForTesting(EtymologicalTheory theory,
-			EtymologyProblem problem, List<String> concepts, boolean largeLanguageSet, boolean branchwiseBorrowing) {
-		List<String> languages = new ArrayList<>();
-		languages.add("eng");
-		languages.add("deu");
-		languages.add("swe");
-		languages.add("nor");
-		languages.add("dan");
-		languages.add("fra");
-		languages.add("spa");
-		languages.add("ita");
-		languages.add("cat");
-		if (largeLanguageSet) {
-			languages.add("isl");
-			languages.add("nld");
-
-			languages.add("por");
-			languages.add("cat");
-			languages.add("ron");
-			languages.add("lat");
-
-			languages.add("lit");
-			languages.add("lav");
-			languages.add("rus");
-			languages.add("bel");
-			languages.add("ukr");
-			languages.add("pol");
-			languages.add("ces");
-			languages.add("slv");
-			languages.add("slk");
-			languages.add("hrv");
+		Stack<String> langStack = new Stack<>();
+		Multimap<String, Integer> langsToForms = new Multimap<>(CollectionType.SET);
+		Set<Integer> homPegs = new HashSet<>();
+		Set<String> concepts = new HashSet<>(); // TODO also get concepts of confirmed protoforms
+		for (int formId : config.getFormIds()) {
+			String lang = objectStore.getLangForForm(formId);
+			langStack.add(lang);
+			langsToForms.put(lang, formId);
+			homPegs.add(objectStore.getPegOrSingletonForFormId(formId));
+			concepts.addAll(objectStore.getConceptsForForm(formId));
 		}
 
-		InferenceLogger logger = problem.getConfig().getLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.DB_DIR, logger);
-		IPATokenizer tokenizer = new IPATokenizer();
-		IndexedObjectStore objectStore = new IndexedObjectStore(wordListDb, null);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(
-				LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger), theory);
-		int treeDepth = 4;
-
-		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
-	}
-
-	public static EtymologyIdeaGenerator getIdeaGeneratorWithFictionalData(EtymologyProblem problem, boolean synonyms,
-			boolean moreLangsPerBranch, boolean moreBranches, boolean branchwiseBorrowing) {
-		IPATokenizer tokenizer = new IPATokenizer();
-
-		List<String> languages = new ArrayList<>();
-		languages.add("a1");
-		languages.add("a2");
-		languages.add("a3");
-		languages.add("b1");
-		languages.add("b2");
-		languages.add("b3");
-		languages.add("c1");
-		languages.add("c2");
-		languages.add("c3");
-
-		// Languages with several entries for one concept
-		if (synonyms) {
-			languages.add("a4");
-		}
-
-		if (moreLangsPerBranch) {
-			languages.add("a5");
-			languages.add("a6");
-			languages.add("b4");
-		}
-
-		if (moreBranches) {
-			languages.add("d1");
-			languages.add("d2");
-			languages.add("d3");
-			languages.add("d4");
-		}
-
-		List<String> concepts = new ArrayList<>();
-		concepts.add("SpracheN");
-
-		InferenceLogger logger = problem.getConfig().getLogger();
-		CLDFWordlistDatabase wordListDb = LoadUtils.loadDatabase(EtymologyProblemConfig.TEST_DB_DIR, logger);
-		CorrespondenceModel corres = LoadUtils.loadCorrModel(EtymologyProblemConfig.DB_DIR, false, tokenizer, logger);
-		EtymologicalTheory theory = new EtymologicalTheory(wordListDb);
-		PhoneticSimilarityHelper phonSimHelper = new PhoneticSimilarityHelper(corres, theory);
-		int treeDepth = 2;
-
-		return new EtymologyIdeaGenerator(problem, theory, phonSimHelper, wordListDb);
-	}
-
-	public void generateAtoms() {
-		// 1. Determine and retrieve/generate the relevant F-atoms.
-
-		// TODO
-		// For the given concept and modernLanguages, retrieve Fufo, Flng, Fsem,
-		// Hmem
-		// Get the Hmem siblings for these atoms and retrieve their F-atoms
-		// (update `concepts`!)
-
-		// Retrieving modernLanguages from the tree to get proto modernLanguages
-		// as well.
-		List<String> concepts = config.getConcepts();
-		for (String lang : tree.getAllLanguages()) {
-			Set<Integer> cldfForms = objectStore.getFormsForLanguage(lang);
-			if (cldfForms == null || cldfForms.isEmpty()) {
-				// Proto language
-				cldfForms = new HashSet<>();
-				for (String concept : concepts) {
-					// TODO get the most likely reconstructed form instead (if
-					// available) (vbl)
-					int formId = objectStore.createFormId();
-					objectStore.addFormIdWithConcept(formId, concept);
-					objectStore.addFormIdWithLanguage(formId, lang);
-					cldfForms.add(formId);
-				}
+		// Language atoms
+		Set<String> langsAdded = new HashSet<>();
+		String anc = phylo.lowestCommonAncestor(langStack);
+		if (anc.equals(LanguagePhylogeny.root)) {
+			// If the selection contains languages from multiple different families,
+			// add languages + word forms from up to the earliest established contact.
+			// TODO warn user if there are no relevant contacts
+			Multimap<String, String> familyAncestorToLangs = new Multimap<>(CollectionType.SET);
+			for (String lang : langStack) {
+				familyAncestorToLangs.put(phylo.getPathFor(lang).get(0), lang);
 			}
-			for (Integer cldfFormID : cldfForms) {
-				List<String> conceptsForForm = objectStore.getConceptsForForm(cldfFormID);
-				for (String concept : conceptsForForm) {
-					if (concepts.contains(concept)) {
-						entryPool.add(new Entry(cldfFormID, lang, concept));
-						// TODO only add these for proto modernLanguages that don't
-						// have
-						// these yet, retrieve existing F-atoms from db and pass
-						// them on
-						addFormAtoms(cldfFormID, lang, concept, cldfFormID);
+			for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
+				langStack.clear();
+				langStack.addAll(relatedLangs);
+				anc = phylo.lowestCommonAncestor(langStack);
+				addLanguageFamily(phylo, objectStore, renderer, homPegs, anc, langStack, langsAdded, langsToForms);
+			}
+		} else {
+			// If there is a (non-root) common ancestor,
+			// add languages + word forms up to the lowest common ancestor.
+			addLanguageFamily(phylo, objectStore, renderer, homPegs, anc, langStack, langsAdded, langsToForms);
+		}
+		for (String lang : langsAdded) {
+			if (phylo.hasIncomingInfluences(lang)) {
+				for (String contact : phylo.getIncomingInfluences(lang)) {
+					if (langsAdded.contains(contact)) {
+						pslProblem.addObservation("Xloa", 1.0, lang, contact);
 					}
 				}
 			}
 		}
 
-		// 2. Generate semantic similarity atoms.
+		// Form atoms
+		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief
+		// values from previous inferences can be used here
+		// -> as observations and as fixed atoms (RAG filter)
+		for (String lang : langsToForms.keySet()) {
+			for (int formId : langsToForms.get(lang)) {
+				pslProblem.addTarget("Eunk", formId + "");
 
-		SemanticNetwork semanticNet = config.getSemanticNet();
-		for (String concept1 : concepts) {
-			for (String concept2 : concepts) {
-				pslProblem.addObservation("Ssim", semanticNet.getSimilarity(concept1, concept2), concept1, concept2);
-			}
-		}
-
-		// 3. Generate language ancestry/contact atoms.
-
-		boolean branchwiseBorrowing = config.branchwiseBorrowing();
-		for (String lang1 : tree.getAllLanguages()) {
-			for (String lang2 : tree.getAllLanguages()) {
-				if (lang1.equals(lang2)) {
-					continue;
+				if (phylo.hasIncomingInfluences(lang)) {
+					for (String contact : phylo.getIncomingInfluences(lang)) {
+						if (langsToForms.containsKey(contact)) {
+							for (int contactFormId : langsToForms.get(contact)) {
+								pslProblem.addObservation("Xloa", 1.0, formId + "", contactFormId + "");
+								pslProblem.addTarget("Eloa", formId + "", contactFormId + "");
+							}
+						}
+					}
 				}
-				if (tree.distanceToAncestor(lang1, lang2) == 1) {
-					pslProblem.addObservation("Tanc", 1.0, lang1, lang2);
-				} else if ((!branchwiseBorrowing) && tree.getLevel(lang1).equals(tree.getLevel(lang2))) {
-					// TODO: borrowing from e.g. Latin
-					// TODO: geographical distance etc.
-					// TODO: make this open instead? e.g.
-					// pslProblem.addTarget
-					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
-				} else if (branchwiseBorrowing
-						&& tree.getLevel(lang1).getFocusNode().equals(tree.getLevel(lang1).getFocusNode())
-						&& tree.getLevel(lang1).getIndex().equals(tree.getLevel(lang2).getIndex() + 1)) {
-					pslProblem.addObservation("Tcnt", 1.0, lang1, lang2);
+				String parent = phylo.parents.get(lang);
+				if (langsToForms.containsKey(parent)) {
+					for (int parentFormId : langsToForms.get(parent)) {
+						pslProblem.addObservation("Xinh", 1.0, formId + "", parentFormId + "");
+						pslProblem.addTarget("Einh", formId + "", parentFormId + "");
+					}
 				}
 			}
 		}
 
-		// 4. Generate etymology atoms.
+		List<Integer> allForms = new ArrayList<>();
+		langsToForms.values().forEach(allForms::addAll);
+		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
+		for (int i = 0; i < allForms.size() - 1; i++) {
+			int formIdI = allForms.get(i);
+			pslProblem.addObservation("Fsim", 1.0, formIdI + "", formIdI + "");
+			addHomsetInfo(objectStore, formIdI, homPegs, concepts);
 
-		for (Entry entry1 : entryPool) {
-			pslProblem.addTarget("Eunk", entry1.formIdAsString);
-			for (Entry entry2 : entryPool) {
-				addAtomsForFormPair(entry1, entry2);
+			// Compare phonetic forms.
+			boolean hasUnderlyingForm1 = objectStore.hasUnderlyingForm(formIdI);
+			for (int j = i + 1; j < allForms.size(); j++) {
+				int formIdJ = allForms.get(j);
+				if (!hasUnderlyingForm1 || !objectStore.hasUnderlyingForm(formIdJ)) {
+					pslProblem.addTarget("Fsim", formIdI + "", formIdJ + "");
+					pslProblem.addTarget("Fsim", formIdJ + "", formIdI + "");
+				} else {
+					double fSim = phonSim.similarity(formIdI, formIdJ);
+					pslProblem.addObservation("Fsim", fSim, formIdI + "", formIdJ + "");
+					pslProblem.addObservation("Fsim", fSim, formIdJ + "", formIdI + "");
+				}
 			}
 		}
-	}
+		int lastForm = allForms.get(allForms.size() - 1);
+		addHomsetInfo(objectStore, lastForm, homPegs, concepts);
+		pslProblem.addObservation("Fsim", 1.0, lastForm + "", lastForm + "");
 
-	private void addAtomsForFormPair(Entry entry1, Entry entry2) {
-		if (entry1.formId.equals(entry2.formId)) {
-			return;
+		for (int form : allForms) {
+			System.err.println("Form: " + form + " " + objectStore.getLangForForm(form) + " "
+					+ objectStore.getRawFormForFormId(form));
+		}
+		for (int form : homPegs) {
+			System.err.println("Peg: " + form + " " + objectStore.getLangForForm(form) + " "
+					+ objectStore.getRawFormForFormId(form));
 		}
 
-		if (tree.distanceToAncestor(entry1.language, entry2.language) == 1) {
-			pslProblem.addTarget("Einh", entry1.formIdAsString, entry2.formIdAsString);
-			pslProblem.addObservation("Eloa", 0.0, entry1.formIdAsString, entry2.formIdAsString);
-		} else if (tree.getLevel(entry1.language) == tree.getLevel(entry2.language)) {
-			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
-			if (!config.branchwiseBorrowing()) {
-				pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
-			}
-		} else if (config.branchwiseBorrowing()
-				&& tree.getLevel(entry1.language).getFocusNode().equals(tree.getLevel(entry2.language).getFocusNode())
-				&& tree.getLevel(entry1.language).getIndex().equals(tree.getLevel(entry2.language).getIndex() + 1)) {
-			pslProblem.addTarget("Eloa", entry1.formIdAsString, entry2.formIdAsString);
-		} else {
-			pslProblem.addObservation("Einh", 0.0, entry1.formIdAsString, entry2.formIdAsString);
-			pslProblem.addObservation("Eloa", 0.0, entry1.formIdAsString, entry2.formIdAsString);
-		}
-
-		String ipa1 = "";
-		String ipa2 = "";
-		ipa1 = objectStore.getRawFormForFormId(entry1.formId);
-		if (ipa1 == null || ipa1.isEmpty()) {
-			return;
-		}
-
-		ipa2 = objectStore.getRawFormForFormId(entry2.formId);
-		if (ipa2 == null || ipa2.isEmpty()) {
-			return;
-		}
-
-		double sim = 0.0;
-		PhoneticString form1 = null;
-		PhoneticString form2 = null;
-		form1 = phonSimHelper.extractSegments(entry1.formId);
-		form2 = phonSimHelper.extractSegments(entry2.formId);
-		sim = phonSimHelper.similarity(form1, form2);
-		sim = logistic(sim);
-		pslProblem.addObservation("Fsim", sim, entry1.formIdAsString, entry2.formIdAsString);
-		System.out.println("Fsim(" + entry1.formId + "/" + ipa1 + "/" + form1 + "," + entry2.formId + "/" + ipa2 + "/"
-				+ form2 + ") " + sim);
-
-	}
-
-	private void addFormAtoms(int formId, String doculectId, String concept, int cldfForm) {
-		pslProblem.addObservation("Flng", 1.0, formId + "", doculectId);
-		pslProblem.addObservation("Fsem", 1.0, formId + "", concept);
-		String ipa = objectStore.getRawFormForFormId(cldfForm);
-		if (ipa != null && !ipa.isEmpty()) {
-			// TODO add XFufo also for imported Fufo atoms!!
-			pslProblem.addObservation(F_UFO_EX, 1.0, formId + "");
-			pslProblem.addObservation("Fufo", 1.0, formId + "", formId + "");
+		if (PRINT_LOG) {
+			super.pslProblem.printAtomsToConsole();
 		}
 	}
 
-	private double logistic(double input) {
-		double growthRate = 8.0;
-		double midpoint = 0.42;
-		return Math.pow(1 + Math.pow(Math.E, (-growthRate * (input - midpoint))), -1);
-	}
-
-	public void export(ObjectMapper mapper, String path) {
-		try {
-			export(mapper, new FileOutputStream(path));
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public void export(ObjectMapper mapper, OutputStream out) {
-		config.export(mapper, out);
-	}
-
-	// Costly because this involves renaming the leaf nodes in the tree.
-	private void updateLanguagesAndTree() {
-		setTree();
-		System.err.println("Initial tree:");
-		LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
-		if (config.addSiblingLanguages())
-			addSiblingLanguages();
-		removeIsolates();
-		logger.displayln("");
-	}
-
-	// Costly because this involves renaming the leaf nodes in the tree.
-	public void setLanguages(List<String> languages) {
-		config.setLanguages(languages);
-		updateLanguagesAndTree();
-	}
-
-	public void setConcepts(List<String> concepts) {
-		config.setConcepts(concepts);
-	}
-
-	private void setTree() {
-		tree = new LevelBasedPhylogeny(config.getTreeDepth(), config.getTreeFile(), config.getModernLanguages());
-		ancestors = new ArrayList<>();
-		for (String language : tree.getAllLanguages()) {
-			if (config.getModernLanguages().contains(language)) {
+	private void addLanguageFamily(LanguagePhylogeny phylo, IndexedObjectStore objectStore,
+			EtinenConstantRenderer renderer, Set<Integer> homPegs, String lowestCommonAnc, Stack<String> langStack,
+			Set<String> langsAdded, Multimap<String, Integer> langsToForms) {
+		logger.displayln(
+				"Adding languages descended from " + renderer.getLanguageRepresentation(lowestCommonAnc) + ":");
+		while (!langStack.isEmpty()) {
+			String lang = langStack.pop();
+			if (langsAdded.contains(lang)) {
 				continue;
 			}
-			String languageId = language;
-			if (objectStore.getNameForLang(language) == null) {
-				languageId = objectStore.addNewLanguage(language);
-				if (!languageId.equals(language))
-					tree.getTree().renameNode(language, languageId);
-			}
-			ancestors.add(languageId);
-		}
-	}
-
-	public LevelBasedPhylogeny getTree() {
-		return tree;
-	}
-
-	private void addSiblingLanguages() {
-		logger.displayln("Adding sibling languages to the language set.");
-		System.err.println("Adding sibling languages to the language set.");
-		Set<String> parents = new HashSet<>();
-		for (String lang : config.getModernLanguages()) {
-			parents.add(tree.getParent(lang));
-		}
-		LevelBasedPhylogeny fullTree = new LevelBasedPhylogeny(config.getTreeFile());
-		Set<String> targetLangs = new HashSet<>();
-		for (String langId : objectStore.getLanguageIds()) {
-			targetLangs.add(langId);
-		}
-		targetLangs.removeAll(config.getModernLanguages());
-		targetLangs.removeAll(ancestors);
-		String anc;
-		boolean addedAny = false;
-		for (String langId : targetLangs) {
-			for (String ancestor : fullTree.getTree().pathToRoot(langId)) {
-				anc = objectStore.getNameForLang(ancestor);
-				if (anc != null) {
-					ancestor = anc;
+			logger.displayln("- " + renderer.getLanguageRepresentation(lang));
+			langsAdded.add(lang);
+			String parent = phylo.parents.get(lang);
+			pslProblem.addObservation("Xinh", 1.0, lang, parent);
+			Collection<Integer> forms = langsToForms.get(lang);
+			if (forms == null) {
+				// Deal with (not-yet-reconstructed) protoforms
+				boolean foundForm = false;
+				for (int homPeg : homPegs) {
+					// Any confirmed reconstructions we can work with?
+					int recForm = objectStore.getReconstructionIdForPegAndLang(homPeg, lang);
+					if (recForm != -1) {
+						langsToForms.put(lang, recForm);
+						foundForm = true;
+					}
 				}
-				for (String parent : parents) {
-					if (ancestor.equals(parent)) {
-						tree.getTree().children.get(parent).add(langId);
-						tree.getTree().parents.put(langId, parent);
-						TreeLayer layer = tree.getTree().getLayer("ROOT", config.getTreeDepth());
-						tree.getTree().nodesToLayers.put(langId, layer);
-						config.getModernLanguages().add(langId);
-						addedAny = true;
-						logger.displayln("- Added " + langId + ".");
-						System.err.println("- Added " + langId + ".");
-						break;
+				if (!foundForm) {
+					// Create a dummy form
+					int formId = objectStore.createFormId();
+					objectStore.addFormIdWithLanguage(formId, lang);
+					langsToForms.put(lang, formId);
+				}
+			}
+			if (!parent.equals(lowestCommonAnc) && !langsAdded.contains(parent)) {
+				langStack.push(parent);
+			}
+		}
+	}
+
+	private void addHomsetInfo(IndexedObjectStore objectStore, int formId, Set<Integer> homPegs,
+			Set<String> allConcepts) {
+		// TODO add relevant 0-belief atoms for other concepts
+		int pegForForm = objectStore.getPegForFormIdIfRegistered(formId);
+		Collection<String> concepts = objectStore.getConceptsForForm(formId);
+		System.err.println("PEG: " + formId + " " + objectStore.getLangForForm(formId) + " " + pegForForm);
+		if (pegForForm < 0) {
+			if (concepts == null) {
+				concepts = allConcepts;
+			}
+			for (int homPeg : homPegs) {
+				for (String concept : concepts) {
+					pslProblem.addTarget("Fhom", formId + "", homPeg + "", concept);
+					System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+							+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ")");
+				}
+			}
+		} else {
+			for (Integer homPeg : homPegs) {
+				if (homPeg.equals(pegForForm)) {
+					for (String concept : concepts) {
+						pslProblem.addObservation("Fhom", 1.0, formId + "", homPeg + "", concept);
+						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 1.0");
+					}
+				} else {
+					for (String concept : concepts) {
+						pslProblem.addObservation("Fhom", 0.0, formId + "", homPeg + "", concept);
+						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
+								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 0.0");
 					}
 				}
 			}
 		}
-		if (addedAny) {
-			logger.displayln("New language set: " + config.getModernLanguages());
-			LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
-			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
-		} else {
-			logger.displayln("No missing sibling languages found. Tree unchanged.");
-			System.err.println("No missing sibling languages found. Tree unchanged.");
-		}
-	}
-
-	private void removeIsolates() {
-		logger.displayln("Removing isolates from the language set.");
-		System.err.println("Removing isolates from the language set.");
-		Set<String> toBeRemoved = new HashSet<>();
-		boolean removedAny = false;
-		for (String lang : config.getModernLanguages()) {
-			String parent = tree.getTree().parents.get(lang);
-			// System.err.println("lang: " + lang + ", level: " + tree.getLevel(lang) + ",
-			// parent: " + parent + ", siblings: " + tree.getTree().children.get(parent));
-			while (// Leaf node with no siblings
-			(tree.getLevel(lang).equals(TreeLayer.leaves()) && tree.getTree().children.get(parent).size() == 1)
-					// Intermediate node with no children
-					|| (!tree.getLevel(lang).equals(TreeLayer.leaves()) && (tree.getTree().children.get(lang) == null
-							|| tree.getTree().children.get(lang).isEmpty()))) {
-
-				removedAny = true;
-				tree.getTree().children.get(parent).remove(lang);
-				tree.getTree().parents.remove(lang);
-				toBeRemoved.add(lang);
-				logger.displayln("- Removing " + lang + ".");
-				System.err.println("- Removing " + lang + ".");
-				lang = parent;
-				parent = tree.getTree().parents.get(parent);
-				if (parent == null || lang.equals(tree.getTree().root)) {
-					break;
-				}
-			}
-		}
-		config.getModernLanguages().removeAll(toBeRemoved);
-		if (removedAny) {
-			logger.displayln("Remaining languages: " + config.getModernLanguages());
-			if (logger.getGuiStream() != null) {
-				// GUI stream is null when running offline inferences
-				LanguageTreeStorage.saveLayeredTree(tree.getTree(), logger.getGuiStream());
-			}
-			LanguageTreeStorage.saveLayeredTree(tree.getTree(), System.err);
-		} else {
-			logger.displayln("No isolates found. Tree unchanged.");
-			System.err.println("No isolates found. Tree unchanged.");
-		}
-		this.removedIsolates = toBeRemoved;
-	}
-
-	public Set<String> getRemovedIsolates() {
-		return removedIsolates;
-	}
-
-	private class Entry {
-
-		Integer formId = null;
-		String formIdAsString = null;
-		String language;
-		String concept;
-
-		public Entry(int formId, String language, String concept) {
-			this.formId = formId;
-			this.formIdAsString = formId + "";
-			this.language = language;
-			this.concept = concept;
-		}
-
-		public String toString() {
-			return formIdAsString + " (" + language + ", " + concept + ")";
-		}
-
 	}
 
 }

@@ -1,19 +1,5 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.DoubleNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.databind.node.TextNode;
-import de.tuebingen.sfs.eie.shared.util.SemanticNetwork;
-import de.tuebingen.sfs.psl.engine.DatabaseManager;
-import de.tuebingen.sfs.psl.engine.PslProblemConfig;
-import de.tuebingen.sfs.psl.util.log.InferenceLogger;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -31,39 +17,34 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.DoubleNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import de.tuebingen.sfs.psl.engine.DatabaseManager;
+import de.tuebingen.sfs.psl.engine.PslProblemConfig;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+
 public class EtymologyProblemConfig extends PslProblemConfig {
 
-	//TODO: move files to the main resources, add / in front of each path, referenc
-	public static final String DB_DIR = "src/test/resources/northeuralex-0.9";
-	public static final String TEST_DB_DIR = "etinen-etymology/src/test/resources/testdb";
-	public static final String NETWORK_EDGES_FILE = "src/test/resources/etymology/clics2-network-edges.txt";
-	public static final String NETWORK_IDS_FILE = "src/test/resources/etymology/clics2-network-ids.txt";
-	public static final String NELEX_CONCEPTS_FILE = "src/test/resources/northeuralex-0.9/parameters.csv";
-	public static final int MAX_DIST = 2;
-
 	private static final double DEFAULT_THRESHOLD = 0.05;
-	private static final int DEFAULT_TREE_DEPTH = 4;
-	private static final String DEFAULT_TREE_FILE = DB_DIR + "/tree.nwk";
-	private static final String DEFAULT_LOGFILE_PATH = System.getProperty("user.home") + "/.etinen/"+"etym-inf-log.txt";
+	private static final String DEFAULT_LOGFILE_PATH = "src/test/resources/etym-inf-log.txt";
+	private static final int DEFAULT_MAX_SEM_EDGE_DIST = 2;
 
-	private Integer treeDepth = null;
-	private Boolean branchwiseBorrowing = null;
-	private Boolean addSiblingLanguages = null;
-	private String treeFile = null;
-	private SemanticNetwork semanticNet = null;
-	private String wordListDbDir = null;
-	private String correspondenceDbDir = null;
-	private List<String> concepts = null;
-	private List<String> modernLanguages = null;
+	private List<Integer> formIds = null;
 
 	private Map<String, Double> ruleWeights;
 	private Set<String> ignoreRules;
-	private double persistenceThreshold;
-	private InferenceLogger logger;
+	// The maximum number of edges that can be between a pair of concepts for them
+	// to get a Ssim score higher than 0.
+	private int maxSemEdgeDist;
 
-	// --------------
-	// Constructors
-	// --------------
+	private double persistenceThreshold;
+
+	private InferenceLogger logger;
 
 	public EtymologyProblemConfig() {
 		resetToDefaults();
@@ -74,59 +55,15 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		setNonPersistableFeatures(problemId, dbManager);
 	}
 
-	public EtymologyProblemConfig(List<String> concepts, List<String> modernLanguages, String treeFile,
-			SemanticNetwork semanticNet, String wordListDbDir, int treeDepth, Boolean branchwiseBorrowing,
-			Boolean addSiblingLanguages, String correspondenceDbDir, Map<String, Double> ruleWeights,
-			Set<String> ignoreRules, Double persistenceThreshold, InferenceLogger logger) {
+	public EtymologyProblemConfig(List<Integer> formIds, Map<String, Double> ruleWeights, Set<String> ignoreRules,
+			int maxSemEdgeDist, Double persistenceThreshold, InferenceLogger logger) {
 		resetToDefaults();
 		this.logger = logger;
 		logger.displayln("Creating EtymologyIdeaGeneratorConfig.");
-		if (concepts == null) {
-			logger.displayln("...No concepts specified.");
+		if (formIds == null) {
+			logger.displayln("...No forms specified.");
 		} else {
-			this.concepts = concepts;
-		}
-		if (semanticNet == null) {
-			logger.displayln("...No semantic net given, using default network.");
-		} else {
-			this.setSemanticNet(semanticNet);
-		}
-		if (wordListDbDir == null) {
-			logger.displayln("...No CLDF Wordlist Database given, using default.");
-		} else {
-			this.wordListDbDir = wordListDbDir;
-		}
-		if (correspondenceDbDir == null || correspondenceDbDir.isEmpty()) {
-			logger.displayln("...No Correspondence Database directory given, using default.");
-		} else {
-			this.correspondenceDbDir = correspondenceDbDir;
-		}
-		this.branchwiseBorrowing = branchwiseBorrowing;
-		if (branchwiseBorrowing == null) {
-			logger.displayln("...No value for branchwiseBorrowing given, using default (true).");
-			this.branchwiseBorrowing = true;
-		}
-		this.addSiblingLanguages = addSiblingLanguages;
-		if (addSiblingLanguages == null) {
-			logger.displayln("...No value for addSiblingLanguages given, using default (true).");
-			this.addSiblingLanguages = true;
-		}
-		if (treeDepth < 1) {
-			System.err.println(
-					"...No phylogenetic tree depth specified, using default value (" + DEFAULT_TREE_DEPTH + ").");
-		} else {
-			this.treeDepth = treeDepth;
-		}
-		if (treeFile == null || treeFile.trim().isEmpty()) {
-			logger.displayln("...No input file for the tree specified, using default: " + DEFAULT_TREE_FILE);
-		} else {
-			this.treeFile = treeFile;
-		}
-		if (modernLanguages == null) {
-			logger.displayln(
-					"...No modernLanguages specified. Will only construct the phylogenetic tree once the modernLanguages are set via setLanguages().");
-		} else {
-			this.setModernLanguages(modernLanguages);
+			this.formIds = formIds;
 		}
 		if (ruleWeights == null) {
 			logger.displayln("...No rule weights specified.");
@@ -137,6 +74,11 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			logger.displayln("...No blacklist of rules specified.");
 		} else {
 			this.ignoreRules = ignoreRules;
+		}
+		if (maxSemEdgeDist < 0) {
+			logger.displayln("...No maximum concept graph distance specified.");
+		} else {
+			this.maxSemEdgeDist = maxSemEdgeDist;
 		}
 		if (persistenceThreshold == null) {
 			logger.displayln(
@@ -166,8 +108,8 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		try {
 			return fromStream(mapper, new FileInputStream(path), logger);
 		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
+			System.err.println("File not found, using default configuration file (" + path + ")");
+			return new EtymologyProblemConfig();
 		}
 	}
 
@@ -181,23 +123,11 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		EtymologyProblemConfig copy = new EtymologyProblemConfig();
 		super.copyFields(copy);
 
-		copy.concepts = new ArrayList<>(concepts);
-		copy.modernLanguages = new ArrayList<>(modernLanguages);
-
-		copy.setSemanticNet(new SemanticNetwork(semanticNet.getNetworkEdgesFile(), semanticNet.getNetworkIdsFile(),
-				semanticNet.getNelexConceptsFile(), semanticNet.getMaxDist()));
-
-		copy.wordListDbDir = wordListDbDir;
-		copy.correspondenceDbDir = correspondenceDbDir;
-
-		copy.treeDepth = treeDepth;
-		copy.treeFile = treeFile;
+		copy.formIds = new ArrayList<>(formIds);
 
 		copy.ruleWeights = new HashMap<>(ruleWeights);
 		copy.ignoreRules = new HashSet<>(ignoreRules);
-
-		copy.branchwiseBorrowing = branchwiseBorrowing;
-		copy.addSiblingLanguages = addSiblingLanguages;
+		copy.maxSemEdgeDist = maxSemEdgeDist;
 
 		// copy.logger = logger;
 		copy.setLogfile(super.getLogfilePath());
@@ -215,100 +145,22 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 		super.setName("etymology");
 		super.setDeclareUserPrior(false); // TODO
 
-		concepts = new ArrayList<>();
-		setModernLanguages(new ArrayList<>());
-
-		setSemanticNet(new SemanticNetwork(NETWORK_EDGES_FILE, NETWORK_IDS_FILE, NELEX_CONCEPTS_FILE, MAX_DIST));
-
-		wordListDbDir = DB_DIR;
-		correspondenceDbDir = DB_DIR;
-
-		treeDepth = DEFAULT_TREE_DEPTH;
-		treeFile = DEFAULT_TREE_FILE;
-
+		formIds = new ArrayList<>();
 		ruleWeights = new TreeMap<>();
 		ignoreRules = new TreeSet<>();
-
-		branchwiseBorrowing = true;
-		addSiblingLanguages = true;
+		maxSemEdgeDist = DEFAULT_MAX_SEM_EDGE_DIST;
 
 		logger = new InferenceLogger();
 		setLogfile(DEFAULT_LOGFILE_PATH);
 		persistenceThreshold = DEFAULT_THRESHOLD;
 	}
 
-	public int getTreeDepth() {
-		return treeDepth;
+	public List<Integer> getFormIds() {
+		return formIds;
 	}
 
-	public void setTreeDepth(int depth) {
-		treeDepth = depth;
-	}
-
-	public String getTreeFile() {
-		return treeFile;
-	}
-
-	public void setTreeFile(String treeFile) {
-		this.treeFile = treeFile;
-	}
-
-	public boolean branchwiseBorrowing() {
-		return branchwiseBorrowing;
-	}
-
-	public boolean addSiblingLanguages() {
-		return addSiblingLanguages;
-	}
-
-	public String[] getSemanticNetworkConfig() {
-		return new String[] { getSemanticNet().getNetworkEdgesFile(), getSemanticNet().getNetworkIdsFile(),
-				getSemanticNet().getNelexConceptsFile(), getSemanticNet().getMaxDist() + "" };
-	}
-
-	public String getWordListDbDir() {
-		return wordListDbDir;
-	}
-
-	public void setWordListDbDir(String wordListDbDir) {
-		this.wordListDbDir = wordListDbDir;
-	}
-
-	public String getCorrespondenceDbDir() {
-		return correspondenceDbDir;
-	}
-
-	public void setCorrespondenceDbDir(String correspondenceDbDir) {
-		this.correspondenceDbDir = correspondenceDbDir;
-	}
-
-	public List<String> getConcepts() {
-		return concepts;
-	}
-
-	public void setConcepts(List<String> concepts) {
-		this.concepts = concepts;
-	}
-
-	public List<String> getLanguages() {
-		return getModernLanguages();
-	}
-
-	public void setLanguages(List<String> modernLanguages) {
-		this.setModernLanguages(modernLanguages);
-	}
-
-	public void setBranchwiseBorrowing(boolean branchwiseBorrowing) {
-		this.branchwiseBorrowing = branchwiseBorrowing;
-	}
-
-	public void setAddSiblingLanguages(boolean addSiblingLanguages) {
-		this.addSiblingLanguages = addSiblingLanguages;
-	}
-
-	public void setSemanticNetworkConfig(String networkEdgesFile, String networkIdsFile, String nelexConceptsFile,
-			int maxDist) {
-		this.setSemanticNet(new SemanticNetwork(networkEdgesFile, networkIdsFile, nelexConceptsFile, maxDist));
+	public void setFormIds(List<Integer> formIds) {
+		this.formIds = formIds;
 	}
 
 	public void setIgnoreRules(Set<String> ignoreRules) {
@@ -352,20 +204,13 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			this.persistenceThreshold = threshold;
 	}
 
-	public List<String> getModernLanguages() {
-		return modernLanguages;
+	public int getMaxSemEdgeDist() {
+		return maxSemEdgeDist;
 	}
 
-	public void setModernLanguages(List<String> modernLanguages) {
-		this.modernLanguages = modernLanguages;
-	}
-
-	public SemanticNetwork getSemanticNet() {
-		return semanticNet;
-	}
-
-	public void setSemanticNet(SemanticNetwork semanticNet) {
-		this.semanticNet = semanticNet;
+	public void setMaxSemEdgeDist(int maxSemEdgeDist) {
+		if (maxSemEdgeDist >= 0)
+			this.maxSemEdgeDist = maxSemEdgeDist;
 	}
 
 	public void setNonPersistableFeatures(String problemId, DatabaseManager dbManager) {
@@ -379,17 +224,8 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	public void print(PrintStream out) {
 		out.println("Etymology config");
-		out.println("- branchwiseBorrowing: " + branchwiseBorrowing);
-		out.println("- treeDepth: " + treeDepth);
-		out.println("- treeFile: " + treeFile);
-		out.println("- wordListDbDir: " + wordListDbDir);
-		out.println("- correspondenceDbDir: " + correspondenceDbDir);
-		out.println("- concepts: " + concepts);
-		out.println("- modernLanguages: " + getModernLanguages());
-		out.println("- networkEdgesFile: " + getSemanticNet().getNetworkEdgesFile());
-		out.println("- networkIdsFile: " + getSemanticNet().getNetworkIdsFile());
-		out.println("- nelexConceptsFile: " + getSemanticNet().getNelexConceptsFile());
-		out.println("- maxDist: " + getSemanticNet().getMaxDist());
+		out.println("- Forms: " + formIds);
+		out.println("- Maximum concept distance: " + maxSemEdgeDist);
 		if (ignoreRules == null || ignoreRules.isEmpty()) {
 			out.println("- No rules to ignore.");
 		} else {
@@ -410,17 +246,8 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 
 	public void logSettings() {
 		logger.displayln("Etymology config");
-		logger.displayln("- branchwiseBorrowing: " + branchwiseBorrowing);
-		logger.displayln("- treeDepth: " + treeDepth);
-		logger.displayln("- treeFile: " + treeFile);
-		logger.displayln("- wordListDbDir: " + wordListDbDir);
-		logger.displayln("- correspondenceDbDir: " + correspondenceDbDir);
-		logger.displayln("- concepts (in config!): " + concepts);
-		logger.displayln("- modernLanguages (in config!): " + getModernLanguages());
-		logger.displayln("- networkEdgesFile: " + getSemanticNet().getNetworkEdgesFile());
-		logger.displayln("- networkIdsFile: " + getSemanticNet().getNetworkIdsFile());
-		logger.displayln("- nelexConceptsFile: " + getSemanticNet().getNelexConceptsFile());
-		logger.displayln("- maxDist: " + getSemanticNet().getMaxDist());
+		logger.displayln("- Forms (in config!): " + formIds);
+		logger.displayln("- Maximum concept distance: " + maxSemEdgeDist);
 		if (ignoreRules == null || ignoreRules.isEmpty()) {
 			logger.displayln("- No rules to ignore.");
 		} else {
@@ -464,70 +291,12 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			System.err.println("No value for declareUserPrior given. (Using default.)");
 		}
 		try {
-			List<String> concepts = mapper.treeToValue(rootNode.path("concepts"), ArrayList.class);
-			if (concepts != null)
-				setConcepts(concepts);
+			// TODO check integer conversion
+			List<Integer> formIds = mapper.treeToValue(rootNode.path("formIds"), ArrayList.class);
+			if (formIds != null)
+				setFormIds(formIds);
 		} catch (JsonProcessingException e) {
-			System.err.println("No concept list given. (Using default.)");
-		}
-		try {
-			List<String> modernLanguages = mapper.treeToValue(rootNode.path("modernLanguages"), ArrayList.class);
-			if (modernLanguages != null)
-				setModernLanguages(modernLanguages);
-		} catch (JsonProcessingException e) {
-			System.err.println("No language list given. (Using default.)");
-		}
-		try {
-			Integer treeDepth = mapper.treeToValue(rootNode.path("treeDepth"), Integer.class);
-			if (treeDepth != null)
-				setTreeDepth(treeDepth);
-		} catch (JsonProcessingException e) {
-			System.err.println("No tree depth given. (Using default.)");
-		}
-		try {
-			String treeFile = mapper.treeToValue(rootNode.path("treeFile"), String.class);
-			if (treeFile != null)
-				setTreeFile(treeFile);
-		} catch (JsonProcessingException e) {
-			System.err.println("No tree file given. (Using default.)");
-		}
-		try {
-			Boolean branchwiseBorrowing = mapper.treeToValue(rootNode.path("branchwiseBorrowing"), Boolean.class);
-			if (branchwiseBorrowing != null)
-				setBranchwiseBorrowing(branchwiseBorrowing);
-		} catch (JsonProcessingException e) {
-			System.err.println("No value for branchwiseBorrowing given. (Using default.)");
-		}
-		try {
-			Boolean addSiblingLanguages = mapper.treeToValue(rootNode.path("addSiblingLanguages"), Boolean.class);
-			if (addSiblingLanguages != null)
-				setAddSiblingLanguages(addSiblingLanguages);
-		} catch (JsonProcessingException e) {
-			System.err.println("No value for addSiblingLanguages given. (Using default.)");
-		}
-		try {
-			HashMap<String, Object> semanticNetConfig = (HashMap<String, Object>) mapper
-					.treeToValue(rootNode.path("semanticNet"), HashMap.class);
-			if (semanticNetConfig != null) {
-				setSemanticNetworkConfig((String) semanticNetConfig.get("edges"), (String) semanticNetConfig.get("ids"),
-						(String) semanticNetConfig.get("nelexConcepts"), (Integer) semanticNetConfig.get("maxDist"));
-			}
-		} catch (JsonProcessingException e) {
-			System.err.println("No semantic network given. (Using default.)");
-		}
-		try {
-			String wordListDbDir = mapper.treeToValue(rootNode.path("wordListDbDir"), String.class);
-			if (wordListDbDir != null)
-				setWordListDbDir(wordListDbDir);
-		} catch (JsonProcessingException e) {
-			System.err.println("No wordListDbDir given. (Using default.)");
-		}
-		try {
-			String correspondenceDbDir = mapper.treeToValue(rootNode.path("correspondenceDbDir"), String.class);
-			if (correspondenceDbDir != null)
-				setCorrespondenceDbDir(correspondenceDbDir);
-		} catch (JsonProcessingException e) {
-			System.err.println("No correspondenceDbDir given. (Using default.)");
+			System.err.println("No form IDs given. (Using empty list.)");
 		}
 		try {
 			Object ruleWeights = mapper.treeToValue(rootNode.path("ruleWeights"), HashMap.class);
@@ -544,6 +313,15 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			}
 		} catch (JsonProcessingException e) {
 			System.err.println("No rule blacklist given. (Using default.)");
+		}
+		try {
+			Object maxSemEdgeDist = mapper.treeToValue(rootNode.path("maxSemEdgeDist"), Integer.class);
+			if (maxSemEdgeDist != null)
+				setMaxSemEdgeDist(Integer.parseInt((String) maxSemEdgeDist));
+		} catch (JsonProcessingException e) {
+			System.err.println("No maxSemEdgeDist given. (Using default.)");
+		} catch (NumberFormatException e) {
+			System.err.println("Could not read the maxSemEdgeDist. (Using default.)");
 		}
 		try {
 			Object persistenceThreshold = mapper.treeToValue(rootNode.path("persistenceThreshold"), Double.class);
@@ -580,28 +358,12 @@ public class EtymologyProblemConfig extends PslProblemConfig {
 			rootNode.set(PslProblemConfig.NAME_FIELD, mapper.readTree(mapper.writeValueAsString(super.getName())));
 			rootNode.set(PslProblemConfig.USER_PRIOR_FIELD,
 					mapper.readTree(mapper.writeValueAsString(super.isDeclareUserPrior())));
-			rootNode.set("concepts", (ArrayNode) mapper.readTree(mapper.writeValueAsString(concepts)));
-			rootNode.set("modernLanguages",
-					(ArrayNode) mapper.readTree(mapper.writeValueAsString(getModernLanguages())));
-			rootNode.set("treeDepth", new IntNode(treeDepth));
-			rootNode.set("branchwiseBorrowing",
-					(BooleanNode) mapper.readTree(mapper.writeValueAsString(branchwiseBorrowing)));
-			rootNode.set("addSiblingLanguages",
-					(BooleanNode) mapper.readTree(mapper.writeValueAsString(addSiblingLanguages)));
-			rootNode.set("treeFile", new TextNode(treeFile));
-			rootNode.set("wordListDbDir", new TextNode(wordListDbDir));
-			rootNode.set("correspondenceDbDir", new TextNode(correspondenceDbDir));
-
-			Map<String, Object> semanticNetConfig = new HashMap<>();
-			semanticNetConfig.put("edges", getSemanticNet().getNetworkEdgesFile());
-			semanticNetConfig.put("ids", getSemanticNet().getNetworkIdsFile());
-			semanticNetConfig.put("nelexConcepts", getSemanticNet().getNelexConceptsFile());
-			semanticNetConfig.put("maxDist", getSemanticNet().getMaxDist());
-			rootNode.set("semanticNet", (ObjectNode) mapper.readTree(mapper.writeValueAsString(semanticNetConfig)));
+			rootNode.set("formIds", (ArrayNode) mapper.readTree(mapper.writeValueAsString(formIds)));
 			rootNode.set("ruleWeights", (ObjectNode) mapper.readTree(mapper.writeValueAsString(ruleWeights)));
 			rootNode.set("ignoreRules", (ArrayNode) mapper.readTree(mapper.writeValueAsString(ignoreRules)));
 			rootNode.set("persistenceThreshold",
 					(DoubleNode) mapper.readTree(mapper.writeValueAsString(persistenceThreshold)));
+			rootNode.set("maxSemEdgeDist", mapper.readTree(mapper.writeValueAsString(maxSemEdgeDist)));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
