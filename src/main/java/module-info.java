@@ -2,6 +2,7 @@ module de.tuebingen.sfs.eie.components.etymology {
     exports de.tuebingen.sfs.eie.components.etymology.filter;
     exports de.tuebingen.sfs.eie.components.etymology.ideas;
     exports de.tuebingen.sfs.eie.components.etymology.problems;
+    opens de.tuebingen.sfs.eie.components.etymology.problems;
     exports de.tuebingen.sfs.eie.components.etymology.talk.rule;
     requires com.fasterxml.jackson.core;
     requires de.tuebingen.sfs.psl;
