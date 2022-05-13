@@ -97,13 +97,15 @@ public class EtymologyProblem extends PslProblem {
 		if (config.include(EunkPriorRule.NAME))
 			addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
 		if (config.include(EloaPriorRule.NAME))
-			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 2.0)));
+			addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 0.5)));
 
 		// If two forms are inherited from the same form, they should be similar:
 		addRule("EinhToFsim", "2: Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)");
 		// If two forms are similar and might be inherited from a common source, it's
 		// likely that they really were.
 		addRule("FsimToEinh", "1: Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) -> Einh(X,Z)");
+		//If a borrowing relation between two forms is possible and they are quite similar, this makes a borrowing likely.
+		addRule("FsimToEloa", "2: Fsim(X,Y) & Xloa(X,Y) -> Eloa(X,Y)");
 		// If two forms are similar and inherited from different sources, those source
 		// words should be similar to one another too.
 		addRule("FsimToFsim", "1: Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
@@ -111,6 +113,12 @@ public class EtymologyProblem extends PslProblem {
 		// If a word is more similar to a word in a contact language than to its
 		// reconstructed ancestor, that makes it more likely to be a loan:
 		addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
+
+		//An inherited form should be more similar to its immediate ancestor than to any other word.
+		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(Y, Z) & X != Z -> Fsim(X,Y)");
+
+		//A borrowed form should be more similar to its donor than to any other word.
+		addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z -> Fsim(X,Y)");
 
 		// Sister forms should be less similar than either is to their common parent
 		// form:
