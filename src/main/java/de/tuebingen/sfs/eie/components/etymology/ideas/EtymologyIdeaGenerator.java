@@ -137,6 +137,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 					pslProblem.addTarget("Fsim", formIdJ + "", formIdI + "");
 				} else {
 					double fSim = phonSim.similarity(formIdI, formIdJ);
+					if (fSim > 0.95) fSim = 0.95;
 					pslProblem.addObservation("Fsim", fSim, formIdI + "", formIdJ + "");
 					pslProblem.addObservation("Fsim", fSim, formIdJ + "", formIdI + "");
 				}
