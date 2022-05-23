@@ -1,11 +1,6 @@
 package de.tuebingen.sfs.eie.components.etymology.ideas;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblem;
 import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig;
@@ -13,6 +8,7 @@ import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.util.Pair;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -21,219 +17,297 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
-	public static boolean PRINT_LOG = true;
+    public static boolean PRINT_LOG = true;
 
-	private EtymologicalTheory theory;
-	protected EtymologyProblemConfig config;
-	protected InferenceLogger logger;
+    public static final int CTRL_ARG = -3;
+    public static final String TMP_SFX = "_form";
 
-	public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory) {
-		super(problem);
-		this.theory = theory;
-		this.logger = problem.getLogger();
-		logger.displayln("...Creating EtymologyIdeaGenerator.");
-		logger.displayln("...Working with the following idea generation configuration:");
-		config = (EtymologyProblemConfig) problem.getConfig();
-		if (PRINT_LOG) {
-			config.logSettings();
-		}
-		logger.displayln("Finished setting up the Etymology Idea Generator.");
-	}
+    private EtymologicalTheory theory;
+    protected EtymologyProblemConfig config;
+    protected InferenceLogger logger;
 
-	// TODO this needs to be updated. current experiments are happening in the
-	// sample idea generator
-	public void generateAtoms(EtinenConstantRenderer renderer) {
-		// TODO warn user about missing homologue members if applicable?
+    public EtymologyIdeaGenerator(EtymologyProblem problem, EtymologicalTheory theory) {
+        super(problem);
+        this.theory = theory;
+        this.logger = problem.getLogger();
+        logger.displayln("...Creating EtymologyIdeaGenerator.");
+        logger.displayln("...Working with the following idea generation configuration:");
+        config = (EtymologyProblemConfig) problem.getConfig();
+        if (PRINT_LOG) {
+            config.logSettings();
+        }
+        logger.displayln("Finished setting up the Etymology Idea Generator.");
+    }
 
-		IndexedObjectStore objectStore = theory.getIndexedObjectStore();
-		LanguagePhylogeny phylo = theory.getLanguagePhylogeny();
+    public void generateAtoms() {
+        IndexedObjectStore objectStore = theory.getIndexedObjectStore();
+        LanguagePhylogeny phylo = theory.getLanguagePhylogeny();
 
-		Stack<String> langStack = new Stack<>();
-		Multimap<String, Integer> langsToForms = new Multimap<>(CollectionType.SET);
-		Set<Integer> homPegs = new HashSet<>();
-		Set<String> concepts = new HashSet<>(); // TODO also get concepts of confirmed protoforms
-		for (int formId : config.getFormIds()) {
-			String lang = objectStore.getLangForForm(formId);
-			langStack.add(lang);
-			langsToForms.put(lang, formId);
-			homPegs.add(objectStore.getPegOrSingletonForFormId(formId));
-			concepts.addAll(objectStore.getConceptsForForm(formId));
-		}
+        Multimap<String, Form> langsToForms = new Multimap<>(CollectionType.SET);
+        Set<Integer> homPegs = new HashSet<>();
+        for (int formId : config.getFormIds()) {
+            String lang = objectStore.getLangForForm(formId);
+            langsToForms.put(lang, new Form(formId));
+            int peg = objectStore.getPegForFormIdIfRegistered(formId);
+            if (peg > -1) {
+                // TODO if this is a modern form w/o homologue set: warn user
+                homPegs.add(peg);
+            }
+            if (PRINT_LOG) {
+                System.err.println(
+                        formId + " " + theory.normalize(formId) + " -- " + objectStore.getLangForForm(formId) +
+                                " -- peg: " + peg);
+            }
+        }
 
-		// Language atoms
-		Set<String> langsAdded = new HashSet<>();
-		String anc = phylo.lowestCommonAncestor(langStack);
-		if (anc.equals(LanguagePhylogeny.root)) {
-			// If the selection contains languages from multiple different families,
-			// add languages + word forms from up to the earliest established contact.
-			// TODO warn user if there are no relevant contacts
-			Multimap<String, String> familyAncestorToLangs = new Multimap<>(CollectionType.SET);
-			for (String lang : langStack) {
-				familyAncestorToLangs.put(phylo.getPathFor(lang).get(0), lang);
-			}
-			for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
-				langStack.clear();
-				langStack.addAll(relatedLangs);
-				anc = phylo.lowestCommonAncestor(langStack);
-				addLanguageFamily(phylo, objectStore, renderer, homPegs, anc, langStack, langsAdded, langsToForms);
-			}
-		} else {
-			// If there is a (non-root) common ancestor,
-			// add languages + word forms up to the lowest common ancestor.
-			addLanguageFamily(phylo, objectStore, renderer, homPegs, anc, langStack, langsAdded, langsToForms);
-		}
-		for (String lang : langsAdded) {
-			if (phylo.hasIncomingInfluences(lang)) {
-				for (String contact : phylo.getIncomingInfluences(lang)) {
-					if (langsAdded.contains(contact)) {
-						pslProblem.addObservation("Xloa", 1.0, lang, contact);
-					}
-				}
-			}
-		}
+        // Are there any languages missing?
+        List<String> langsGiven = new ArrayList<>(langsToForms.keySet());
+        Set<String> langsMissing = new HashSet<>();
+        String lca = phylo.lowestCommonAncestor(langsGiven);
+        if (lca.equals(LanguagePhylogeny.root)) {
+            Multimap<String, String> familyAncestorToLangs = new Multimap<>(CollectionType.SET);
+            for (String lang : langsGiven) {
+                familyAncestorToLangs.put(phylo.getPathFor(lang).get(0), lang);
+            }
+            // TODO If the selection contains languages from multiple different families,
+            // add languages + word forms from up to the earliest established contact.
+            // TODO warn user if there are no relevant contacts
+            for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
+                addMissingLangsForBranch(phylo, phylo.lowestCommonAncestor(new ArrayList<>(relatedLangs)), relatedLangs,
+                        langsMissing, langsGiven);
+            }
+        } else {
+            // If there is a (non-root) common ancestor,
+            // add languages + word forms up to the lowest common ancestor.
+            addMissingLangsForBranch(phylo, lca, langsGiven, langsMissing, langsGiven);
+        }
 
-		// Form atoms
-		// TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eety belief
-		// values from previous inferences can be used here
-		// -> as observations and as fixed atoms (RAG filter)
-		for (String lang : langsToForms.keySet()) {
-			for (int formId : langsToForms.get(lang)) {
-				pslProblem.addTarget("Eunk", formId + "");
+        // Retrieve proto forms in same homologue sets, if available
+        List<Form> allForms = new ArrayList<>();
+        langsToForms.values().forEach(allForms::addAll);
+        for (int peg : homPegs) {
+            for (int formId : objectStore.getFormsForPeg(peg)) {
+                Form form = new Form(formId);
+                if (allForms.contains(form)) {
+                    continue;
+                }
+                String lang = objectStore.getLangForForm(formId);
+                if (langsMissing.contains(lang)) {
+                    allForms.add(form);
+                    langsToForms.put(lang, form);
+                    langsMissing.remove(lang);
+                }
+            }
+        }
+        // Dummy values for any remaining proto forms
+        for (String lang : langsMissing) {
+            // TODO discuss this (int vs str)
+//            Form form = new Form(lang + TMP_SFX);
+            int formId = objectStore.createFormId();
+            objectStore.addFormIdWithLanguage(formId, lang);
+            Form form = new Form(formId);
+            langsToForms.put(lang, form);
+            allForms.add(form);
+        }
 
-				if (phylo.hasIncomingInfluences(lang)) {
-					for (String contact : phylo.getIncomingInfluences(lang)) {
-						if (langsToForms.containsKey(contact)) {
-							for (int contactFormId : langsToForms.get(contact)) {
-								pslProblem.addObservation("Xloa", 1.0, formId + "", contactFormId + "");
-								pslProblem.addTarget("Eloa", formId + "", contactFormId + "");
-							}
-						}
-					}
-				}
-				String parent = phylo.parents.get(lang);
-				if (langsToForms.containsKey(parent)) {
-					for (int parentFormId : langsToForms.get(parent)) {
-						pslProblem.addObservation("Xinh", 1.0, formId + "", parentFormId + "");
-						pslProblem.addTarget("Einh", formId + "", parentFormId + "");
-					}
-				}
-			}
-		}
+        // Form atoms
+        // TODO check EtymologicalTheory to see if confirmed Einh/Eloa/Eunk belief values
+        // from previous inferences can be used here
+        int maxDist = -1;
+        for (String lang : langsToForms.keySet()) {
+            for (Form form : langsToForms.get(lang)) {
+                pslProblem.addTarget("Eunk", form.toString());
 
-		List<Integer> allForms = new ArrayList<>();
-		langsToForms.values().forEach(allForms::addAll);
-		PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
-		for (int i = 0; i < allForms.size() - 1; i++) {
-			int formIdI = allForms.get(i);
-			pslProblem.addObservation("Fsim", 1.0, formIdI + "", formIdI + "");
-			addHomsetInfo(objectStore, formIdI, homPegs, concepts);
+                if (phylo.hasIncomingInfluences(lang)) {
+                    for (String contact : phylo.getIncomingInfluences(lang)) {
+                        for (Form contactForm : langsToForms.get(contact)) {
+                            pslProblem.addObservation("Xloa", 1.0, form.toString(), contactForm.toString());
+                            pslProblem.addTarget("Eloa", form.toString(), contactForm.toString());
+                            if (PRINT_LOG) {
+                                System.err.println(
+                                        "Observation: Xloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() +
+                                                ") 1.0");
+                                System.err.println(
+                                        "Target: Eloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() + ")");
+                            }
+                        }
+                    }
+                }
 
-			// Compare phonetic forms.
-			boolean hasUnderlyingForm1 = objectStore.hasUnderlyingForm(formIdI);
-			for (int j = i + 1; j < allForms.size(); j++) {
-				int formIdJ = allForms.get(j);
-				if (!hasUnderlyingForm1 || !objectStore.hasUnderlyingForm(formIdJ)) {
-					pslProblem.addTarget("Fsim", formIdI + "", formIdJ + "");
-					pslProblem.addTarget("Fsim", formIdJ + "", formIdI + "");
-				} else {
-					double fSim = phonSim.similarity(formIdI, formIdJ);
-					if (fSim > 0.95) fSim = 0.95;
-					pslProblem.addObservation("Fsim", fSim, formIdI + "", formIdJ + "");
-					pslProblem.addObservation("Fsim", fSim, formIdJ + "", formIdI + "");
-				}
-			}
-		}
-		int lastForm = allForms.get(allForms.size() - 1);
-		addHomsetInfo(objectStore, lastForm, homPegs, concepts);
-		pslProblem.addObservation("Fsim", 1.0, lastForm + "", lastForm + "");
+                String parent = phylo.parents.get(lang);
+                if (PRINT_LOG) System.err.println(
+                        lang + " <- " + parent + " " + langsToForms.containsKey(parent) + " " + langsToForms.keySet());
+                if (langsToForms.containsKey(parent)) {
+                    for (Form parentForm : langsToForms.get(parent)) {
+                        pslProblem.addObservation("Xinh", 1.0, form.toString(), parentForm.toString());
+                        pslProblem.addTarget("Einh", form.toString(), parentForm.toString());
+                        if (PRINT_LOG) {
+                            System.err.println(
+                                    "Observation: Xinh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() +
+                                            ") 1.0");
+                            System.err.println(
+                                    "Target: Einh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() + ")");
+                        }
+                    }
+                }
+            }
+            for (String lang2 : langsToForms.keySet()) {
+                int dist = phylo.distance(lang, lang2);
+                if (dist > maxDist) {
+                    maxDist = dist;
+                }
+                for (Form form1 : langsToForms.get(lang)) {
+                    for (Form form2 : langsToForms.get(lang2)) {
+                        pslProblem.addObservation("Xdst", 1.0, form1.toString(), form2.toString(), dist + "");
+                        if (PRINT_LOG) {
+                            System.err.println(
+                                    "Observation: Xdst(" + form1.prettyPrint() + ", " + form2.prettyPrint() + ", " +
+                                            dist + ")");
+                        }
+                    }
+                }
+            }
+        }
+        for (int i = maxDist; i > 0; i--) {
+            for (int j = i - 1; j >= 0; j--) {
+                // "smaller than"
+                pslProblem.addObservation("Xsth", 1.0, j + "", i + "");
+                if (PRINT_LOG) {
+                    System.err.println("Observation: Xsth(" + j + ", " + i + ") 1.0");
+                }
+            }
+        }
 
-		for (int form : allForms) {
-			System.err.println("Form: " + form + " " + objectStore.getLangForForm(form) + " "
-					+ objectStore.getRawFormForFormId(form));
-		}
-		for (int form : homPegs) {
-			System.err.println("Peg: " + form + " " + objectStore.getLangForForm(form) + " "
-					+ objectStore.getRawFormForFormId(form));
-		}
+        PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
+        int nForms = allForms.size();
+        for (int i = 0; i < nForms - 1; i++) {
+            Form formI = allForms.get(i);
+            addAtomsForSingleForm(objectStore, formI, homPegs);
 
-		if (PRINT_LOG) {
-			super.pslProblem.printAtomsToConsole();
-		}
-	}
+            // Compare phonetic forms.
+            for (int j = i + 1; j < nForms; j++) {
+                Form formJ = allForms.get(j);
+                if (!formI.hasId() || !formJ.hasId() || theory.tokenize(formI.id) == null ||
+                        theory.tokenize(formJ.id) == null) {
+                    // If at least one of the forms is unknown, we have to infer the similarity scores.
+                    pslProblem.addTarget("Fsim", formI + "", formJ + "");
+                    pslProblem.addTarget("Fsim", formJ + "", formI + "");
+                    if (PRINT_LOG) {
+                        System.err.println("Target: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() + ")");
+                        System.err.println("Target: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() + ")");
+                    }
+                } else {
+                    double fSim = phonSim.similarity(formI.id, formJ.id);
+                    pslProblem.addObservation("Fsim", fSim, formI + "", formJ + "");
+                    pslProblem.addObservation("Fsim", fSim, formJ + "", formI + "");
+                    ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", formI + "", formJ + "");
+                    ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", formJ + "", formI + "");
+                    if (PRINT_LOG) {
+                        System.err.println("Observation: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() +
+                                ") %.2f".formatted(fSim));
+                        System.err.println("Observation: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() +
+                                ") %.2f".formatted(fSim));
+                    }
+                }
+            }
+        }
+        addAtomsForSingleForm(objectStore, allForms.get(nForms - 1), homPegs);
 
-	private void addLanguageFamily(LanguagePhylogeny phylo, IndexedObjectStore objectStore,
-			EtinenConstantRenderer renderer, Set<Integer> homPegs, String lowestCommonAnc, Stack<String> langStack,
-			Set<String> langsAdded, Multimap<String, Integer> langsToForms) {
-		logger.displayln(
-				"Adding languages descended from " + renderer.getLanguageRepresentation(lowestCommonAnc) + ":");
-		while (!langStack.isEmpty()) {
-			String lang = langStack.pop();
-			if (langsAdded.contains(lang)) {
-				continue;
-			}
-			logger.displayln("- " + renderer.getLanguageRepresentation(lang));
-			langsAdded.add(lang);
-			String parent = phylo.parents.get(lang);
-			pslProblem.addObservation("Xinh", 1.0, lang, parent);
-			Collection<Integer> forms = langsToForms.get(lang);
-			if (forms == null) {
-				// Deal with (not-yet-reconstructed) protoforms
-				boolean foundForm = false;
-				for (int homPeg : homPegs) {
-					// Any confirmed reconstructions we can work with?
-					int recForm = objectStore.getReconstructionIdForPegAndLang(homPeg, lang);
-					if (recForm != -1) {
-						langsToForms.put(lang, recForm);
-						foundForm = true;
-					}
-				}
-				if (!foundForm) {
-					// Create a dummy form
-					int formId = objectStore.createFormId();
-					objectStore.addFormIdWithLanguage(formId, lang);
-					langsToForms.put(lang, formId);
-				}
-			}
-			if (!parent.equals(lowestCommonAnc) && !langsAdded.contains(parent)) {
-				langStack.push(parent);
-			}
-		}
-	}
+        if (PRINT_LOG) {
+            super.pslProblem.printAtomsToConsole();
+        }
+    }
 
-	private void addHomsetInfo(IndexedObjectStore objectStore, int formId, Set<Integer> homPegs,
-			Set<String> allConcepts) {
-		// TODO add relevant 0-belief atoms for other concepts
-		int pegForForm = objectStore.getPegForFormIdIfRegistered(formId);
-		Collection<String> concepts = objectStore.getConceptsForForm(formId);
-		System.err.println("PEG: " + formId + " " + objectStore.getLangForForm(formId) + " " + pegForForm);
-		if (pegForForm < 0) {
-			if (concepts == null) {
-				concepts = allConcepts;
-			}
-			for (int homPeg : homPegs) {
-				for (String concept : concepts) {
-					pslProblem.addTarget("Fhom", formId + "", homPeg + "", concept);
-					System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-							+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ")");
-				}
-			}
-		} else {
-			for (Integer homPeg : homPegs) {
-				if (homPeg.equals(pegForForm)) {
-					for (String concept : concepts) {
-						pslProblem.addObservation("Fhom", 1.0, formId + "", homPeg + "", concept);
-						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 1.0");
-					}
-				} else {
-					for (String concept : concepts) {
-						pslProblem.addObservation("Fhom", 0.0, formId + "", homPeg + "", concept);
-						System.err.println("Fhom(" + objectStore.getLangForForm(formId) + ", "
-								+ objectStore.getRawFormForFormId(homPeg) + ", " + concept + ") 0.0");
-					}
-				}
-			}
-		}
-	}
+    private void addAtomsForSingleForm(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
+        pslProblem.addObservation("Fsim", 1.0, form.toString(), form.toString());
+        ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", form.toString(), form.toString());
+        if (PRINT_LOG) {
+            System.err.println("Fsim: Xloa(" + form.prettyPrint() + ", " + form.prettyPrint() + ") 1.0");
+        }
+
+        addHomsetInfo(objectStore, form, homPegs);
+
+        // Make sure the EinhOrEloaOrEunk rule always gets grounded:
+        pslProblem.addObservation("Eloa", 0.0, form.toString(), CTRL_ARG + "");
+        // TODO this one should actually probably be properly excluded from the sidebar:
+        ((EtymologyProblem) pslProblem).addFixedAtom("Eloa", form.toString(), CTRL_ARG + "");
+        if (PRINT_LOG) {
+            System.err.println("Observation: Eloa(" + form.prettyPrint() + ", CTRL_ARG) 0.0");
+        }
+    }
+
+    private void addMissingLangsForBranch(LanguagePhylogeny phylo, String lca, Collection<String> relatedLangs,
+                                          Set<String> langsMissing, List<String> langsGiven) {
+        for (String inputLang : relatedLangs) {
+            for (String ancLang : phylo.pathToRoot(inputLang)) {
+                if (langsGiven.contains(ancLang)) {
+                    continue;
+                }
+                langsMissing.add(ancLang);
+                if (ancLang.equals(lca)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private void addHomsetInfo(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
+        int pegForForm = -1;
+        if (form.hasId()) {
+            objectStore.getPegForFormIdIfRegistered(form.id);
+        }
+
+        if (pegForForm == -1) {
+            // Unknown homologue set -> infer set membership.
+            for (int homPeg : homPegs) {
+                pslProblem.addTarget("Fhom", form.toString(), homPeg + "");
+                ((EtymologyProblem) pslProblem).addFixedAtom("Fhom", form.toString(), homPeg + "");
+                if (PRINT_LOG) {
+                    System.err.println("Target: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ")");
+                }
+            }
+            return;
+        }
+
+        // TODO make sure homPegs won't be empty
+        for (int homPeg : homPegs) {
+//            if (homPeg == pegForForm) {
+            pslProblem.addObservation("Fhom", 1.0, form.toString(), homPeg + "");
+//            } else {
+//                pslProblem.addObservation("Fhom", 0.0, form.toString(), homPeg + "");
+//            }
+            ((EtymologyProblem) pslProblem).addFixedAtom("Fhom", form.toString(), homPeg + "");
+            if (PRINT_LOG) {
+                System.err.println(
+                        "Observation: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ") 1.0");
+            }
+        }
+    }
+
+    class Form {
+        Integer id = null;
+        String str = null;
+
+        Form(int id) {
+            this.id = id;
+        }
+
+        Form(String str) {
+            this.str = str;
+        }
+
+        boolean hasId() {
+            return id != null;
+        }
+
+        public String prettyPrint() {
+            return str == null ? theory.normalize(id) : str;
+        }
+
+        @Override
+        public String toString() {
+            return id == null ? str : id + "";
+        }
+    }
 
 }

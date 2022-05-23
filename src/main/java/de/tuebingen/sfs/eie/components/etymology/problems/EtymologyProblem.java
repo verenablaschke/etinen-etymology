@@ -186,6 +186,7 @@ public class EtymologyProblem extends PslProblem {
 	}
 
 	public void addFixedAtom(String pred, String... args) {
+		// TODO do this with AtomTemplates instead
 		fixedAtoms.add(pred + "(" + String.join(",", args) + ")");
 	}
 
