@@ -64,7 +64,7 @@ public class EtymologyProblem extends PslProblem {
 		declareClosedPredicate("Xsth", 2);
 		declareClosedPredicate("Xdst", 3);
 
-		declareOpenPredicate("Fhom", 3);
+		declareOpenPredicate("Fhom", 2);
 		declareOpenPredicate(new FsimPred());
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
@@ -115,10 +115,10 @@ public class EtymologyProblem extends PslProblem {
 		//addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
 
 		//A loanword relation implies that the donor and the recipient form must be from the same homologue set.
-		addRule("EloaToFhom", "Eloa(X,Y) & Fhom(Y,H,C) -> Fhom(X,H,C) .");
+		addRule("EloaToFhom", "Eloa(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
 
 		//An inheritance relation implies that the two forms must be from the same homologue set.
-		addRule("EinhToFhom", "Einh(X,Y) & Fhom(Y,H,C) -> Fhom(X,H,C) .");
+		addRule("EinhToFhom", "Einh(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
 
 		//An inherited form should be more similar to its immediate ancestor than to any other word.
 		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(Y, Z) & X != Z & Y != Z -> Fsim(X,Y)");
@@ -133,26 +133,23 @@ public class EtymologyProblem extends PslProblem {
 		// the common ancestor, reusing the grounding atoms to create the constant 2:
 		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
 		// Smaller tree distances -> higher similarity
-		//addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fhom(X,H,C) & Fhom(Y,H,C) & Fhom(Z,H,C) & Fsim(X,Z) -> Fsim(X,Y)");
+		//addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fhom(X,H) & Fhom(Y,H) & Fhom(Z,H) & Fsim(X,Z) -> Fsim(X,Y)");
 		// We need to further push up low-tree-distance similarities:
 		//addRule("XdstOneToFsim", "0.3: Xdst(X,Y,'1') & Fhom(X,H,C) & Fhom(Y,H,C) -> Fsim(X,Y)");
 
 		// Every pair of sister languages in which a homologue set is reconstructed or
 		// attested makes it more likely to have existed in the common parent language:
-		//addRule("FhomReconstruction", "1: Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H,C)");
+		//addRule("FhomReconstruction", "1: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H)");
 		// Propagating evidence along unary branches, with negative evidence being weaker
-		addRule("FhomParentPositive", "0.6: Fhom(X,H,C) & Xinh(X,Z) -> Fhom(Z,H,C)");
-		addRule("FhomParentNegative", "0.4: ~Fhom(X,H,C) & Xinh(X,Z) -> ~Fhom(Z,H,C)");
+		addRule("FhomParentPositive", "0.6: Fhom(X,H) & Xinh(X,Z) -> Fhom(Z,H)");
+		addRule("FhomParentNegative", "0.4: ~Fhom(X,H) & Xinh(X,Z) -> ~Fhom(Z,H)");
 		// Each language must have had one of the homologue sets as its word for the concept
-		addRule("FhomDistribution", "Fhom(Z,+H,C) = 1.");
+		addRule("FhomDistribution", "Fhom(Z,+H) = 1.");
 		// If both parent and child share the same homologue set, that provides some evidence of inheritance
-		addRule("FhomToEinh", "0.4: Fhom(X,H,C) & Fhom(Y,H,C) & Xinh(X,Y) -> Einh(X,Y)");
+		addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
 		// If there is a doubt about the reconstructability of a homologue set in the parent, an available
 		// loanword etymology becomes much more likely
-		addRule("FhomToEloa", "1.0: Fhom(X,H,C) & ~Fhom(Y,H,C) & Xinh(X,Y) & Xloa(X,Z) -> Eloa(X,Z)");
-		// TODO Limit the number of homologues for each concept at each reconstructed
-		// languages (express bias against synonyms)
-		//addRule("FhomSynonyms", "0.5: Fhom(+Z,+H,C) <= 2");
+		addRule("FhomToEloa", "1.0: Fhom(X,H) & ~Fhom(Y,H) & Xinh(X,Y) & Xloa(X,Z) -> Eloa(X,Z)");
 
 		// -------------------
 
