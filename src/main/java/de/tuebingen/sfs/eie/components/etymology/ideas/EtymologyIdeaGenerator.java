@@ -45,7 +45,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
         Multimap<String, Form> langsToForms = new Multimap<>(CollectionType.SET);
         Set<Integer> homPegs = new HashSet<>();
-        for (int formId : config.getFormIds()) {
+        for (int formId : config.getFormIds()) { // TODO min 2 forms!
             String lang = objectStore.getLangForForm(formId);
             langsToForms.put(lang, new Form(formId));
             int peg = objectStore.getPegForFormIdIfRegistered(formId);
@@ -76,6 +76,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 addMissingLangsForBranch(phylo, phylo.lowestCommonAncestor(new ArrayList<>(relatedLangs)), relatedLangs,
                         langsMissing, langsGiven);
             }
+            // TODO try to connect the different branches via contact links and go up further in the tree if necessary
         } else {
             // If there is a (non-root) common ancestor,
             // add languages + word forms up to the lowest common ancestor.
