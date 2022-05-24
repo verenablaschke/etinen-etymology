@@ -121,6 +121,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
                 if (phylo.hasIncomingInfluences(lang)) {
                     for (String contact : phylo.getIncomingInfluences(lang)) {
+                        if (!langsToForms.containsKey(contact)){
+                            continue;
+                        }
                         for (Form contactForm : langsToForms.get(contact)) {
                             pslProblem.addObservation("Xloa", 1.0, form.toString(), contactForm.toString());
                             pslProblem.addTarget("Eloa", form.toString(), contactForm.toString());
