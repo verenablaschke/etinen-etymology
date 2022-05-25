@@ -8,6 +8,7 @@ import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
 import de.tuebingen.sfs.eie.shared.core.LanguageTree;
+import de.tuebingen.sfs.eie.shared.talk.HypotheticalForm;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -19,7 +20,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
     public static boolean PRINT_LOG = true;
 
     public static final int CTRL_ARG = -3;
-    public static final String TMP_SFX = "_form";
 
     private EtymologicalTheory theory;
     protected EtymologyProblemConfig config;
@@ -44,9 +44,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
         Multimap<String, Form> langsToForms = new Multimap<>(CollectionType.SET);
         Set<Integer> homPegs = new HashSet<>();
+        Set<String> conceptsInConfig = new HashSet<>();
         for (int formId : config.getFormIds()) { // TODO min 2 forms!
             String lang = objectStore.getLangForForm(formId);
             langsToForms.put(lang, new Form(formId));
+            conceptsInConfig.addAll(objectStore.getConceptsForForm(formId));
             int peg = objectStore.getPegForFormIdIfRegistered(formId);
             if (peg > -1) {
                 // TODO if this is a modern form w/o homologue set: warn user
@@ -94,12 +96,10 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
             }
         }
         // Dummy values for any remaining proto forms
+        List<String> concepts = new ArrayList<>(conceptsInConfig);
+        Collections.sort(concepts);
         for (String lang : langsMissing) {
-            // TODO discuss this (int vs str)
-//            Form form = new Form(lang + TMP_SFX);
-            int formId = objectStore.createFormId();
-            objectStore.addFormIdWithLanguage(formId, lang);
-            Form form = new Form(formId);
+            Form form = new Form(new HypotheticalForm(lang, concepts).toString());
             langsToForms.put(lang, form);
             allForms.add(form);
         }
@@ -260,7 +260,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
     }
 
     private Set<String> addMissingLangsForBranch(LanguagePhylogeny phylo, String lca, Collection<String> relatedLangs,
-                                          Set<String> langsMissing, List<String> langsGiven) {
+                                                 Set<String> langsMissing, List<String> langsGiven) {
         Set<String> langsMissingInBranch = new HashSet<>();
         for (String inputLang : relatedLangs) {
             if (inputLang.equals(lca)) {
