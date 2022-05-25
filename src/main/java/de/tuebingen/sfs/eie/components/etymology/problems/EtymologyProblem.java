@@ -85,7 +85,7 @@ public class EtymologyProblem extends PslProblem {
 		// Form similarity is symmetric:
 		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
 		// Form similarity is (partially) transitive (?):
-		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z) .");
+		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) & (X != Z) & (Y != Z) -> Fsim(X,Z) .");
 		// -------------------
 
 		// WEIGHTED RULES
@@ -118,17 +118,17 @@ public class EtymologyProblem extends PslProblem {
 		addRule("EinhToFhom", "Einh(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
 
 		//An inherited form should be more similar to its immediate ancestor than to any other word.
-		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(Y, Z) & X != Z & Y != Z -> Fsim(X,Y)");
+		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
 
 		//A borrowed form should be more similar to its donor than to any other word.
 		addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
 
 		// Sister forms should be less similar than either is to their common parent
 		// form:
-		addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
+		//addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
 		// The distance between two sister words must not exceed the sum of distances to
 		// the common ancestor, reusing the grounding atoms to create the constant 2:
-		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
+		//addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
 		// Smaller tree distances -> higher similarity
 		//addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fhom(X,H) & Fhom(Y,H) & Fhom(Z,H) & Fsim(X,Z) -> Fsim(X,Y)");
 		// We need to further push up low-tree-distance similarities:
