@@ -304,14 +304,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
     private void addHomsetInfo(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
         int pegForForm = -1;
         if (form.hasId()) {
-            objectStore.getPegForFormIdIfRegistered(form.id);
+            pegForForm = objectStore.getPegForFormIdIfRegistered(form.id);
         }
 
         if (pegForForm == -1) {
             // Unknown homologue set -> infer set membership.
             for (int homPeg : homPegs) {
                 pslProblem.addTarget("Fhom", form.toString(), homPeg + "");
-                ((EtymologyProblem) pslProblem).addFixedAtom("Fhom", form.toString(), homPeg + "");
                 if (PRINT_LOG) {
                     System.err.println("Target: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ")");
                 }
@@ -320,6 +319,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         }
 
         // TODO make sure homPegs won't be empty
+        // (display warning if no input forms belong to any homsets)
         for (int homPeg : homPegs) {
 //            if (homPeg == pegForForm) {
             pslProblem.addObservation("Fhom", 1.0, form.toString(), homPeg + "");
