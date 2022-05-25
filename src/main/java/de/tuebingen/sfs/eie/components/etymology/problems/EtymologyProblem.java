@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.tuebingen.sfs.eie.shared.talk.pred.*;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
@@ -19,10 +20,6 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
-import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -58,13 +55,13 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void declarePredicates() {
-		declareClosedPredicate("Xinh", 2);
-		declareClosedPredicate("Xloa", 2);
+		declareClosedPredicate(new XinhPred());
+		declareClosedPredicate(new XloaPred());
 
-		declareClosedPredicate("Xsth", 2);
-		declareClosedPredicate("Xdst", 3);
+		declareClosedPredicate(new XsthPred());
+		declareClosedPredicate(new XdstPred());
 
-		declareOpenPredicate("Fhom", 2);
+		declareOpenPredicate(new FhomPred());
 		declareOpenPredicate(new FsimPred());
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
@@ -88,7 +85,7 @@ public class EtymologyProblem extends PslProblem {
 		// Form similarity is symmetric:
 		addRule("FsimSymmetry", "Fsim(X,Y) = Fsim(Y,X) .");
 		// Form similarity is (partially) transitive (?):
-		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) -> Fsim(X,Z) .");
+		addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) & (X != Z) & (Y != Z) -> Fsim(X,Z) .");
 		// -------------------
 
 		// WEIGHTED RULES
@@ -121,17 +118,17 @@ public class EtymologyProblem extends PslProblem {
 		addRule("EinhToFhom", "Einh(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
 
 		//An inherited form should be more similar to its immediate ancestor than to any other word.
-		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(Y, Z) & X != Z & Y != Z -> Fsim(X,Y)");
+		addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
 
 		//A borrowed form should be more similar to its donor than to any other word.
 		addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
 
 		// Sister forms should be less similar than either is to their common parent
 		// form:
-		addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
+		//addRule("FsimFamily", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) + Fsim(X,Y) <= 3 + Fsim(X,Z)");
 		// The distance between two sister words must not exceed the sum of distances to
 		// the common ancestor, reusing the grounding atoms to create the constant 2:
-		addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
+		//addRule("FsimTriangle", "1: (X != Y) + Xinh(X,Z) + Xinh(Y,Z) - Fsim(X,Z) - Fsim(Y,Z) >= 2 - Fsim(X,Y)");
 		// Smaller tree distances -> higher similarity
 		//addRule("XdstToFsim", "1: Xsth(D1,D2) & Xdst(X,Y,D1) & Xdst(X,Z,D2) & Fhom(X,H) & Fhom(Y,H) & Fhom(Z,H) & Fsim(X,Z) -> Fsim(X,Y)");
 		// We need to further push up low-tree-distance similarities:
