@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import de.tuebingen.sfs.eie.shared.talk.pred.*;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
@@ -19,10 +20,6 @@ import de.tuebingen.sfs.eie.components.etymology.talk.rule.EloaPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.EunkPriorRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TancToEinhRule;
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.TcntToEloaRule;
-import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -58,13 +55,13 @@ public class EtymologyProblem extends PslProblem {
 
 	@Override
 	public void declarePredicates() {
-		declareClosedPredicate("Xinh", 2);
-		declareClosedPredicate("Xloa", 2);
+		declareClosedPredicate(new XinhPred());
+		declareClosedPredicate(new XloaPred());
 
-		declareClosedPredicate("Xsth", 2);
-		declareClosedPredicate("Xdst", 3);
+		declareClosedPredicate(new XsthPred());
+		declareClosedPredicate(new XdstPred());
 
-		declareOpenPredicate("Fhom", 2);
+		declareOpenPredicate(new FhomPred());
 		declareOpenPredicate(new FsimPred());
 		declareOpenPredicate(new EinhPred());
 		declareOpenPredicate(new EloaPred());
