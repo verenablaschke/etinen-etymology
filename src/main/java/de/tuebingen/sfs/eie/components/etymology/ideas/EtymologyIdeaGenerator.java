@@ -7,8 +7,7 @@ import de.tuebingen.sfs.eie.components.etymology.problems.EtymologyProblemConfig
 import de.tuebingen.sfs.eie.shared.core.EtymologicalTheory;
 import de.tuebingen.sfs.eie.shared.core.IndexedObjectStore;
 import de.tuebingen.sfs.eie.shared.core.LanguagePhylogeny;
-import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.shared.util.Pair;
+import de.tuebingen.sfs.eie.shared.core.LanguageTree;
 import de.tuebingen.sfs.eie.shared.util.PhoneticSimilarityHelper;
 import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.data.Multimap;
@@ -69,14 +68,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
             for (String lang : langsGiven) {
                 familyAncestorToLangs.put(phylo.getPathFor(lang).get(0), lang);
             }
-            // TODO If the selection contains languages from multiple different families,
-            // add languages + word forms from up to the earliest established contact.
             // TODO warn user if there are no relevant contacts
-            for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
-                addMissingLangsForBranch(phylo, phylo.lowestCommonAncestor(new ArrayList<>(relatedLangs)), relatedLangs,
-                        langsMissing, langsGiven);
-            }
-            // TODO try to connect the different branches via contact links and go up further in the tree if necessary
+            getLangsForBranches(phylo, langsMissing, langsGiven, familyAncestorToLangs);
         } else {
             // If there is a (non-root) common ancestor,
             // add languages + word forms up to the lowest common ancestor.
@@ -121,7 +114,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
                 if (phylo.hasIncomingInfluences(lang)) {
                     for (String contact : phylo.getIncomingInfluences(lang)) {
-                        if (!langsToForms.containsKey(contact)){
+                        if (!langsToForms.containsKey(contact)) {
                             continue;
                         }
                         for (Form contactForm : langsToForms.get(contact)) {
@@ -139,6 +132,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 }
 
                 String parent = phylo.parents.get(lang);
+                if (parent == null || parent.equals(LanguageTree.root)) {
+                    continue;
+                }
                 if (PRINT_LOG) System.err.println(
                         lang + " <- " + parent + " " + langsToForms.containsKey(parent) + " " + langsToForms.keySet());
                 if (langsToForms.containsKey(parent)) {
@@ -222,6 +218,71 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         }
     }
 
+    private void getLangsForBranches(LanguagePhylogeny phylo, Set<String> langsMissing, List<String> langsGiven,
+                                     Multimap<String, String> familyAncestorToLangs) {
+        List<String>[] families = (ArrayList<String>[]) new ArrayList[familyAncestorToLangs.keySet().size()];
+        String[] curLcas = new String[families.length];
+        int i = 0;
+        for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
+            String branchLca = phylo.lowestCommonAncestor(new ArrayList<>(relatedLangs));
+            if (PRINT_LOG) {
+                System.err.println("Branch under " + branchLca);
+                System.err.println("- given: " + relatedLangs);
+            }
+            Set<String> newLangs = addMissingLangsForBranch(phylo, branchLca, relatedLangs, langsMissing, langsGiven);
+            curLcas[i] = branchLca;
+            families[i] = new ArrayList<>(relatedLangs);
+            families[i].addAll(newLangs);
+            i++;
+        }
+        // Try to connect the different branches via contact links and go up further in the tree if necessary
+        String[] contactAncestors = phylo.oldestContactLanguages(families, curLcas);
+        for (i = 0; i < contactAncestors.length; i++) {
+            if (contactAncestors[i] == null) {
+                if (PRINT_LOG) {
+                    System.err.println("No relevant contact links involving the ancestors of " + curLcas[i]);
+                }
+                continue;
+            }
+            if (PRINT_LOG) {
+                System.err.println("Adding ancestors of " + curLcas[i]);
+            }
+            for (String anc : phylo.pathToRoot(curLcas[i])) {
+                langsMissing.add(anc);
+                if (PRINT_LOG) {
+                    System.err.println("- " + anc);
+                }
+                if (contactAncestors[i].equals(anc)) {
+                    break;
+                }
+            }
+        }
+    }
+
+    private Set<String> addMissingLangsForBranch(LanguagePhylogeny phylo, String lca, Collection<String> relatedLangs,
+                                          Set<String> langsMissing, List<String> langsGiven) {
+        Set<String> langsMissingInBranch = new HashSet<>();
+        for (String inputLang : relatedLangs) {
+            if (inputLang.equals(lca)) {
+                continue;
+            }
+            for (String ancLang : phylo.pathToRoot(inputLang)) {
+                if (langsGiven.contains(ancLang)) {
+                    continue;
+                }
+                if (PRINT_LOG && !langsMissing.contains(ancLang)) {
+                    System.err.println("- adding " + ancLang + " (> " + inputLang + ")");
+                }
+                langsMissing.add(ancLang);
+                langsMissingInBranch.add(ancLang);
+                if (ancLang.equals(lca)) {
+                    break;
+                }
+            }
+        }
+        return langsMissingInBranch;
+    }
+
     private void addAtomsForSingleForm(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
         pslProblem.addObservation("Fsim", 1.0, form.toString(), form.toString());
         ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", form.toString(), form.toString());
@@ -237,21 +298,6 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         ((EtymologyProblem) pslProblem).addFixedAtom("Eloa", form.toString(), CTRL_ARG + "");
         if (PRINT_LOG) {
             System.err.println("Observation: Eloa(" + form.prettyPrint() + ", CTRL_ARG) 0.0");
-        }
-    }
-
-    private void addMissingLangsForBranch(LanguagePhylogeny phylo, String lca, Collection<String> relatedLangs,
-                                          Set<String> langsMissing, List<String> langsGiven) {
-        for (String inputLang : relatedLangs) {
-            for (String ancLang : phylo.pathToRoot(inputLang)) {
-                if (langsGiven.contains(ancLang)) {
-                    continue;
-                }
-                langsMissing.add(ancLang);
-                if (ancLang.equals(lca)) {
-                    break;
-                }
-            }
         }
     }
 
