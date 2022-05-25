@@ -1,5 +1,6 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
+import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
@@ -62,6 +63,10 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
             if (atom.equals(contextAtom)) {
                 continue;
             }
+            if (atom.startsWith(EloaPred.NAME) && atom.endsWith(EtymologyIdeaGenerator.CTRL_ARG + ")")) {
+                // Eloa dummy atom to control the grounding
+                continue;
+            }
             double belief = rag.getValue(atom);
             String[] predDetails = StringUtils.split(atom, '(');
             Result res = new Result(atom, predDetails[0],
@@ -116,10 +121,10 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
         boolean first = true;
         for (Result nonCompetitor : nonCompetitors) {
             if (first) {
-                sb.append("It");
+                sb.append("It ");
                 first = false;
             } else {
-                sb.append(", and it");
+                sb.append(", and it ");
             }
             sb.append(BeliefScale.verbalizeBeliefAsPredicate(nonCompetitor.belief));
             sb.append(" that ");
