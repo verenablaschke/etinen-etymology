@@ -32,16 +32,16 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
                                       RuleAtomGraph rag, boolean whyExplanation) {
         String einh1 = null;
         double einh1Belief = -1;
-        String[] einh1Args = new String[2];
+        String[] einh1Args= null;
         String einh2 = null;
         double einh2Belief = -1;
-        String[] einh2Args = new String[2];
+        String[] einh2Args= null;
         String fsimAnte = null;
         double fsimAnteBelief = -1;
-        String[] fsimAnteArgs = new String[2];
+        String[] fsimAnteArgs= null;
         String fsimCons = null;
         double fsimConsBelief = -1;
-        String[] fsimConsArgs = new String[2];
+        String[] fsimConsArgs= null;
 
         for (Tuple atomToStatus : rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName)) {
             String atom = atomToStatus.get(0);

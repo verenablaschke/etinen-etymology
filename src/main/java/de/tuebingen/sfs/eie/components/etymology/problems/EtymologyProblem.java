@@ -9,16 +9,10 @@ import java.util.Set;
 
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.*;
 import de.tuebingen.sfs.eie.shared.talk.pred.*;
-import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingRule;
 import de.tuebingen.sfs.psl.talk.TalkingRule;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated.DirectEetyToFsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated.EetyToFsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated.EetyToSsimRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated.TancToEinhRule;
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated.TcntToEloaRule;
 import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -105,10 +99,9 @@ public class EtymologyProblem extends PslProblem {
         //addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
 
         //A loanword relation implies that the donor and the recipient form must be from the same homologue set.
-        addRule("EloaToFhom", "Eloa(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
-
+        addRule(new EetyToFhomRule("Eloa", this));
         //An inheritance relation implies that the two forms must be from the same homologue set.
-        addRule("EinhToFhom", "Einh(X,Y) & Fhom(Y,H) -> Fhom(X,H) .");
+        addRule(new EetyToFhomRule("Einh", this));
 
         //An inherited form should be more similar to its immediate ancestor than to any other word.
         addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
