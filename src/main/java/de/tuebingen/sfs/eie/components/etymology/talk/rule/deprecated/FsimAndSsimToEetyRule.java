@@ -1,4 +1,4 @@
-package de.tuebingen.sfs.eie.components.etymology.talk.rule;
+package de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;

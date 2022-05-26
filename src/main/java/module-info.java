@@ -4,6 +4,7 @@ module de.tuebingen.sfs.eie.components.etymology {
     exports de.tuebingen.sfs.eie.components.etymology.problems;
     opens de.tuebingen.sfs.eie.components.etymology.problems;
     exports de.tuebingen.sfs.eie.components.etymology.talk.rule;
+    exports de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated;
     requires com.fasterxml.jackson.core;
     requires de.tuebingen.sfs.psl;
     requires java.desktop;

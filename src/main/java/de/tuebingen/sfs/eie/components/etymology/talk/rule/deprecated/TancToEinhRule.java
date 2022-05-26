@@ -1,4 +1,4 @@
-package de.tuebingen.sfs.eie.components.etymology.talk.rule;
+package de.tuebingen.sfs.eie.components.etymology.talk.rule.deprecated;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
@@ -9,18 +9,18 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 
 import java.util.List;
 
-public class TcntToEloaRule extends EtinenTalkingLogicalRule {
+public class TancToEinhRule extends EtinenTalkingLogicalRule {
 
-    public static final String NAME = "TcntToEloa";
-    private static final String RULE = "Tcnt(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Eloa(X, Y)";
-    private static final String VERBALIZATION = "A word can be loaned from a contact language";
+    public static final String NAME = "TancToEinh";
+    private static final String RULE = "Tanc(L1, L2) & Flng(X, L1) & Flng(Y, L2) -> Einh(X, Y)";
+    private static final String VERBALIZATION = "A word can be inherited from its direct ancestor language";
 
     // For serialization.
-    public TcntToEloaRule(String serializedParameters) {
+    public TancToEinhRule(String serializedParameters) {
         super(NAME, RULE, VERBALIZATION);
     }
 
-    public TcntToEloaRule(PslProblem pslProblem, double weight) {
+    public TancToEinhRule(PslProblem pslProblem, double weight) {
         super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION + ".");
     }
 
@@ -35,13 +35,13 @@ public class TcntToEloaRule extends EtinenTalkingLogicalRule {
                                       RuleAtomGraph rag, boolean whyExplanation) {
         String[] args = getArgs();
         List<Tuple> atomToStatus = rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName);
-        String contactLang = null;
 
+        String ancestor = null;
         for (int i = 0; i < args.length; i++) {
             String groundAtom = atomToStatus.get(i).get(0);
-            if (groundAtom.startsWith("Tcnt")) {
+            if (groundAtom.startsWith("Tanc")) {
                 String[] predDetails = StringUtils.split(groundAtom, '(');
-                contactLang = StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", ")[1];
+                ancestor = StringUtils.split(predDetails[1].substring(0, predDetails[1].length() - 1), ", ")[1];
                 break;
             }
         }
@@ -49,9 +49,9 @@ public class TcntToEloaRule extends EtinenTalkingLogicalRule {
         StringBuilder sb = new StringBuilder();
         sb.append(VERBALIZATION).append(", in this case ");
         if (renderer != null) {
-            contactLang = renderer.getLanguageRepresentation(contactLang);
+            ancestor = renderer.getLanguageRepresentation(ancestor);
         }
-        sb.append(contactLang).append(".");
+        sb.append(ancestor).append(".");
         return sb.toString();
     }
 
@@ -59,5 +59,6 @@ public class TcntToEloaRule extends EtinenTalkingLogicalRule {
     public String getSerializedParameters() {
         return "";
     }
+
 
 }
