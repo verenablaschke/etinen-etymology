@@ -9,6 +9,8 @@ import java.util.Set;
 
 import de.tuebingen.sfs.eie.components.etymology.talk.rule.*;
 import de.tuebingen.sfs.eie.shared.talk.pred.*;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingRule;
+import de.tuebingen.sfs.psl.talk.TalkingRule;
 import org.linqs.psl.model.rule.GroundRule;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
@@ -26,10 +28,6 @@ import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 public class EtymologyProblem extends PslProblem {
 
     public static boolean verbose = true;
-
-    public static final String[] RULES = new String[]{EunkPriorRule.NAME, EloaPriorRule.NAME,
-            EinhOrEloaOrEunkRule.NAME, EloaPlusEloaRule.NAME, TancToEinhRule.NAME, TcntToEloaRule.NAME,
-            EetyToFsimRule.NAME, EetyToSsimRule.NAME, DirectEetyToFsimRule.NAME};
 
     Set<String> fixedAtoms = new HashSet<>();
 
@@ -75,14 +73,12 @@ public class EtymologyProblem extends PslProblem {
         // TODO add config checks for the new rules, like before:
 
         // --- CONSTRAINTS ---
-        if (config.include(EinhOrEloaOrEunkRule.NAME))
-            addRule(new EinhOrEloaOrEunkRule(this));
-        if (config.include(EloaPlusEloaRule.NAME))
-            addRule(new EloaPlusEloaRule(this));
-        if (config.include(FsimSymmetryRule.NAME))
-            addRule(new FsimSymmetryRule(this));
-        // Form similarity is (partially) transitive (?):
-        addRule("FsimTransitivity", "Fsim(X,Y) & Fsim(Y,Z) & (X != Y) & (X != Z) & (Y != Z) -> Fsim(X,Z) .");
+        for (TalkingRule rule : new TalkingRule[]{new EinhOrEloaOrEunkRule(this),
+                new EloaPlusEloaRule(this), new FsimSymmetryRule(this), new FsimTransitivityRule(this)}) {
+            if (config.include(rule.getName())) {
+                addRule(rule);
+            }
+        }
         // -------------------
 
         // WEIGHTED RULES
@@ -102,7 +98,7 @@ public class EtymologyProblem extends PslProblem {
         //addRule("FsimToEloa", "2: Fsim(X,Y) & Xloa(X,Y) -> Eloa(X,Y)");
         // If two forms are similar and inherited from different sources, those source
         // words should be similar to one another too.
-        addRule("FsimToFsim", "1: Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)");
+        addRule(new FsimToFsimRule(this));
 
         // If a word is more similar to a word in a contact language than to its
         // reconstructed ancestor, that makes it more likely to be a loan:
@@ -191,8 +187,7 @@ public class EtymologyProblem extends PslProblem {
         RuleAtomGraph.GROUNDING_OUTPUT = true;
         RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
         Map<String, Double> valueMap = extractResultsForAllPredicates(false);
-        if (verbose)
-            System.err.println("FIXED: " + fixedAtoms);
+        if (verbose) System.err.println("FIXED: " + fixedAtoms);
         RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms), groundRules);
         return new InferenceResult(rag, valueMap, getEtymologyConfig().copy());
     }
