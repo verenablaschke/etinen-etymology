@@ -131,7 +131,7 @@ public class EtymologyProblem extends PslProblem {
         addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
         // If there is a doubt about the reconstructability of a homologue set in the parent, an available
         // loanword etymology becomes much more likely
-        addRule("FhomToEloa", "1.0: Fhom(X,H) & ~Fhom(Y,H) & Xinh(X,Y) & Xloa(X,Z) -> Eloa(X,Z)");
+        addRule(new FhomToEloaRule(this));
 
         // -------------------
 
