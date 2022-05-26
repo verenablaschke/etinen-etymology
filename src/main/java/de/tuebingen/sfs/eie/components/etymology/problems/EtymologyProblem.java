@@ -124,8 +124,8 @@ public class EtymologyProblem extends PslProblem {
         // attested makes it more likely to have existed in the common parent language:
         //addRule("FhomReconstruction", "1: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H)");
         // Propagating evidence along unary branches, with negative evidence being weaker
-        addRule("FhomParentPositive", "0.6: Fhom(X,H) & Xinh(X,Z) -> Fhom(Z,H)");
-        addRule("FhomParentNegative", "0.4: ~Fhom(X,H) & Xinh(X,Z) -> ~Fhom(Z,H)");
+        addRule(new FhomParentPositiveRule(this));
+        addRule(new FhomParentNegativeRule(this));
         // Each language must have had one of the homologue sets as its word for the concept
         addRule("FhomDistribution", "Fhom(Z,+H) = 1.");
         // If both parent and child share the same homologue set, that provides some evidence of inheritance
