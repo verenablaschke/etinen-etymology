@@ -68,7 +68,8 @@ public class EtymologyProblem extends PslProblem {
 
         // --- CONSTRAINTS ---
         for (TalkingRule rule : new TalkingRule[]{new EinhOrEloaOrEunkRule(this),
-                new EloaPlusEloaRule(this), new FsimSymmetryRule(this), new FsimTransitivityRule(this)}) {
+                new EloaPlusEloaRule(this), new FsimSymmetryRule(this), new FsimTransitivityRule(this),
+                new FhomDistributionRule(this)}) {
             if (config.include(rule.getName())) {
                 addRule(rule);
             }
@@ -126,8 +127,6 @@ public class EtymologyProblem extends PslProblem {
         // Propagating evidence along unary branches, with negative evidence being weaker
         addRule(new FhomParentPositiveRule(this));
         addRule(new FhomParentNegativeRule(this));
-        // Each language must have had one of the homologue sets as its word for the concept
-        addRule("FhomDistribution", "Fhom(Z,+H) = 1.");
         // If both parent and child share the same homologue set, that provides some evidence of inheritance
         addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
         // If there is a doubt about the reconstructability of a homologue set in the parent, an available
