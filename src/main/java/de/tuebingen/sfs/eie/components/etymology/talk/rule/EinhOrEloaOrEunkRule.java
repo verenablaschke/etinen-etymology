@@ -79,13 +79,21 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(
-                "A word's origin can be explained as inheritance or borrowing (several sources may seem plausible), or it is unknown.");
+//        sb.append(
+//                "A word's origin can be explained as inheritance or borrowing (several sources may seem plausible), or it is unknown.");
+        if (stringToPred(contextAtom) instanceof EunkPred) {
+            sb.append(
+                    "A word's origin is out of scope only if no explanation via inheritance or borrowing is available.");
+        } else {
+            sb.append(
+                    "The last step in a word's history will be an inheritance or a borrowing, unless its origin is out of scope.");
+        }
+        sb.append("\n");
 
         if (competitors.size() == 0) {
-            sb.append(" In this case, there are no likely competing explanations.");
+            sb.append("In this case, there are no likely competing explanations.");
         } else if (competitors.size() == 1) {
-            sb.append(" An alternative explanation is that ");
+            sb.append("An alternative explanation is that ");
             sb.append("\\url[");
             Result competitor = competitors.get(0);
             sb.append(escapeForURL(stringToPred(competitor.pred).verbalizeIdeaAsSentence(renderer, competitor.args)));
@@ -100,7 +108,7 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
                     return -o1.belief.compareTo(o2.belief);
                 }
             });
-            sb.append(" Other explanations are ");
+            sb.append("Other explanations are ");
             for (Result competitor : competitors) {
                 sb.append("that ");
                 sb.append("\\url[");

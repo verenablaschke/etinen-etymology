@@ -59,11 +59,10 @@ public class EetyToFhomRule extends EtinenTalkingLogicalRule {
 
         // TODO argument structure should depend on whether it's fhomAnte or fhomCons
         StringBuilder sb = new StringBuilder();
-        sb.append(getVerbalization());
-        sb.delete(sb.length() - 1, sb.length());
-        sb.append(", but \\url[");
+        sb.append(getVerbalization()).append("\n");
+        sb.append("However, \\url[");
         if (contextAtom.equals(fhomCons) || contextAtom.equals(fhomAnte)) {
-            if (eety.toUpperCase().startsWith("ELOA")) {
+            if (eety.startsWith("Eloa")) {
                 sb.append(escapeForURL(new EloaPred().verbalizeIdeaAsSentence(renderer, eetyBelief, eetyArgs)));
             } else {
                 sb.append(escapeForURL(new EinhPred().verbalizeIdeaAsSentence(renderer, eetyBelief, eetyArgs)));

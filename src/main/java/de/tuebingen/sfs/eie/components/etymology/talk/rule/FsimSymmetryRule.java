@@ -41,12 +41,19 @@ public class FsimSymmetryRule extends EtinenTalkingArithmeticRule {
             inverseBelief = rag.getValue(atom);
         }
 
+        boolean similar = Math.abs(inverseBelief - rag.getValue(contextAtom)) < 0.01;
+
         StringBuilder sb = new StringBuilder();
-        sb.append("Form similarity is symmetric, and the ");
-        sb.append("\\url[").append(escapeForURL("inverse similarity")).append("]{").append(inverseAtom).append("}");
-        sb.append(" is ");
-//        sb.append(BeliefScale.verbalizeBeliefAsAdjectiveHigh(inverseBelief));
-        sb.append("%.2f".formatted(inverseBelief));
+        sb.append("Form similarity is symmetric, ").append(similar ? "and" : "but");
+        sb.append(" the \\url[").append(escapeForURL("inverse similarity")).append("]{").append(inverseAtom);
+        sb.append("} is ");
+        if (similar) {
+            sb.append("also");
+        }
+        sb.append(BeliefScale.verbalizeBeliefAsAdjectiveHigh(inverseBelief));
+        if (!similar) {
+            sb.append(" %.2".formatted(inverseBelief));
+        }
         sb.append(".");
         return sb.toString();
     }

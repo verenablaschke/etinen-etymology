@@ -49,7 +49,8 @@ public class EloaPlusEloaRule extends EtinenTalkingArithmeticRule {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append("The inverse loanword relationship (");
+        sb.append(VERBALIZATION);
+        sb.append("\nThe inverse loanword relationship (");
         sb.append("\\url[");
         sb.append(escapeForURL(new EloaPred().verbalizeIdeaAsNP(renderer, competitorArgs)));
         sb.append("]{").append(competitorAtom).append("}");

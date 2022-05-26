@@ -25,6 +25,8 @@ public class EtymologyProblem extends PslProblem {
 
     Set<String> fixedAtoms = new HashSet<>();
 
+    public static Set<String> RULES = new HashSet<>(); // TODO (rule names used by the config GUI)
+
     // TODO make sure the config sets the dbmanager and problemId when it's
     // initialized
     // (old to-do)
@@ -125,8 +127,8 @@ public class EtymologyProblem extends PslProblem {
         // attested makes it more likely to have existed in the common parent language:
         //addRule("FhomReconstruction", "1: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H)");
         // Propagating evidence along unary branches, with negative evidence being weaker
-        addRule(new FhomParentPositiveRule(this));
-        addRule(new FhomParentNegativeRule(this));
+        addRule(new FhomChildToParentRule(this));
+        addRule(new FhomParentToChildRule(this));
         // If both parent and child share the same homologue set, that provides some evidence of inheritance
         addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
         // If there is a doubt about the reconstructability of a homologue set in the parent, an available

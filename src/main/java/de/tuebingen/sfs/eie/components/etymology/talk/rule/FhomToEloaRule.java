@@ -40,11 +40,11 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
 
         for (Tuple atomToStatus : rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName)) {
             String atom = atomToStatus.get(0);
-            if (atom.startsWith("X") || atom.startsWith("x")) {
+            if (atom.startsWith("X")) {
                 continue;
             }
             String[] atomArgs = StringUtils.split(atom.substring(atom.indexOf('(') + 1, atom.length() - 1), ", ");
-            if (atom.toUpperCase().startsWith("ELOA")) {
+            if (atom.startsWith("Eloa")) {
                 eloa = atom;
                 eloaArgs = atomArgs;
             } else if (atomToStatus.get(1).equals("+")) {
@@ -67,10 +67,11 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
             sb.append(FhomPred.updateArgs(renderer, fhomParentArgs)[0]).append("]{").append(fhomParent).append("} ");
             sb.append(BeliefScale.verbalizeBeliefAsPredicate(rag.getValue(fhomParent)));
             sb.append(", which makes a loanword etymology more likely.");
+            // TODO
             return sb.toString();
         }
-
-        // TODO
+        
+        //TODO
         sb.append(VERBALIZATION);
         return sb.toString();
     }

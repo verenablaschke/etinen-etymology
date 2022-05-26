@@ -54,14 +54,15 @@ public class FsimTransitivityRule extends EtinenTalkingArithmeticRule {
 
         StringBuilder sb = new StringBuilder();
         sb.append(VERBALIZATION);
+        sb.append("\n");
 
         if (contextAtom.equals(consequent)) {
-            sb.append(" \\url[");
-            sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(renderer, beliefVals[0], args[0])));
-            sb.append("]{").append(antecedent1).append("} and ");
+            sb.append("The \\url[");
+            sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsNP(renderer, beliefVals[0], args[0])));
+            sb.append("]{").append(antecedent1).append("} and the ");
             sb.append("\\url[");
-            sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(renderer, beliefVals[1], args[1])));
-            sb.append("]{").append(antecedent2).append("}, which implies that ");
+            sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsNP(renderer, beliefVals[1], args[1])));
+            sb.append("]{").append(antecedent2).append("} imply that ");
             args[2] = FsimPred.updateArgs(renderer, args[2]);
             sb.append(args[2][0]).append(" and ").append(args[2][1]).append(" should be at least ");
             double minSim = beliefVals[0] + beliefVals[1] - 1;
@@ -71,7 +72,6 @@ public class FsimTransitivityRule extends EtinenTalkingArithmeticRule {
             }
             // TODO this comes off the wrong way when minSim is low ("should be at least dissimilar")
             sb.append(BeliefScale.verbalizeBeliefAsSimilarity(minSim)).append(".");
-//            sb.append("%.2f.".formatted(beliefVals[0] + beliefVals[1] - 1));
             return sb.toString();
         }
 
