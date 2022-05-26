@@ -41,6 +41,11 @@ public class FsimSymmetryRule extends EtinenTalkingArithmeticRule {
             inverseBelief = rag.getValue(atom);
         }
 
+        if (inverseBelief < 0) {
+            // Stayed -1 because the contextAtom and the inverse atom are identical.
+            return "Form similarity is symmetric.";
+        }
+
         boolean similar = Math.abs(inverseBelief - rag.getValue(contextAtom)) < 0.01;
 
         StringBuilder sb = new StringBuilder();
