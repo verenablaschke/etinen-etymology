@@ -138,7 +138,7 @@ public class FsimTransitivityRule extends EtinenTalkingArithmeticRule {
         }
 
         sb.append("Since").append(x).append(" and ").append(z).append(" are ");
-        sb.append(BeliefScale.verbalizeBeliefAsMinimumSimilarityOnly(beliefVals[2]));
+        sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(beliefVals[2]));
         sb.append(", the similarity between ").append(x).append(" and ").append(y).append(" cannot be ");
         double maxSim = beliefVals[2] + 1 - beliefVals[contextAtom.equals(antecedent0) ? 1 : 0];
         if (maxSim > 1) {

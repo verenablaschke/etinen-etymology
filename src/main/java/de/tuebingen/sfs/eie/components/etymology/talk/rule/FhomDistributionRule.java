@@ -53,7 +53,7 @@ public class FhomDistributionRule extends EtinenTalkingArithmeticRule {
             String[] args = StringUtils.split(StringUtils.split(atom.substring(0, atom.length() - 1), '(')[1], ", ");
             args = FhomPred.updateArgs(renderer, args);
             sb.append(" is ").append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(atom)));
-            sb.append(" that \\url[").append(escapeForURL(args[0])).append(" instead is a homologue of ");
+            sb.append(" that ").append(args[0]).append(" instead is a \\url[homologue of ");
             sb.append(escapeForURL(args[1])).append("]{").append(atom).append("}");
         }
         if (!first) {

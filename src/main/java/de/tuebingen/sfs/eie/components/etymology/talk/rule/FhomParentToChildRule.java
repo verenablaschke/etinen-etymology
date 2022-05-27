@@ -5,6 +5,8 @@ import de.tuebingen.sfs.eie.shared.talk.pred.FhomPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.talk.Belief;
+import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
@@ -12,7 +14,6 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FhomParentToChild";
     private static final String RULE = "0.4: Fhom(Z,H) & Xinh(X,Z) -> Fhom(X,H)";
-    // TODO rephrase 'parent form'?
     private static final String VERBALIZATION = "If a homologue of H in unlikely to exist in a child language, " +
             "that makes it less likely for a homologue to exist in the parent language.";
 
@@ -40,7 +41,7 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
                 continue;
             }
             String[] atomArgs = StringUtils.split(atom.substring(atom.indexOf('(') + 1, atom.length() - 1), ", ");
-            if (atomToStatus.get(1).equals("-")) {
+            if (atomToStatus.get(1).equals("+")) {
                 child = atom;
                 childArgs = atomArgs;
             } else {
@@ -50,52 +51,44 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
         }
 
         StringBuilder sb = new StringBuilder();
-        parentArgs = FhomPred.updateArgs(renderer, parentArgs);
-        childArgs = FhomPred.updateArgs(renderer, childArgs);
-        if (contextAtom.equals(parent)) {
-            // 'parent perspective'
-            sb.append("If a homologue of ").append(parentArgs[1]);
-            sb.append(" is unlikely to exist in a child language (");
-            sb.append(renderer == null ? childArgs[0] : renderer.getLanguageRepresentation(childArgs[0]));
-            sb.append("), that makes it less likely for a homologue to exist in the parent language (");
-            sb.append(renderer == null ? parentArgs[0] : renderer.getLanguageRepresentation(parentArgs[0]));
-            sb.append(").");
-        } else {
-            // 'child perspective'
+        String childLang = renderer == null ? childArgs[0] : renderer.getLanguageRepresentation(childArgs[0]);
+        String parentLang = renderer == null ? parentArgs[0] : renderer.getLanguageRepresentation(parentArgs[0]);
+        String h = renderer == null ? childArgs[1] : renderer.getFormRepresentation(childArgs[1]);
+
+        if (contextAtom.equals(child)) {
+            // 'child perspective', consequent, 'why not lower?'
             sb.append("A homologue of ").append(parentArgs[1]);
-            sb.append(" in a child language (");
-            sb.append(renderer == null ? childArgs[0] : renderer.getLanguageRepresentation(childArgs[0]));
+            sb.append(" in a child language (").append(childLang);
             sb.append(") becomes more likely if there is evidence for a homologue in the parent language (");
-            sb.append(renderer == null ? parentArgs[0] : renderer.getLanguageRepresentation(parentArgs[0]));
-            sb.append(").");
+            sb.append(parentLang).append(").\n");
+            sb.append("Since \\url[").append(parentLang).append(" ");
+            sb.append(BeliefScale.verbalizeBeliefAsAdverb(rag.getValue(parent))).append(" has a homologue of ");
+            sb.append(h).append("]{").append(parent).append("}, it should be at least as likely that ");
+            sb.append(childLang).append(" does too.");
+            return sb.toString();
         }
-        sb.append("\n");
 
-        // TODO
+        // 'parent perspective', antecedent, 'why not higher?'
+        sb.append("If a homologue of ").append(parentArgs[1]);
+        sb.append(" is unlikely to exist in a child language (").append(childLang);
+        sb.append("), that makes it less likely for one to exist in the parent language (");
+        sb.append(parentLang).append(").\n");
 
-//        String[] xinhArgs = XinhPred.updateArgs(renderer, parentArgs[0], childArgs[0]);
-//        sb.append("It is unlikely that a form (").append(xinhArgs[0]);
-//        sb.append(") belongs to a different homologue set than its parent form ("); // TODO see above
-//        sb.append(xinhArgs[1]).append("), ");
-//
-//        if (contextAtom.equals(child)) {
-//            // 'why not higher?'
-//            sb.append("but it is only ");
-//            sb.append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(parent)));
-//            sb.append(" that \\url[");
-//            sb.append(escapeForURL(xinhArgs[0]));
-//            sb.append(" is also a homologue of ")
-//                    .append(renderer == null ? homPeg : renderer.getFormRepresentation(homPeg));
-//            sb.append("]{").append(parent).append("}.");
-//        } else {
-//            // 'why not lower?'
-//            sb.append("and it is ").append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(child)));
-//            sb.append("that \\url[");
-//            sb.append(escapeForURL(xinhArgs[1]));
-//            sb.append(" is also a homologue of ")
-//                    .append(renderer == null ? homPeg : renderer.getFormRepresentation(homPeg));
-//            sb.append("]{").append(child).append("}.");
-//        }
+        double childVal = rag.getValue(child);
+        if (childVal > 0.999) {
+            // Rule is greyed out.
+            sb.append("However, since it is in fact ");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(childVal)); // 'extremely likely'
+            sb.append(" that \\url[").append(escapeForURL(childLang)).append(" has a homologue of ");
+            sb.append(escapeForURL(h)).append("]{").append(child).append("}, changing the homologue judgement of ");
+            sb.append(renderer == null ? parentArgs[0] : renderer.getFormRepresentation(parentArgs[0]));
+            sb.append(" wouldn't cause a rule violation.");
+            return sb.toString();
+        }
+
+        sb.append("Since it ").append(BeliefScale.verbalizeBeliefAsPredicateWithOnly(childVal)).append(" that \\url[");
+        sb.append(escapeForURL(childLang)).append(" has a homologue of ").append(escapeForURL(h)).append("]{");
+        sb.append(child).append("}, it shouldn't be any more likely that ").append(parentLang).append(" does.");
         return sb.toString();
     }
 
