@@ -79,8 +79,6 @@ public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
         }
 
         StringBuilder sb = new StringBuilder();
-//        sb.append(
-//                "A word's origin can be explained as inheritance or borrowing (several sources may seem plausible), or it is unknown.");
         if (stringToPred(contextAtom) instanceof EunkPred) {
             sb.append(
                     "A word's origin is out of scope only if no explanation via inheritance or borrowing is available.");

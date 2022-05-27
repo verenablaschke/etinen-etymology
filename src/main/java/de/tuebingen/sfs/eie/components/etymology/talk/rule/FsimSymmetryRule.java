@@ -1,13 +1,10 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
-import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
 public class FsimSymmetryRule extends EtinenTalkingArithmeticRule {
@@ -53,11 +50,11 @@ public class FsimSymmetryRule extends EtinenTalkingArithmeticRule {
         sb.append(" the \\url[").append(escapeForURL("inverse similarity")).append("]{").append(inverseAtom);
         sb.append("} is ");
         if (similar) {
-            sb.append("also");
+            sb.append("also ");
         }
         sb.append(BeliefScale.verbalizeBeliefAsAdjectiveHigh(inverseBelief));
         if (!similar) {
-            sb.append(" %.2".formatted(inverseBelief));
+            sb.append(" (%.2f)".formatted(inverseBelief));
         }
         sb.append(".");
         return sb.toString();

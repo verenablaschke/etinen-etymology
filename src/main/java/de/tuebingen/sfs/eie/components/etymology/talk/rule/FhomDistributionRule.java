@@ -35,7 +35,7 @@ public class FhomDistributionRule extends EtinenTalkingArithmeticRule {
     public String generateExplanation(EtinenConstantRenderer renderer, String groundingName, String contextAtom,
                                       RuleAtomGraph rag, boolean whyExplanation) {
         StringBuilder sb = new StringBuilder();
-        sb.append(VERBALIZATION).append("\n");
+        sb.append(VERBALIZATION);
         boolean first = true;
         for (Tuple atomToStatus : rag.getLinkedAtomsForGroundingWithLinkStatusAsList(groundingName)) {
             String atom = atomToStatus.get(0);
@@ -44,7 +44,7 @@ public class FhomDistributionRule extends EtinenTalkingArithmeticRule {
             }
 
             if (first) {
-                sb.append("It");
+                sb.append("\nIt");
                 first = false;
             } else {
                 sb.append(", and it");
@@ -56,7 +56,9 @@ public class FhomDistributionRule extends EtinenTalkingArithmeticRule {
             sb.append(" that \\url[").append(escapeForURL(args[0])).append(" instead is a homologue of ");
             sb.append(escapeForURL(args[1])).append("]{").append(atom).append("}");
         }
-        sb.append(".");
+        if (!first) {
+            sb.append(".");
+        }
         return sb.toString();
     }
 

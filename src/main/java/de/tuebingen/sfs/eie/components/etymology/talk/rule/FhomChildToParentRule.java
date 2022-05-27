@@ -64,7 +64,7 @@ public class FhomChildToParentRule extends EtinenTalkingLogicalRule {
             sb.append("A homologue of ").append(childArgs[1]);
             sb.append(" in a parent language (");
             sb.append(renderer == null ? parentArgs[0] : renderer.getLanguageRepresentation(parentArgs[0]));
-            sb.append("), becomes more likely if there is evidence for a homologue in the child language (");
+            sb.append(") becomes more likely if there is evidence for a homologue in the child language (");
             sb.append(renderer == null ? childArgs[0] : renderer.getLanguageRepresentation(childArgs[0]));
             sb.append(").");
         }
