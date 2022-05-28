@@ -126,7 +126,7 @@ public class FsimTransitivityRule extends EtinenTalkingArithmeticRule {
             sb.append(BeliefScale.verbalizeBeliefAsSimilarity(beliefVals[1])).append(")");
         }
         sb.append(" determine a minimum similarity \\url[between").append(escapeForURL(x));
-        sb.append(" and ").append(escapeForURL(z)).append("]{").append(consequent).append("}.");
+        sb.append(" and ").append(escapeForURL(z)).append("]{").append(consequent).append("}. ");
 
         if (beliefVals[2] > 0.999) {
             // Entire rule is greyed out.
@@ -137,7 +137,7 @@ public class FsimTransitivityRule extends EtinenTalkingArithmeticRule {
             return sb.toString();
         }
 
-        sb.append("Since").append(x).append(" and ").append(z).append(" are ");
+        sb.append("Since ").append(x).append(" and ").append(z).append(" are ");
         sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(beliefVals[2]));
         sb.append(", the similarity between ").append(x).append(" and ").append(y).append(" cannot be ");
         double maxSim = beliefVals[2] + 1 - beliefVals[contextAtom.equals(antecedent0) ? 1 : 0];
