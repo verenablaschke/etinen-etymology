@@ -51,14 +51,13 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
         }
 
         StringBuilder sb = new StringBuilder();
-        String childLang = renderer == null ? childArgs[0] : renderer.getLanguageRepresentation(childArgs[0]);
-        String parentLang = renderer == null ? parentArgs[0] : renderer.getLanguageRepresentation(parentArgs[0]);
+        String childLang = renderer == null ? childArgs[0] : renderer.getLanguageRepresentationForForm(childArgs[0]);
+        String parentLang = renderer == null ? parentArgs[0] : renderer.getLanguageRepresentationForForm(parentArgs[0]);
         String h = renderer == null ? childArgs[1] : renderer.getFormRepresentation(childArgs[1]);
 
         if (contextAtom.equals(child)) {
             // 'child perspective', consequent, 'why not lower?'
-            sb.append("A homologue of ").append(parentArgs[1]);
-            sb.append(" in a child language (").append(childLang);
+            sb.append("A homologue of ").append(h).append(" in a child language (").append(childLang);
             sb.append(") becomes more likely if there is evidence for a homologue in the parent language (");
             sb.append(parentLang).append(").\n");
             sb.append("Since \\url[").append(parentLang).append(" ");
@@ -69,9 +68,8 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
         }
 
         // 'parent perspective', antecedent, 'why not higher?'
-        sb.append("If a homologue of ").append(parentArgs[1]);
-        sb.append(" is unlikely to exist in a child language (").append(childLang);
-        sb.append("), that makes it less likely for one to exist in the parent language (");
+        sb.append("If a homologue of ").append(h).append(" is unlikely to exist in a child language (");
+        sb.append(childLang).append("), that makes it less likely for one to exist in the parent language (");
         sb.append(parentLang).append(").\n");
 
         double childVal = rag.getValue(child);
