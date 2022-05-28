@@ -13,7 +13,7 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FhomParentToChild";
-    private static final String RULE = "0.4: Fhom(Z,H) & Xinh(X,Z) -> Fhom(X,H)";
+    private static final String RULE = "0.2: Fhom(Z,H) & Xinh(X,Z) -> Fhom(X,H)";
     private static final String VERBALIZATION = "If a homologue of H in unlikely to exist in a child language, " +
             "that makes it less likely for a homologue to exist in the parent language.";
 

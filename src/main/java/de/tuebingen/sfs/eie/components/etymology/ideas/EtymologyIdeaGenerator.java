@@ -321,11 +321,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         // TODO make sure homPegs won't be empty
         // (display warning if no input forms belong to any homsets)
         for (int homPeg : homPegs) {
-//            if (homPeg == pegForForm) {
-            pslProblem.addObservation("Fhom", 1.0, form.toString(), homPeg + "");
-//            } else {
-//                pslProblem.addObservation("Fhom", 0.0, form.toString(), homPeg + "");
-//            }
+            if (homPeg == pegForForm) {
+                pslProblem.addObservation("Fhom", 1.0, form.toString(), homPeg + "");
+            } else {
+                pslProblem.addObservation("Fhom", 0.0, form.toString(), homPeg + "");
+            }
             ((EtymologyProblem) pslProblem).addFixedAtom("Fhom", form.toString(), homPeg + "");
             if (PRINT_LOG) {
                 System.err.println(
