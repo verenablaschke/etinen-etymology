@@ -107,7 +107,7 @@ public class EtymologyProblem extends PslProblem {
         addRule(new EetyToFhomRule("Einh", this));
 
         //An inherited form should be more similar to its immediate ancestor than to any other word.
-        addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
+        //addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
 
         //A borrowed form should be more similar to its donor than to any other word.
         addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
