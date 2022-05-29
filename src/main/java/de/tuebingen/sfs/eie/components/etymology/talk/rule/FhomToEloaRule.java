@@ -1,11 +1,13 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.FhomPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.XinhPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.talk.Belief;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
@@ -56,23 +58,63 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
             }
         }
 
+        double fhomCurBelief = rag.getValue(fhomCur);
+        double fhomParentBelief = rag.getValue(fhomParent);
+        double eloaBelief = rag.getValue(eloa);
+        String x = renderer == null ? fhomCurArgs[0] : renderer.getFormRepresentation(fhomCurArgs[0]);
+        String y = renderer == null ? fhomParentArgs[0] : renderer.getFormRepresentation(fhomParentArgs[0]);
+
         StringBuilder sb = new StringBuilder();
+        sb.append(VERBALIZATION).append("\n");
 
         if (contextAtom.equals(eloa)) {
-            sb.append("It is ").append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(fhomCur)));
-            sb.append(" that \\url[")
-                    .append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomCurArgs)));
-            sb.append("]{").append(fhomCur).append("}, but the \\url[");
-            sb.append("reconstructability of this homologue set in the parent ");
-            sb.append(FhomPred.updateArgs(renderer, fhomParentArgs)[0]).append("]{").append(fhomParent).append("} ");
-            sb.append(BeliefScale.verbalizeBeliefAsPredicate(rag.getValue(fhomParent)));
-            sb.append(", which makes a loanword etymology more likely.");
-            // TODO
-            return sb.toString();
+            // consequent: 'why not lower?'
+            sb.append("Since \\url[");
+            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomCurBelief, fhomCurArgs)));
+            sb.append("]{").append(fhomCur).append("} and \\url[");
+            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs)));
+            sb.append("]{").append(fhomParent).append("}, ");
+            double minLoa = fhomCurBelief - fhomParentBelief;
+            if (minLoa < 0.01) {
+                sb.append(" changing the loanword judgment would actually not cause a rule violation");
+            } else {
+                sb.append("a loanword relationship, such as between ").append(x).append(" and ").append(y);
+                sb.append(" should ").append(BeliefScale.verbalizeBeliefAsInfinitiveMinimumPredicate(minLoa));
+            }
+            return sb.append(".").toString();
         }
-        
+
+        String h = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
+
+        if (eloaBelief > 0.999) {
+            // Greyed out.
+            sb.append("The homology judgments for ");
+            if (contextAtom.equals(fhomCur)) {
+                sb.append(x).append(" and ").append(h).append("} and for \\url[");
+                sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
+                sb.append("]{").append(fhomParent).append("}");
+            } else {
+                sb.append("\\url[");
+                sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
+                sb.append("]{").append(fhomCur).append("} and for ").append(y).append(" and ").append(h);
+            }
+            sb.append(" influence how likely it should \\textit{at least} be that ").append(x);
+            sb.append(" is a loanword. ");
+            sb.append("However, since it is ");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(eloa))); // 'extremely likely'
+            sb.append(" that ").append(x).append(" is borrowed, changing either of the homology judgments ");
+            sb.append("wouldn't cause a rule violation.");
+        }
+
+        if (contextAtom.equals(fhomCur)) {
+            // antecedent -> 'why not higher?'
+            sb.append("Since ").append(new EloaPred().verbalizeIdeaAsSentence(renderer, eloaBelief, eloaArgs));
+
+        }
+
+        // negated antecedent -> 'why not lower?'
+
         //TODO
-        sb.append(VERBALIZATION);
         return sb.toString();
     }
 
