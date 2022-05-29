@@ -23,6 +23,7 @@ public class EtymologyProblem extends PslProblem {
     public static boolean verbose = true;
 
     Set<String> fixedAtoms = new HashSet<>();
+    Set<String> hiddenAtoms = new HashSet<>();
 
     public static Set<String> RULES = new HashSet<>(); // TODO (rule names used by the config GUI)
 
@@ -84,7 +85,6 @@ public class EtymologyProblem extends PslProblem {
 
         // -------------------
         // WEIGHTED RULES
-
 
         // Biases against borrowing and against unknown etymologies
         if (config.include(EunkPriorRule.NAME))
@@ -172,7 +172,16 @@ public class EtymologyProblem extends PslProblem {
 
     public void addFixedAtom(String pred, String... args) {
         // TODO do this with AtomTemplates instead
-        fixedAtoms.add(pred + "(" + String.join(",", args) + ")");
+        fixedAtoms.add(pred + "(" + String.join(", ", args) + ")");
+    }
+
+    public void addHiddenAtom(String atom) {
+        hiddenAtoms.add(atom);
+    }
+
+    public void addHiddenAtom(String pred, String... args) {
+        // TODO do this with AtomTemplates instead
+        hiddenAtoms.add(pred + "(" + String.join(", ", args) + ")");
     }
 
     @Override
@@ -183,7 +192,8 @@ public class EtymologyProblem extends PslProblem {
         RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
         Map<String, Double> valueMap = extractResultsForAllPredicates(false);
         if (verbose) System.err.println("FIXED: " + fixedAtoms);
-        RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms), groundRules);
+        RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms, hiddenAtoms),
+                groundRules);
         return new InferenceResult(rag, valueMap, getEtymologyConfig().copy());
     }
 

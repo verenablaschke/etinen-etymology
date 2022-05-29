@@ -294,8 +294,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
 
         // Make sure the EinhOrEloaOrEunk rule always gets grounded:
         pslProblem.addObservation("Eloa", 0.0, form.toString(), CTRL_ARG + "");
-        // TODO this one should actually probably be properly excluded from the sidebar:
         ((EtymologyProblem) pslProblem).addFixedAtom("Eloa", form.toString(), CTRL_ARG + "");
+        ((EtymologyProblem) pslProblem).addHiddenAtom("Eloa", form.toString(), CTRL_ARG + "");
         if (PRINT_LOG) {
             System.err.println("Observation: Eloa(" + form.prettyPrint() + ", CTRL_ARG) 0.0");
         }

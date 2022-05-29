@@ -22,7 +22,7 @@ public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstrain
 
     public static final String NAME = "EinhOrEloaOrEunk";
     private static final String RULE = "Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 .";
-    private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
+    private static final String VERBALIZATION = "The possible explanations for a word's origin must follow a probability distribution.";
 
     // For serialization.
     public EinhOrEloaOrEunkConstraint(String serializedParameters) {
