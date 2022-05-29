@@ -6,7 +6,7 @@ import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EtinenTalkingPredicate;
 import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
-import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticRule;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticConstraint;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
@@ -18,18 +18,19 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-public class EinhOrEloaOrEunkRule extends EtinenTalkingArithmeticRule {
+public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstraint {
 
     public static final String NAME = "EinhOrEloaOrEunk";
     private static final String RULE = "Einh(X, +Y) + Eloa(X, +Z) + Eunk(X) = 1 .";
     private static final String VERBALIZATION = "The possible explanations for a word's origin follow a probability distribution.";
 
     // For serialization.
-    public EinhOrEloaOrEunkRule(String serializedParameters) {
+    public EinhOrEloaOrEunkConstraint(String serializedParameters) {
+        // No idiosyncrasies in this rule, just use default values:
         super(NAME, RULE, VERBALIZATION);
     }
 
-    public EinhOrEloaOrEunkRule(PslProblem pslProblem) {
+    public EinhOrEloaOrEunkConstraint(PslProblem pslProblem) {
         super(NAME, RULE, pslProblem, VERBALIZATION);
     }
 

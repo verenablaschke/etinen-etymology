@@ -12,17 +12,17 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 public class FhomChildToParentRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FhomChildToParent";
-    private static final String RULE = "0.6: Fhom(X,H) & Xinh(X,Z) -> Fhom(Z,H)";
+    private static final String RULE = "Fhom(X,H) & Xinh(X,Z) -> Fhom(Z,H)";
     private static final String VERBALIZATION = "If a homologue of H in unlikely to exist in a parent language, " +
             "that makes it less likely for a homologue to exist in the child language.";
 
     // For serialization.
     public FhomChildToParentRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+        super(serializedParameters);
     }
 
-    public FhomChildToParentRule(PslProblem pslProblem) {
-        super(NAME, RULE, pslProblem, VERBALIZATION);
+    public FhomChildToParentRule(PslProblem pslProblem, double weight) {
+        super(NAME, weight, RULE, pslProblem, VERBALIZATION);
     }
 
 

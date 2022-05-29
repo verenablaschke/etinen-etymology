@@ -13,11 +13,11 @@ public class EunkPriorRule extends EtinenTalkingLogicalRule {
 
     // For serialization.
     public EunkPriorRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+        super(serializedParameters);
     }
 
     public EunkPriorRule(PslProblem pslProblem, double weight) {
-        super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION);
+        super(NAME, weight, RULE, pslProblem, VERBALIZATION);
     }
 
     @Override

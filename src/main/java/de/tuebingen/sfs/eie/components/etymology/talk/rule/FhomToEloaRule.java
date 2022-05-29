@@ -15,18 +15,18 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 public class FhomToEloaRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FhomToEloa";
-    private static final String RULE = "1.0: Fhom(X,H) & ~Fhom(Y,H) & Xinh(X,Y) & Xloa(X,Z) -> Eloa(X,Z)";
+    private static final String RULE = "Fhom(X,H) & ~Fhom(Y,H) & Xinh(X,Y) & Xloa(X,Z) -> Eloa(X,Z)";
     private static final String VERBALIZATION =
             "If there is any doubt about the reconstructability of a homologue set in the parent, " +
                     "an available loanword etymology becomes much more likely.";
 
     // For serialization.
     public FhomToEloaRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+        super(serializedParameters);
     }
 
-    public FhomToEloaRule(PslProblem pslProblem) {
-        super(NAME, RULE, pslProblem, VERBALIZATION);
+    public FhomToEloaRule(PslProblem pslProblem, double weight) {
+        super(NAME, weight, RULE, pslProblem, VERBALIZATION);
     }
 
 

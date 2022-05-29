@@ -2,25 +2,26 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticRule;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticConstraint;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EloaPlusEloaRule extends EtinenTalkingArithmeticRule {
+public class EloaPlusEloaConstraint extends EtinenTalkingArithmeticConstraint {
 
     public static final String NAME = "EloaPlusEloa";
     private static final String RULE = "Eloa(X, Y) + Eloa(Y, X) <= 1 .";
     private static final String VERBALIZATION = "Borrowing cannot happen in a circular fashion.";
 
     // For serialization.
-    public EloaPlusEloaRule(String serializedParameters) {
+    public EloaPlusEloaConstraint(String serializedParameters) {
+        // No idiosyncrasies in this rule, just use default values:
         super(NAME, RULE, VERBALIZATION);
     }
 
-    public EloaPlusEloaRule(PslProblem pslProblem) {
+    public EloaPlusEloaConstraint(PslProblem pslProblem) {
         super(NAME, RULE, pslProblem, VERBALIZATION);
     }
 

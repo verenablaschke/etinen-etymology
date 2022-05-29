@@ -1,23 +1,22 @@
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
-import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
+import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
+import de.tuebingen.sfs.eie.components.etymology.talk.rule.*;
+import de.tuebingen.sfs.eie.shared.talk.pred.*;
+import de.tuebingen.sfs.psl.engine.AtomTemplate;
+import de.tuebingen.sfs.psl.engine.InferenceResult;
+import de.tuebingen.sfs.psl.engine.PslProblem;
+import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.talk.TalkingRuleOrConstraint;
+import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+import org.linqs.psl.model.rule.GroundRule;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import de.tuebingen.sfs.eie.components.etymology.talk.rule.*;
-import de.tuebingen.sfs.eie.shared.talk.pred.*;
-import de.tuebingen.sfs.psl.talk.TalkingRule;
-import org.linqs.psl.model.rule.GroundRule;
-
-import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
-import de.tuebingen.sfs.psl.engine.AtomTemplate;
-import de.tuebingen.sfs.psl.engine.InferenceResult;
-import de.tuebingen.sfs.psl.engine.PslProblem;
-import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+import static de.tuebingen.sfs.psl.engine.AtomTemplate.ANY_CONST;
 
 public class EtymologyProblem extends PslProblem {
 
@@ -69,16 +68,23 @@ public class EtymologyProblem extends PslProblem {
         // TODO add config checks for the new rules, like before:
 
         // --- CONSTRAINTS ---
-        for (TalkingRule rule : new TalkingRule[]{new EinhOrEloaOrEunkRule(this),
-                new EloaPlusEloaRule(this), new FsimSymmetryRule(this), new FsimTransitivityRule(this),
-                new FhomDistributionRule(this)}) {
-            if (config.include(rule.getName())) {
-                addRule(rule);
+        for (TalkingRuleOrConstraint constraint : new TalkingRuleOrConstraint[]{new EinhOrEloaOrEunkConstraint(this),
+                new EloaPlusEloaConstraint(this), new FsimSymmetryConstraint(this),
+                new FsimTransitivityConstraint(this), new FhomDistributionConstraint(this)}) {
+
+            if (config.include(constraint.getName())) {
+                addRule(constraint);
             }
         }
-        // -------------------
+        //A loanword relation implies that the donor and the recipient form must be from the same homologue set.
+        addRule(new EetyToFhomConstraint("Eloa", this));
+        //An inheritance relation implies that the two forms must be from the same homologue set.
+        addRule(new EetyToFhomConstraint("Einh", this));
 
+
+        // -------------------
         // WEIGHTED RULES
+
 
         // Biases against borrowing and against unknown etymologies
         if (config.include(EunkPriorRule.NAME))
@@ -95,16 +101,11 @@ public class EtymologyProblem extends PslProblem {
         //addRule("FsimToEloa", "2: Fsim(X,Y) & Xloa(X,Y) -> Eloa(X,Y)");
         // If two forms are similar and inherited from different sources, those source
         // words should be similar to one another too.
-        addRule(new FsimToFsimRule(this));
+        addRule(new FsimToFsimRule(this, 1.0));
 
         // If a word is more similar to a word in a contact language than to its
         // reconstructed ancestor, that makes it more likely to be a loan:
         //addRule("EloaAndFsim", "1: Xloa(X,W) + Eloa(X,W) >= Xinh(X,Z) + Fsim(X,W) - Fsim(X,Z)");
-
-        //A loanword relation implies that the donor and the recipient form must be from the same homologue set.
-        addRule(new EetyToFhomRule("Eloa", this));
-        //An inheritance relation implies that the two forms must be from the same homologue set.
-        addRule(new EetyToFhomRule("Einh", this));
 
         //An inherited form should be more similar to its immediate ancestor than to any other word.
         //addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
@@ -127,13 +128,13 @@ public class EtymologyProblem extends PslProblem {
         // attested makes it more likely to have existed in the common parent language:
         //addRule("FhomReconstruction", "1: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H)");
         // Propagating evidence along unary branches, with negative evidence being weaker
-        addRule(new FhomChildToParentRule(this));
-        addRule(new FhomParentToChildRule(this));
+        addRule(new FhomChildToParentRule(this, 0.6));
+        addRule(new FhomParentToChildRule(this, 0.2));
         // If both parent and child share the same homologue set, that provides some evidence of inheritance
         addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
         // If there is a doubt about the reconstructability of a homologue set in the parent, an available
         // loanword etymology becomes much more likely
-        addRule(new FhomToEloaRule(this));
+        addRule(new FhomToEloaRule(this, 1.0));
 
         // -------------------
 

@@ -1,24 +1,25 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticRule;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticConstraint;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class FsimSymmetryRule extends EtinenTalkingArithmeticRule {
+public class FsimSymmetryConstraint extends EtinenTalkingArithmeticConstraint {
 
     public static final String NAME = "FsimSymmetry";
     private static final String RULE = "Fsim(X,Y) = Fsim(Y,X) .";
     private static final String VERBALIZATION = "Form similarity is symmetric.";
 
     // For serialization.
-    public FsimSymmetryRule(String serializedParameters) {
+    public FsimSymmetryConstraint(String serializedParameters) {
+        // No idiosyncrasies in this rule, just use default values:
         super(NAME, RULE, VERBALIZATION);
     }
 
-    public FsimSymmetryRule(PslProblem pslProblem) {
+    public FsimSymmetryConstraint(PslProblem pslProblem) {
         super(NAME, RULE, pslProblem, VERBALIZATION);
     }
 

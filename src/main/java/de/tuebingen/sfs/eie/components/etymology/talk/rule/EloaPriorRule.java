@@ -13,11 +13,11 @@ public class EloaPriorRule extends EtinenTalkingLogicalRule {
 
     // For serialization.
     public EloaPriorRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+        super(serializedParameters);
     }
 
     public EloaPriorRule(PslProblem pslProblem, double weight) {
-        super(NAME, weight + ": " + RULE, pslProblem, VERBALIZATION);
+        super(NAME, weight, RULE, pslProblem, VERBALIZATION);
     }
 
     @Override

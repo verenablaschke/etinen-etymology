@@ -14,17 +14,17 @@ import de.tuebingen.sfs.psl.util.data.Tuple;
 public class FsimToFsimRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FsimToFsim";
-    private static final String RULE = "1: Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)";
+    private static final String RULE = "Fsim(X,Y) & Einh(X,W) & Einh(Y,Z) & (W != Z) -> Fsim(W,Z)";
     private static final String VERBALIZATION = "If two forms are similar and inherited from different sources, " +
             "those source words should be similar to one another too.";
 
     // For serialization.
     public FsimToFsimRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+        super(serializedParameters);
     }
 
-    public FsimToFsimRule(PslProblem pslProblem) {
-        super(NAME, RULE, pslProblem, VERBALIZATION);
+    public FsimToFsimRule(PslProblem pslProblem, double weight) {
+        super(NAME, weight, RULE, pslProblem, VERBALIZATION);
     }
 
 

@@ -4,24 +4,24 @@ import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.FhomPred;
-import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
+import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalConstraint;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;
 
-public class EetyToFhomRule extends EtinenTalkingLogicalRule {
+public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
 
     public static final String NAME = "%sToFhom";
     private static final String RULE = "%s(X,Y) & Fhom(Y,H) -> Fhom(X,H) .";
     private static final String VERBALIZATION = "A%s relation implies that the donor and the recipient form must be from the same homologue set.";
 
     // For serialization.
-    public EetyToFhomRule(String serializedParameters) {
-        super(NAME, RULE, VERBALIZATION);
+    public EetyToFhomConstraint(String serializedParameters) {
+        super(serializedParameters);
     }
 
-    public EetyToFhomRule(String eetyType, PslProblem pslProblem) {
+    public EetyToFhomConstraint(String eetyType, PslProblem pslProblem) {
         super(NAME.formatted(eetyType), RULE.formatted(eetyType), pslProblem,
                 VERBALIZATION.formatted(eetyType.equals("Eloa") ? " loanword" : "n inheritance"));
     }
