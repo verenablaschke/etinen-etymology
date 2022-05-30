@@ -1,6 +1,7 @@
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
+import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.FhomPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
@@ -67,52 +68,62 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
             // consequent: 'why not lower?'
             sb.append("Since \\url[");
             sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomChildBelief, fhomChildArgs)));
-            sb.append("]{").append(fhomChild).append("} and \\url[");
-            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs)));
+            sb.append("]{").append(fhomChild).append("} ");
+            if ((fhomChildBelief <= 0.5 && fhomParentBelief <= 0.5) ||
+                    (fhomChildBelief > 0.5 && fhomParentBelief > 0.5)) {
+                sb.append("and \\url[");
+                sb.append(escapeForURL(
+                        new FhomPred().verbalizeIdeaAsSentenceWithAlso(renderer, fhomParentBelief, fhomParentArgs)));
+            } else {
+                sb.append("but \\url[");
+                sb.append(escapeForURL(
+                        new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs)));
+            }
             sb.append("]{").append(fhomParent).append("}, ");
-            double minLoa = fhomChildBelief - fhomParentBelief;
+            double minLoa = fhomChildBelief + fhomParentBelief - 1;
             if (minLoa < RuleAtomGraph.DISSATISFACTION_PRECISION) {
                 sb.append(" changing the inheritance judgment would actually not cause a rule violation");
             } else {
-                sb.append("an inheritance relationship should ").append(BeliefScale.verbalizeBeliefAsInfinitiveMinimumPredicate(minLoa));
+                sb.append("an inheritance relationship should ")
+                        .append(BeliefScale.verbalizeBeliefAsInfinitiveMinimumPredicate(minLoa));
             }
             return sb.append(".").toString();
         }
 
+        // antecedent -> 'why not higher?'
+
         String h = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
+        sb.append("The homology judgments for ");
+        if (contextAtom.equals(fhomChild)) {
+            sb.append(x).append(" and ").append(h).append(" and for \\url[");
+            sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
+            sb.append("]{").append(fhomParent).append("} (");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
+        } else {
+            sb.append(y).append(" and ").append(h).append(" and for \\url[");
+            sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
+            sb.append("]{").append(fhomChild).append("} (");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomChildBelief)).append(")");
+        }
+        sb.append(" imply a minimum certainty for ").append(x).append(" being a loanword. ");
 
         if (einhBelief > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
-            sb.append("The homology judgments for ");
-            if (contextAtom.equals(fhomChild)) {
-                sb.append(x).append(" and ").append(h).append(" and for \\url[");
-                sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
-                sb.append("]{").append(fhomParent).append("} (");
-                sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
-            } else {
-                sb.append("\\url[");
-                sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
-                sb.append("]{").append(fhomChild).append("} (");
-                sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomChildBelief)).append(")");
-                sb.append(" and for ").append(y).append(" and ").append(h);
-            }
-            sb.append(" influence how likely it should \\textit{at least} be that ").append(x);
-            sb.append(" is a loanword. ");
-            sb.append("However, since it is ");
+            sb.append("However, since it is already ");
             sb.append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(einh))); // 'extremely likely'
             sb.append(" that ").append(x).append(" is borrowed, changing either of the homology judgments ");
             sb.append("wouldn't cause a rule violation.");
         }
 
+        sb.append("Since it ").append(BeliefScale.verbalizeBeliefAsPredicateWithOnly(einhBelief));
+        sb.append(" that ").append(new EinhPred().verbalizeIdeaAsSentence(renderer, einhArgs));
+        sb.append(", the possibility of ");
         if (contextAtom.equals(fhomChild)) {
-            // antecedent -> 'why not higher?'
-            sb.append("Since ").append(new EloaPred().verbalizeIdeaAsSentence(renderer, einhBelief, einhArgs));
-            // TODO
+            sb.append(x);
+        } else {
+            sb.append(y);
         }
-
-        // negated antecedent -> 'why not lower?'
-
-        //TODO
+        sb.append(" is limited.");
         return sb.toString();
     }
 
