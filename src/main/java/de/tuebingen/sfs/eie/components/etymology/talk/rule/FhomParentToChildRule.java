@@ -73,7 +73,7 @@ public class FhomParentToChildRule extends EtinenTalkingLogicalRule {
         sb.append(parentLang).append(").\n");
 
         double childVal = rag.getValue(child);
-        if (childVal > 0.999) {
+        if (childVal > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Rule is greyed out.
             sb.append("However, since it is in fact ");
             sb.append(BeliefScale.verbalizeBeliefAsAdjective(childVal)); // 'extremely likely'

@@ -69,7 +69,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
         StringBuilder sb = new StringBuilder();
         sb.append(VERBALIZATION).append("\n");
 
-        if (rag.getValue(contextAtom) > 0.999) {
+        if (rag.getValue(contextAtom) > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
             sb.append("(\\url[");
             sb.append(escapeForURL(new FsimPred().verbalizeIdeaAsSentence(renderer, fsimAnteBelief, fsimAnteArgs)));
@@ -110,7 +110,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
         String wLang = renderer == null ? fsimConsArgs[0] : renderer.getLanguageRepresentationForForm(fsimConsArgs[0]);
         String zLang = renderer == null ? fsimConsArgs[1] : renderer.getLanguageRepresentationForForm(fsimConsArgs[1]);
 
-        if (fsimConsBelief > 0.999) {
+        if (fsimConsBelief > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
             sb.append("The (").append(BeliefScale.verbalizeBeliefAsAdjectiveHigh(fsimAnteBelief)).append(")");
             sb.append(" \\url[");
@@ -150,7 +150,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
             sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(fsimConsBelief)).append("]{").append(fsimCons);
             sb.append("}, ");
             double maxSim = fsimConsBelief - (einh1Belief + einh2Belief - 2);
-            if (maxSim > 0.999) {
+            if (maxSim > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
                 sb.append("there are actually no restraints for the similarity between ");
                 sb.append(x).append(" and ").append(y);
             } else {
@@ -173,7 +173,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
             sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(fsimConsBelief)).append("]{").append(fsimCons);
             sb.append("}, ");
             double maxInh = fsimConsBelief - (fsimAnteBelief + einh2Belief - 2);
-            if (maxInh > 0.999) {
+            if (maxInh > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
                 sb.append("there are actually no restraints for the inheritance relation between ");
                 sb.append(x).append(" and ").append(w);
             } else {
@@ -192,7 +192,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
         sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(fsimConsBelief)).append("]{").append(fsimCons);
         sb.append("}, ");
         double maxInh = fsimConsBelief - (fsimAnteBelief + einh1Belief - 2);
-        if (maxInh > 0.999) {
+        if (maxInh > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             sb.append("there are actually no restraints for the inheritance relation between ");
             sb.append(y).append(" and ").append(z);
         } else {

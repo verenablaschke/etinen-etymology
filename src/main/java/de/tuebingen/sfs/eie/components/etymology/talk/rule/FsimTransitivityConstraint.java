@@ -58,7 +58,7 @@ public class FsimTransitivityConstraint extends EtinenTalkingArithmeticConstrain
         sb.append(VERBALIZATION);
         sb.append("\n");
 
-        if (rag.getValue(contextAtom) > 0.999) {
+        if (rag.getValue(contextAtom) > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             sb.append("(");
             String ante1 = new FsimPred().verbalizeIdeaAsSentence(renderer, beliefVals[0], args[0]);
             if (ante1.startsWith("the")) {
@@ -129,7 +129,7 @@ public class FsimTransitivityConstraint extends EtinenTalkingArithmeticConstrain
         sb.append(" determine a minimum similarity \\url[between").append(escapeForURL(x));
         sb.append(" and ").append(escapeForURL(z)).append("]{").append(consequent).append("}. ");
 
-        if (beliefVals[2] > 0.999) {
+        if (beliefVals[2] > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Entire rule is greyed out.
             sb.append("However, since ").append(x).append(" and ").append(z).append(" are already ");
             sb.append(BeliefScale.verbalizeBeliefAsSimilarity(beliefVals[2])); // 'extremely similar'

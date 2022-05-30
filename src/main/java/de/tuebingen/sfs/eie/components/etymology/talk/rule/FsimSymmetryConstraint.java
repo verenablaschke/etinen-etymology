@@ -44,7 +44,7 @@ public class FsimSymmetryConstraint extends EtinenTalkingArithmeticConstraint {
             return "Form similarity is symmetric.";
         }
 
-        boolean similar = Math.abs(inverseBelief - rag.getValue(contextAtom)) < 0.01;
+        boolean similar = Math.abs(inverseBelief - rag.getValue(contextAtom)) < RuleAtomGraph.DISSATISFACTION_PRECISION;
 
         StringBuilder sb = new StringBuilder();
         sb.append("Form similarity is symmetric, ").append(similar ? "and" : "but");

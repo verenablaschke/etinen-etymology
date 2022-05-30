@@ -75,7 +75,7 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
             sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs)));
             sb.append("]{").append(fhomParent).append("}, ");
             double minLoa = fhomCurBelief - fhomParentBelief;
-            if (minLoa < 0.01) {
+            if (minLoa < RuleAtomGraph.DISSATISFACTION_PRECISION) {
                 sb.append(" changing the loanword judgment would actually not cause a rule violation");
             } else {
                 sb.append("a loanword relationship, such as between ").append(x).append(" and ").append(y);
@@ -86,17 +86,20 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
 
         String h = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
 
-        if (eloaBelief > 0.999) {
+        if (eloaBelief > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
             sb.append("The homology judgments for ");
             if (contextAtom.equals(fhomCur)) {
-                sb.append(x).append(" and ").append(h).append("} and for \\url[");
+                sb.append(x).append(" and ").append(h).append(" and for \\url[");
                 sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
-                sb.append("]{").append(fhomParent).append("}");
+                sb.append("]{").append(fhomParent).append("} (");
+                sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
             } else {
                 sb.append("\\url[");
                 sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
-                sb.append("]{").append(fhomCur).append("} and for ").append(y).append(" and ").append(h);
+                sb.append("]{").append(fhomCur).append("} (");
+                sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomCurBelief)).append(")");
+                sb.append(" and for ").append(y).append(" and ").append(h);
             }
             sb.append(" influence how likely it should \\textit{at least} be that ").append(x);
             sb.append(" is a loanword. ");

@@ -93,7 +93,7 @@ public class EtymologyProblem extends PslProblem {
             addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 0.5)));
 
         // If two forms are inherited from the same form, they should be similar:
-        addRule("EinhToFsim", "2: Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)");
+        addRule(new EinhToFsimRule(this, 2.0));
         // If two forms are similar and might be inherited from a common source, it's
         // likely that they really were.
         //addRule("FsimToEinh", "1: Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Einh(X,Z)");
