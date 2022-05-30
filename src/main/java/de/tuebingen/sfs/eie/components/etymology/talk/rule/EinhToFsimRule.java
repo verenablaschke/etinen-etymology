@@ -91,34 +91,32 @@ public class EinhToFsimRule extends EtinenTalkingLogicalRule {
             return sb.append(".").toString();
         }
 
+        // antecedent -> 'why not higher?'
+
+        sb.append("The inheritance judgments for this atom and ");
+        if (contextAtom.equals(einh1)) {
+            sb.append("\\url[").append(escapeForURL(y)).append(" and ").append(escapeForURL(z));
+            sb.append("]{").append(einh2).append("} (");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(einh2Belief)).append(")");
+        } else {
+            sb.append("\\url[");
+            sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(z));
+            sb.append("]{").append(einh1).append("} (");
+            sb.append(BeliefScale.verbalizeBeliefAsAdjective(einh1Belief)).append(")");
+        }
+        sb.append(" determine a minimum similarity between ");
+
         if (fsimScore > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
-            sb.append("The judgments for the inheritance between ");
-            if (contextAtom.equals(einh1)) {
-                sb.append(x).append(" and ").append(z).append(" and between \\url[");
-                sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(z));
-                sb.append("]{").append(einh2).append("} (");
-                sb.append(BeliefScale.verbalizeBeliefAsAdjective(einh2Belief)).append(")");
-            } else {
-                sb.append("\\url[");
-                sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(z));
-                sb.append("]{").append(einh1).append("} (");
-                sb.append(BeliefScale.verbalizeBeliefAsAdjective(einh1Belief)).append(")");
-                sb.append("and between ").append(y).append(" and ").append(z);
-            }
-            sb.append(" imply a minimum similarity for ").append(x).append(" and ").append(y);
+            sb.append(x).append(" and ").append(y);
             sb.append("However, since these two forms are ");
             sb.append(BeliefScale.verbalizeBeliefAsSimilarity(rag.getValue(fsim))); // 'extremely similar'
             sb.append(", changing either of the inheritance judgments wouldn't cause a rule violation.");
+            return sb.toString();
         }
 
-        // antecedent -> 'why not higher?'
-
-        sb.append("The judgments for the inheritance between ");
-        sb.append(x).append(" and ").append(z).append(" and between");
-        sb.append(y).append(" and ").append(z);
-        sb.append(" imply a minimum similarity for ").append(x).append(" and ").append(y);
-        sb.append("However, since these two forms are ");
+        sb.append(" \\url[").append(escapeForURL(x)).append(" and ").append(escapeForURL(y));
+        sb.append("]{").append(fsim).append("}. However, since these two forms are ");
         sb.append(BeliefScale.verbalizeBeliefAsSimilarityWithOnly(rag.getValue(fsim)));
         sb.append(", the maximum inheritance judgments are limited, and since ");
         if (contextAtom.equals(einh1)) {

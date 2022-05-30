@@ -131,7 +131,7 @@ public class EtymologyProblem extends PslProblem {
         addRule(new FhomChildToParentRule(this, 0.6));
         addRule(new FhomParentToChildRule(this, 0.2));
         // If both parent and child share the same homologue set, that provides some evidence of inheritance
-        addRule("FhomToEinh", "0.4: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)");
+        addRule(new FhomToEinhRule(this, 0.4));
         // If there is a doubt about the reconstructability of a homologue set in the parent, an available
         // loanword etymology becomes much more likely
         addRule(new FhomToEloaRule(this, 1.0));
