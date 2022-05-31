@@ -2,7 +2,6 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
 import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
 import de.tuebingen.sfs.eie.shared.talk.pred.FhomPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
@@ -15,7 +14,9 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "FhomToEinh";
     private static final String RULE = "Fhom(X,H) & Fhom(Y,H) & Xinh(X,Y) -> Einh(X,Y)";
-    private static final String VERBALIZATION = "If both parent and child share the same homologue set, that provides some evidence of inheritance.";
+    private static final String VERBALIZATION =
+            "If the forms in a language and its parent are assigned to the same homologue set, " +
+                    "this suggests that the form in the child language was inherited.";
 
     // For serialization.
     public FhomToEinhRule(String serializedParameters) {
@@ -58,60 +59,120 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
         double fhomChildBelief = rag.getValue(fhomChild);
         double fhomParentBelief = rag.getValue(fhomParent);
         double einhBelief = rag.getValue(einh);
-        String x = renderer == null ? fhomChildArgs[0] : renderer.getFormRepresentation(fhomChildArgs[0]);
-        String y = renderer == null ? fhomParentArgs[0] : renderer.getFormRepresentation(fhomParentArgs[0]);
+        String childForm = renderer == null ? fhomChildArgs[0] : renderer.getFormRepresentation(fhomChildArgs[0]);
+        String parentForm = renderer == null ? fhomParentArgs[0] : renderer.getFormRepresentation(fhomParentArgs[0]);
+        String hom = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
 
         StringBuilder sb = new StringBuilder();
         sb.append(VERBALIZATION).append("\n");
 
         if (contextAtom.equals(einh)) {
             // consequent: 'why not lower?'
-            sb.append("Since \\url[");
-            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomChildBelief, fhomChildArgs)));
-            sb.append("]{").append(fhomChild).append("} ");
-            if ((fhomChildBelief <= 0.5 && fhomParentBelief <= 0.5) ||
-                    (fhomChildBelief > 0.5 && fhomParentBelief > 0.5)) {
+            sb.append("Applying this logic to the homologue set for ").append(hom).append(", ");
+
+            String lowerFhom;
+            double lowerFhomBelief;
+            String[] lowerFhomArgs;
+            String lowerForm;
+            String higherFhom;
+            double higherFhomBelief;
+            String[] higherFhomArgs;
+            String higherForm;
+            if (fhomParentBelief > fhomChildBelief) {
+                lowerFhom = fhomChild;
+                lowerFhomBelief = fhomChildBelief;
+                lowerFhomArgs = fhomChildArgs;
+                lowerForm = childForm;
+                higherFhomBelief = fhomParentBelief;
+                higherFhom = fhomParent;
+                higherFhomArgs = fhomParentArgs;
+                higherForm = parentForm;
+            } else {
+                lowerFhom = fhomParent;
+                lowerFhomBelief = fhomParentBelief;
+                lowerFhomArgs = fhomParentArgs;
+                lowerForm = parentForm;
+                higherFhom = fhomChild;
+                higherFhomBelief = fhomChildBelief;
+                higherFhomArgs = fhomChildArgs;
+                higherForm = childForm;
+            }
+
+            if (lowerFhomBelief < RuleAtomGraph.DISSATISFACTION_PRECISION) {
+                // The rule is trivially satisfied because at least one of the forms doesn't belong to the grounding's homologue set.
+                sb.append("since \\url[");
+                if (renderer == null) {
+                    sb.append(escapeForURL(lowerFhom));
+                } else {
+                    sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(lowerForm)));
+                    sb.append(" form ");
+                }
+                sb.append("]{").append(lowerFhom).append("} almost certainly does not belong to this set (");
+                if (fhomChildBelief < 0.5) {
+                    sb.append("and");
+                    sb.append(new FhomPred().verbalizeIdeaAsSentence(renderer, higherFhomBelief, higherFhomArgs));
+                } else {
+                    sb.append("although \\url[");
+                    if (renderer == null) {
+                        sb.append(escapeForURL(higherForm));
+                    } else {
+                        sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(higherForm)));
+                        sb.append(" one");
+                    }
+                    sb.append("]{").append(higherFhom).append("} ");
+                    sb.append(BeliefScale.verbalizeBeliefAsAdverb(higherFhomBelief));
+                    sb.append(" does");
+                }
+                sb.append("), the inheritance judgment is not influenced.");
+                return sb.toString();
+            }
+
+            sb.append("since neither homology judgment is entirely unlikely (\\url[");
+            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, higherFhomBelief, higherFhomArgs)));
+            sb.append("]{").append(higherFhom).append("} ");
+            if ((lowerFhomBelief <= 0.5 && higherFhomBelief <= 0.5) ||
+                    (lowerFhomBelief > 0.5 && higherFhomBelief > 0.5)) {
                 sb.append("and \\url[");
                 sb.append(escapeForURL(
-                        new FhomPred().verbalizeIdeaAsSentenceWithAlso(renderer, fhomParentBelief, fhomParentArgs)));
+                        new FhomPred().verbalizeIdeaAsSentenceWithAlso(renderer, lowerFhomBelief, lowerFhomArgs)));
             } else {
-                sb.append("but \\url[");
+                sb.append("although \\url[");
                 sb.append(escapeForURL(
-                        new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs)));
+                        new FhomPred().verbalizeIdeaAsSentence(renderer, lowerFhomBelief, lowerFhomArgs)));
             }
-            sb.append("]{").append(fhomParent).append("}, ");
-            double minLoa = fhomChildBelief + fhomParentBelief - 1;
-            if (minLoa < RuleAtomGraph.DISSATISFACTION_PRECISION) {
-                sb.append(" changing the inheritance judgment would actually not cause a rule violation");
-            } else {
-                sb.append("an inheritance relationship should ")
-                        .append(BeliefScale.verbalizeBeliefAsInfinitiveMinimumPredicate(minLoa));
-            }
-            return sb.append(".").toString();
+            sb.append("]{").append(lowerFhom).append("}), ");
+            sb.append("we cannot disregard the possibility that ").append(childForm).append(" is inherited from ");
+            sb.append(parentForm).append(".");
+            return sb.toString();
+
+//            double minLoa = lowerFhomBelief + higherFhomBelief - 1;
+//            sb.append("an inheritance relationship should ");
+////            sb.append("not be impossible."); // TODO
+//            sb.append(BeliefScale.verbalizeBeliefAsInfinitiveMinimumPredicate(minLoa));
+//            return sb.append(".").toString();
         }
 
         // antecedent -> 'why not higher?'
 
-        String h = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
         sb.append("The homology judgments for ");
         if (contextAtom.equals(fhomChild)) {
-            sb.append(x).append(" and ").append(h).append(" and for \\url[");
-            sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
+            sb.append(childForm).append(" and ").append(hom).append(" and for \\url[");
+            sb.append(escapeForURL(parentForm)).append(" and ").append(escapeForURL(hom));
             sb.append("]{").append(fhomParent).append("} (");
             sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
         } else {
-            sb.append(y).append(" and ").append(h).append(" and for \\url[");
-            sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
+            sb.append(parentForm).append(" and ").append(hom).append(" and for \\url[");
+            sb.append(escapeForURL(childForm)).append(" and ").append(escapeForURL(hom));
             sb.append("]{").append(fhomChild).append("} (");
             sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomChildBelief)).append(")");
         }
-        sb.append(" imply a minimum certainty for ").append(x).append(" being a loanword. ");
+        sb.append(" imply a minimum certainty for ").append(childForm).append(" being a loanword. ");
 
         if (einhBelief > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.
             sb.append("However, since it is already ");
             sb.append(BeliefScale.verbalizeBeliefAsAdjective(rag.getValue(einh))); // 'extremely likely'
-            sb.append(" that ").append(x).append(" is borrowed, changing either of the homology judgments ");
+            sb.append(" that ").append(childForm).append(" is borrowed, changing either of the homology judgments ");
             sb.append("wouldn't cause a rule violation.");
         }
 
@@ -119,9 +180,9 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
         sb.append(" that ").append(new EinhPred().verbalizeIdeaAsSentence(renderer, einhArgs));
         sb.append(", the possibility of ");
         if (contextAtom.equals(fhomChild)) {
-            sb.append(x);
+            sb.append(childForm);
         } else {
-            sb.append(y);
+            sb.append(parentForm);
         }
         sb.append(" is limited.");
         return sb.toString();
