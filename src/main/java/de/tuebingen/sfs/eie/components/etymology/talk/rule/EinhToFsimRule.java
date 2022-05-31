@@ -13,7 +13,7 @@ public class EinhToFsimRule extends EtinenTalkingLogicalRule {
 
     public static final String NAME = "EinhToFsim";
     private static final String RULE = "Einh(X,Z) & Einh(Y,Z) & (X != Y) -> Fsim(X,Y)";
-    private static final String VERBALIZATION = "If two forms are inherited from the same form, they should be similar";
+    private static final String VERBALIZATION = "If two forms are inherited from the same form, they should be similar.";
 
     // For serialization.
     public EinhToFsimRule(String serializedParameters) {
