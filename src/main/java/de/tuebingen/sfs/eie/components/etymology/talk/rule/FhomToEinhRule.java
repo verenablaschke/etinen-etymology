@@ -104,7 +104,7 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
                 if (renderer == null) {
                     sb.append(escapeForURL(lowerFhom));
                 } else {
-                    sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(lowerForm)));
+                    sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(lowerFhomArgs[0])));
                     sb.append(" form ");
                 }
                 sb.append("]{").append(lowerFhom).append("} almost certainly does not belong to this set (");
@@ -116,7 +116,8 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
                     if (renderer == null) {
                         sb.append(escapeForURL(higherForm));
                     } else {
-                        sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(higherForm)));
+                        sb.append("the ");
+                        sb.append(escapeForURL(renderer.getLanguageRepresentationForForm(higherFhomArgs[0])));
                         sb.append(" one");
                     }
                     sb.append("]{").append(higherFhom).append("} ");
