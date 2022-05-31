@@ -105,7 +105,7 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
                     sb.append(escapeForURL(lowerFhom));
                 } else {
                     sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(lowerFhomArgs[0])));
-                    sb.append(" form ");
+                    sb.append(" form");
                 }
                 sb.append("]{").append(lowerFhom).append("} almost certainly does not belong to this set (");
                 if (fhomChildBelief < 0.5) {
