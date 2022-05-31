@@ -95,6 +95,12 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
                 sb.append("]{").append(fhomParent).append("} (");
                 sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
             } else {
+                sb.append(y).append(" and ").append(h).append(" and for \\url[");
+                sb.append(escapeForURL(y)).append(" and ").append(escapeForURL(h));
+                sb.append("]{").append(fhomParent).append("} (");
+                sb.append(BeliefScale.verbalizeBeliefAsAdjective(fhomParentBelief)).append(")");
+
+
                 sb.append("\\url[");
                 sb.append(escapeForURL(x)).append(" and ").append(escapeForURL(h));
                 sb.append("]{").append(fhomCur).append("} (");

@@ -126,7 +126,7 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
             sb.append("\\url[");
             sb.append(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs));
             sb.append("]{").append(fhomParent).append("} ");
-            if (BeliefScale.sameBeliefInterval(fhomChildBelief, fhomParentBelief) &&
+            if (!BeliefScale.sameBeliefInterval(fhomChildBelief, fhomParentBelief) &&
                     fhomParentBelief > fhomChildBelief) {
                 sb.append("but \\url[");
                 if (fhomChildBelief < RuleAtomGraph.DISSATISFACTION_PRECISION) {
