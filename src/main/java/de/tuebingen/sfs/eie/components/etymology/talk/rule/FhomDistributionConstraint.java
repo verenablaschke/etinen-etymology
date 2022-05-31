@@ -44,7 +44,7 @@ public class FhomDistributionConstraint extends EtinenTalkingArithmeticConstrain
             }
 
             if (first) {
-                sb.append("\nIt");
+                sb.append(" It");
                 first = false;
             } else {
                 sb.append(", and it");

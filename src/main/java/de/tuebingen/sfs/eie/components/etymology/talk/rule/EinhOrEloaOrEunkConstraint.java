@@ -87,7 +87,7 @@ public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstrain
             sb.append(
                     "The last step in a word's history will be an inheritance or a borrowing, unless its origin is out of scope.");
         }
-        sb.append("\n");
+        sb.append(" ");
 
         if (competitors.size() == 0) {
             sb.append("In this case, there are no likely competing explanations.");

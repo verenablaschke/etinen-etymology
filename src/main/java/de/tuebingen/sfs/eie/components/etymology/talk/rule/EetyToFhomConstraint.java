@@ -64,7 +64,7 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(getVerbalization()).append("\n");
+        sb.append(getVerbalization()).append(" ");
 
         String childForm = renderer == null ? fhomChildArgs[0] : renderer.getFormRepresentation(fhomChildArgs[0]);
         String parentForm = renderer == null ? fhomParentArgs[0] : renderer.getFormRepresentation(fhomParentArgs[0]);

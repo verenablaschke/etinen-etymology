@@ -111,6 +111,7 @@ public class EtymologyProblem extends PslProblem {
         //addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
 
         //A borrowed form should be more similar to its donor than to any other word.
+        // TODO verbalization
         addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
 
         // Sister forms should be less similar than either is to their common parent

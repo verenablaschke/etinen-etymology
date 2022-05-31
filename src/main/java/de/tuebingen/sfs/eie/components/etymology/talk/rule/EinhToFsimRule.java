@@ -62,7 +62,7 @@ public class EinhToFsimRule extends EtinenTalkingLogicalRule {
         String z = renderer == null ? einh1Args[1] : renderer.getFormRepresentation(einh1Args[1]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(VERBALIZATION).append("\n");
+        sb.append(VERBALIZATION).append(" ");
 
         if (contextAtom.equals(fsim)) {
             // consequent: 'why not lower?'

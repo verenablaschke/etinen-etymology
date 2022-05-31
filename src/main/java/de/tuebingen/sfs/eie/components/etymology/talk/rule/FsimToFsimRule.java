@@ -67,7 +67,7 @@ public class FsimToFsimRule extends EtinenTalkingLogicalRule {
         }
 
         StringBuilder sb = new StringBuilder();
-        sb.append(VERBALIZATION).append("\n");
+        sb.append(VERBALIZATION).append(" ");
 
         if (rag.getValue(contextAtom) > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // Greyed out.

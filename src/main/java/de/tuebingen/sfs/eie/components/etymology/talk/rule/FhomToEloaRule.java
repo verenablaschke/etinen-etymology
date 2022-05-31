@@ -65,7 +65,7 @@ public class FhomToEloaRule extends EtinenTalkingLogicalRule {
         String y = renderer == null ? fhomParentArgs[0] : renderer.getFormRepresentation(fhomParentArgs[0]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(VERBALIZATION).append("\n");
+        sb.append(VERBALIZATION).append(" ");
 
         if (contextAtom.equals(eloa)) {
             // consequent: 'why not lower?'

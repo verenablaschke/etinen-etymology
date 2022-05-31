@@ -64,7 +64,7 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
         String hom = renderer == null ? fhomParentArgs[1] : renderer.getFormRepresentation(fhomParentArgs[1]);
 
         StringBuilder sb = new StringBuilder();
-        sb.append(VERBALIZATION).append("\n");
+        sb.append(VERBALIZATION).append(" ");
 
         if (contextAtom.equals(einh)) {
             // consequent: 'why not lower?'

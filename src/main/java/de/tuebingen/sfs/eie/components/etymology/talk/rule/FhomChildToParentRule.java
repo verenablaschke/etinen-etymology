@@ -58,7 +58,7 @@ public class FhomChildToParentRule extends EtinenTalkingLogicalRule {
             // 'parent perspective', consequent, 'why not lower?'
             sb.append("A homologue of ").append(h).append(" in a parent language (").append(parentLang);
             sb.append(") becomes more likely if there is evidence for a homologue in the child language (");
-            sb.append(childLang).append(").\n");
+            sb.append(childLang).append("). ");
             sb.append("Since \\url[").append(childLang).append(" ");
             sb.append(BeliefScale.verbalizeBeliefAsAdverb(rag.getValue(child))).append(" has a homologue of ");
             sb.append(h).append("]{").append(child).append("}, it should be at least as likely that ");
@@ -69,7 +69,7 @@ public class FhomChildToParentRule extends EtinenTalkingLogicalRule {
         // 'child perspective', antecedent, 'why not higher?'
         sb.append("If a homologue of ").append(h).append(" is unlikely to exist in a parent language (");
         sb.append(parentLang).append("), that makes it less likely for one to exist in the child language (");
-        sb.append(childLang).append(").\n");
+        sb.append(childLang).append("). ");
 
         double childVal = rag.getValue(parent);
         if (childVal > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {

@@ -56,7 +56,7 @@ public class FsimTransitivityConstraint extends EtinenTalkingArithmeticConstrain
 
         StringBuilder sb = new StringBuilder();
         sb.append(VERBALIZATION);
-        sb.append("\n");
+        sb.append(" ");
 
         if (rag.getValue(contextAtom) > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             sb.append("(");
