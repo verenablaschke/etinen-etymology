@@ -2,10 +2,7 @@ package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.components.etymology.ideas.EtymologyIdeaGenerator;
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
-import de.tuebingen.sfs.eie.shared.talk.pred.EinhPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EloaPred;
-import de.tuebingen.sfs.eie.shared.talk.pred.EtinenTalkingPredicate;
-import de.tuebingen.sfs.eie.shared.talk.pred.EunkPred;
+import de.tuebingen.sfs.eie.shared.talk.pred.*;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingArithmeticConstraint;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
@@ -34,7 +31,7 @@ public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstrain
         super(NAME, RULE, pslProblem, VERBALIZATION);
     }
 
-    private static EtinenTalkingPredicate stringToPred(String str) {
+    private static EtymologyPred stringToPred(String str) {
         switch (str) {
             case "Einh":
                 return new EinhPred();
@@ -93,10 +90,9 @@ public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstrain
             sb.append("In this case, there are no likely competing explanations.");
         } else if (competitors.size() == 1) {
             sb.append("An alternative explanation is that ");
-            sb.append("\\url[");
             Result competitor = competitors.get(0);
-            sb.append(escapeForURL(stringToPred(competitor.pred).verbalizeIdeaAsSentence(renderer, competitor.args)));
-            sb.append("]{").append(competitor.atom).append("}");
+            sb.append(stringToPred(competitor.pred).verbalizeIdeaAsSentenceWithUrl(renderer, competitor.atom,
+                    competitor.args));
             sb.append(", which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitor.belief));
             sb.append(".");
             return sb.toString();
@@ -110,10 +106,8 @@ public class EinhOrEloaOrEunkConstraint extends EtinenTalkingArithmeticConstrain
             sb.append("Other explanations are ");
             for (Result competitor : competitors) {
                 sb.append("that ");
-                sb.append("\\url[");
-                sb.append(
-                        escapeForURL(stringToPred(competitor.pred).verbalizeIdeaAsSentence(renderer, competitor.args)));
-                sb.append("]{").append(competitor.atom).append("}");
+                sb.append(stringToPred(competitor.pred).verbalizeIdeaAsSentenceWithUrl(renderer, competitor.atom,
+                        competitor.args));
                 sb.append(" (which ").append(BeliefScale.verbalizeBeliefAsPredicate(competitor.belief));
                 sb.append("), or ");
             }

@@ -27,7 +27,7 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
     public EetyToFhomConstraint(String eetyType, PslProblem pslProblem) {
         super(NAME.formatted(eetyType), RULE.formatted(eetyType), pslProblem,
                 eetyType.equals("Eloa") ? VERBALIZATION.formatted(" borrowing", "donor", "recipient") :
-                        VERBALIZATION.formatted(" inheritance", "parent", "child"));
+                        VERBALIZATION.formatted("n inheritance", "parent", "child"));
     }
 
     @Override
@@ -97,8 +97,8 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
 
         if (fhomChildBelief > 1 - RuleAtomGraph.DISSATISFACTION_PRECISION) {
             // trivially true case
-            sb.append("we are already certain that \\url[").append(escapeForURL(childForm));
-            sb.append(" belongs to this set]{");
+            sb.append("we are already certain that ").append(childForm);
+            sb.append(" \\url[belongs to this set]{");
             sb.append(fhomChild).append("}. (Therefore, the ");
             if (contextAtom.equals(eety)) {
                 if (eetyIsInheritance) {
@@ -106,9 +106,8 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
                 } else {
                     sb.append("borrowing");
                 }
-                sb.append(" relationship and \\url[the homologue set of ");
-                sb.append(escapeForURL(parentForm)).append("]{").append(fhomParent);
-                sb.append("} are actually not relevant.)");
+                sb.append(" relationship and \\url[the homologue set]{").append(fhomParent);
+                sb.append("} of ").append(parentForm).append(" are actually not relevant.)");
             } else {
                 sb.append("\\url[");
                 if (eetyIsInheritance) {
@@ -123,21 +122,26 @@ public class EetyToFhomConstraint extends EtinenTalkingLogicalConstraint {
         }
 
         if (contextAtom.equals(eety)) {
-            sb.append("\\url[");
-            sb.append(new FhomPred().verbalizeIdeaAsSentence(renderer, fhomParentBelief, fhomParentArgs));
+            sb.append(parentForm).append(" \\url[");
+            sb.append(BeliefScale.verbalizeBeliefAsAdverb(fhomParentBelief)).append(" belongs to this set");
             sb.append("]{").append(fhomParent).append("} ");
             if (!BeliefScale.sameBeliefInterval(fhomChildBelief, fhomParentBelief) &&
                     fhomParentBelief > fhomChildBelief) {
-                sb.append("but \\url[");
+                sb.append("but ");
                 if (fhomChildBelief < RuleAtomGraph.DISSATISFACTION_PRECISION) {
-                    sb.append(escapeForURL(childForm)).append("]{").append(fhomChild).append("}");
-                    sb.append(" certainly is not");
+                    sb.append(childForm).append(" \\url[certainly does not]{").append(fhomChild).append("}");
                 } else {
-                    sb.append("the homologue membership of ");
-                    sb.append(escapeForURL(childForm)).append("]{").append(fhomChild).append("} ");
+                    sb.append("the homologue membership of ").append(childForm).append("\\url[");
                     sb.append(BeliefScale.verbalizeBeliefAsPredicateWithOnly(fhomChildBelief));
+                    sb.append("]{").append(fhomChild).append("} ");
                 }
-                sb.append(", so reconstruction becomes problematic.");
+                sb.append(", so reconstructing a");
+                if (eetyIsInheritance) {
+                    sb.append("n inheritance");
+                } else {
+                    sb.append(" borrowing");
+                }
+                sb.append(" becomes problematic.");
                 return sb.toString();
             }
             sb.append("and \\url[");

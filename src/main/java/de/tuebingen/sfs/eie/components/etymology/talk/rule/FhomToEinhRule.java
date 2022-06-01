@@ -100,49 +100,47 @@ public class FhomToEinhRule extends EtinenTalkingLogicalRule {
 
             if (lowerFhomBelief < RuleAtomGraph.DISSATISFACTION_PRECISION) {
                 // The rule is trivially satisfied because at least one of the forms doesn't belong to the grounding's homologue set.
-                sb.append("since \\url[");
+                sb.append("since ");
                 if (renderer == null) {
-                    sb.append(escapeForURL(lowerFhom));
+                    sb.append(lowerFhom);
                 } else {
-                    sb.append("the ").append(escapeForURL(renderer.getLanguageRepresentationForForm(lowerFhomArgs[0])));
+                    sb.append("the ").append(renderer.getLanguageRepresentationForForm(lowerFhomArgs[0]));
                     sb.append(" form");
                 }
-                sb.append("]{").append(lowerFhom).append("} almost certainly does not belong to this set (");
+                sb.append(" \\url[almost certainly]{");
+                sb.append(lowerFhom).append("} does not belong to this set (");
                 if (fhomChildBelief < 0.5) {
                     sb.append("and");
                     sb.append(new FhomPred().verbalizeIdeaAsSentence(renderer, higherFhomBelief, higherFhomArgs));
                 } else {
-                    sb.append("although \\url[");
+                    sb.append("although ");
                     if (renderer == null) {
-                        sb.append(escapeForURL(higherForm));
+                        sb.append(higherForm);
                     } else {
-                        sb.append("the ");
-                        sb.append(escapeForURL(renderer.getLanguageRepresentationForForm(higherFhomArgs[0])));
+                        sb.append("the ").append(renderer.getLanguageRepresentationForForm(higherFhomArgs[0]));
                         sb.append(" one");
                     }
-                    sb.append("]{").append(higherFhom).append("} ");
-                    sb.append(BeliefScale.verbalizeBeliefAsAdverb(higherFhomBelief));
-                    sb.append(" does");
+                    sb.append(" \\url[").append(BeliefScale.verbalizeBeliefAsAdverb(higherFhomBelief));
+                    sb.append("]{").append(higherFhom).append("} does");
                 }
                 sb.append("), the inheritance judgment is not influenced.");
                 return sb.toString();
             }
 
-            sb.append("since neither homology judgment is entirely unlikely (\\url[");
-            sb.append(escapeForURL(new FhomPred().verbalizeIdeaAsSentence(renderer, higherFhomBelief, higherFhomArgs)));
-            sb.append("]{").append(higherFhom).append("} ");
+            sb.append("since neither homology judgment is entirely unlikely (");
+            sb.append(new FhomPred().verbalizeIdeaAsSentenceWithUrl(renderer, higherFhom, false, higherFhomBelief,
+                    higherFhomArgs));
             if ((lowerFhomBelief <= 0.5 && higherFhomBelief <= 0.5) ||
                     (lowerFhomBelief > 0.5 && higherFhomBelief > 0.5)) {
-                sb.append("and \\url[");
-                sb.append(escapeForURL(
-                        new FhomPred().verbalizeIdeaAsSentenceWithAlso(renderer, lowerFhomBelief, lowerFhomArgs)));
+                sb.append(" and ");
+                sb.append(new FhomPred().verbalizeIdeaAsSentenceWithUrl(renderer, lowerFhom, true, lowerFhomBelief,
+                        lowerFhomArgs));
             } else {
-                sb.append("although \\url[");
-                sb.append(escapeForURL(
-                        new FhomPred().verbalizeIdeaAsSentence(renderer, lowerFhomBelief, lowerFhomArgs)));
+                sb.append(" although ");
+                sb.append(new FhomPred().verbalizeIdeaAsSentenceWithUrl(renderer, lowerFhom, false, lowerFhomBelief,
+                        lowerFhomArgs));
             }
-            sb.append("]{").append(lowerFhom).append("}), ");
-            sb.append("we cannot disregard the possibility that ").append(childForm).append(" is inherited from ");
+            sb.append("),  we cannot disregard the possibility that ").append(childForm).append(" is inherited from ");
             sb.append(parentForm).append(".");
             return sb.toString();
 
