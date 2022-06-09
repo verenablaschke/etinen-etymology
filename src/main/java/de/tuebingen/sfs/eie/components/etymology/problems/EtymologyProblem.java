@@ -22,8 +22,6 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.ConstantRenderer;
-import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.talk.TalkingRuleOrConstraint;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import org.linqs.psl.model.rule.GroundRule;
@@ -100,9 +98,9 @@ public class EtymologyProblem extends PslProblem {
     @Override
     public void addInteractionRules() {
         EtymologyProblemConfig config = (EtymologyProblemConfig) super.getConfig();
-        // TODO add config checks for the new rules, like before:
 
-        // --- CONSTRAINTS ---
+        // -------------------
+        // CONSTRAINTS
         for (TalkingRuleOrConstraint constraint : new TalkingRuleOrConstraint[]{new EinhOrEloaOrEunkConstraint(this),
                 new EloaPlusEloaConstraint(this), new FsimSymmetryConstraint(this),
                 new FsimTransitivityConstraint(this), new FhomDistributionConstraint(this)}) {
@@ -117,13 +115,16 @@ public class EtymologyProblem extends PslProblem {
         addRule(new EetyToFhomConstraint("Einh", this));
 
         // -------------------
-        // WEIGHTED RULES
+        // PRIORS
 
         // Biases against borrowing and against unknown etymologies
         if (config.include(EunkPriorRule.NAME))
             addRule(new EunkPriorRule(this, config.getRuleWeightOrDefault(EunkPriorRule.NAME, 2.5)));
         if (config.include(EloaPriorRule.NAME))
             addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 0.5)));
+
+        // -------------------
+        // "REGULAR" WEIGHTED RULES
 
         // If two forms are inherited from the same form, they should be similar:
         if (config.include(EinhToFsimRule.NAME))
@@ -239,6 +240,7 @@ public class EtymologyProblem extends PslProblem {
         RuleAtomGraph.ATOM_VALUE_OUTPUT = true;
         Map<String, Double> valueMap = extractResultsForAllPredicates(false);
         if (verbose) System.err.println("FIXED: " + fixedAtoms);
+        if (verbose) System.err.println("HIDDEN: " + hiddenAtoms);
         RuleAtomGraph rag = new RuleAtomGraph(this, new EtymologyRagFilter(valueMap, fixedAtoms, hiddenAtoms),
                 groundRules);
         return new InferenceResult(rag, valueMap, getEtymologyConfig().copy());

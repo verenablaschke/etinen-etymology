@@ -166,32 +166,32 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                     }
                 }
             }
-            for (String lang2 : langsToForms.keySet()) {
-                int dist = phylo.distance(lang, lang2);
-                if (dist > maxDist) {
-                    maxDist = dist;
-                }
-                for (Form form1 : langsToForms.get(lang)) {
-                    for (Form form2 : langsToForms.get(lang2)) {
-                        pslProblem.addObservation("Xdst", 1.0, form1.toString(), form2.toString(), dist + "");
-                        if (PRINT_LOG) {
-                            System.err.println(
-                                    "Observation: Xdst(" + form1.prettyPrint() + ", " + form2.prettyPrint() + ", " +
-                                            dist + ")");
-                        }
-                    }
-                }
-            }
+//            for (String lang2 : langsToForms.keySet()) {
+//                int dist = phylo.distance(lang, lang2);
+//                if (dist > maxDist) {
+//                    maxDist = dist;
+//                }
+//                for (Form form1 : langsToForms.get(lang)) {
+//                    for (Form form2 : langsToForms.get(lang2)) {
+//                        pslProblem.addObservation("Xdst", 1.0, form1.toString(), form2.toString(), dist + "");
+//                        if (PRINT_LOG) {
+//                            System.err.println(
+//                                    "Observation: Xdst(" + form1.prettyPrint() + ", " + form2.prettyPrint() + ", " +
+//                                            dist + ")");
+//                        }
+//                    }
+//                }
+//            }
         }
-        for (int i = maxDist; i > 0; i--) {
-            for (int j = i - 1; j >= 0; j--) {
-                // "smaller than"
-                pslProblem.addObservation("Xsth", 1.0, j + "", i + "");
-                if (PRINT_LOG) {
-                    System.err.println("Observation: Xsth(" + j + ", " + i + ") 1.0");
-                }
-            }
-        }
+//        for (int i = maxDist; i > 0; i--) {
+//            for (int j = i - 1; j >= 0; j--) {
+//                // "smaller than"
+//                pslProblem.addObservation("Xsth", 1.0, j + "", i + "");
+//                if (PRINT_LOG) {
+//                    System.err.println("Observation: Xsth(" + j + ", " + i + ") 1.0");
+//                }
+//            }
+//        }
 
         PhoneticSimilarityHelper phonSim = new PhoneticSimilarityHelper(objectStore.getCorrModel(), theory);
         int nForms = allForms.size();
