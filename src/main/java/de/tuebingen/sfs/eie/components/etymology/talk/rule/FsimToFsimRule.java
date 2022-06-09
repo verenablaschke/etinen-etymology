@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018–2022 University of Tübingen
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.tuebingen.sfs.eie.components.etymology.talk.rule;
 
 import de.tuebingen.sfs.eie.shared.talk.EtinenConstantRenderer;
@@ -6,7 +21,6 @@ import de.tuebingen.sfs.eie.shared.talk.pred.FsimPred;
 import de.tuebingen.sfs.eie.shared.talk.rule.EtinenTalkingLogicalRule;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.Belief;
 import de.tuebingen.sfs.psl.talk.BeliefScale;
 import de.tuebingen.sfs.psl.util.data.StringUtils;
 import de.tuebingen.sfs.psl.util.data.Tuple;

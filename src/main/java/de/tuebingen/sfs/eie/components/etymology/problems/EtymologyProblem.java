@@ -1,3 +1,18 @@
+/*
+ * Copyright 2018–2022 University of Tübingen
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package de.tuebingen.sfs.eie.components.etymology.problems;
 
 import de.tuebingen.sfs.eie.components.etymology.filter.EtymologyRagFilter;
@@ -7,6 +22,8 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
+import de.tuebingen.sfs.psl.talk.ConstantRenderer;
+import de.tuebingen.sfs.psl.talk.TalkingRule;
 import de.tuebingen.sfs.psl.talk.TalkingRuleOrConstraint;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import org.linqs.psl.model.rule.GroundRule;
@@ -25,10 +42,27 @@ public class EtymologyProblem extends PslProblem {
     Set<String> fixedAtoms = new HashSet<>();
     Set<String> hiddenAtoms = new HashSet<>();
 
-    public static Set<String> RULES = new HashSet<>(); // TODO (rule names used by the config GUI)
+    // Used by the config GUI:
+    public static Set<String> RULES = new HashSet<>() {{
+        add(EinhOrEloaOrEunkConstraint.NAME);
+        add(EloaPlusEloaConstraint.NAME);
+        add(FsimSymmetryConstraint.NAME);
+        add(FsimTransitivityConstraint.NAME);
+        add(FhomDistributionConstraint.NAME);
+        add(EetyToFhomConstraint.NAME.formatted("Einh"));
+        add(EetyToFhomConstraint.NAME.formatted("Eloa"));
+        add(EunkPriorRule.NAME);
+        add(EloaPriorRule.NAME);
+        add(EinhToFsimRule.NAME);
+        add(FsimToFsimRule.NAME);
+        add("EloaToFsim"); // TODO
+        add(FhomChildToParentRule.NAME);
+        add(FhomParentToChildRule.NAME);
+        add(FhomToEinhRule.NAME);
+        add(FhomToEloaRule.NAME);
+    }};
 
-    // TODO make sure the config sets the dbmanager and problemId when it's
-    // initialized
+    // TODO make sure the config sets the dbmanager and problemId when it's initialized
     // (old to-do)
     public EtymologyProblem(EtymologyProblemConfig config) {
         super(config);
@@ -82,7 +116,6 @@ public class EtymologyProblem extends PslProblem {
         //An inheritance relation implies that the two forms must be from the same homologue set.
         addRule(new EetyToFhomConstraint("Einh", this));
 
-
         // -------------------
         // WEIGHTED RULES
 
@@ -93,15 +126,40 @@ public class EtymologyProblem extends PslProblem {
             addRule(new EloaPriorRule(this, config.getRuleWeightOrDefault(EloaPriorRule.NAME, 0.5)));
 
         // If two forms are inherited from the same form, they should be similar:
-        addRule(new EinhToFsimRule(this, 2.0));
+        if (config.include(EinhToFsimRule.NAME))
+            addRule(new EinhToFsimRule(this, config.getRuleWeightOrDefault(EinhToFsimRule.NAME, 2.0)));
+        // If two forms are similar and inherited from different sources, those source
+        // words should be similar to one another too.
+        if (config.include(FsimToFsimRule.NAME))
+            addRule(new FsimToFsimRule(this, config.getRuleWeightOrDefault(FsimToFsimRule.NAME, 1.0)));
+
+        //A borrowed form should be more similar to its donor than to any other word.
+        // TODO proper class w/ verbalization
+        if (config.include("EloaToFsim"))
+            addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
+
+        // Propagating evidence along unary branches, with negative evidence being weaker
+        if (config.include(FhomChildToParentRule.NAME))
+            addRule(new FhomChildToParentRule(this, config.getRuleWeightOrDefault(FhomChildToParentRule.NAME, 0.6)));
+        if (config.include(FhomParentToChildRule.NAME))
+            addRule(new FhomParentToChildRule(this, config.getRuleWeightOrDefault(FhomParentToChildRule.NAME, 0.2)));
+
+        // If both parent and child share the same homologue set, that provides some evidence of inheritance
+        if (config.include(FhomToEinhRule.NAME))
+            addRule(new FhomToEinhRule(this, config.getRuleWeightOrDefault(FhomToEinhRule.NAME, 0.4)));
+        // If there is a doubt about the reconstructability of a homologue set in the parent, an available
+        // loanword etymology becomes much more likely
+        if (config.include(FhomToEloaRule.NAME))
+            addRule(new FhomToEloaRule(this, config.getRuleWeightOrDefault(FhomToEloaRule.NAME, 1.0)));
+
+        // -------------------
+        // Experimental rules:
+
         // If two forms are similar and might be inherited from a common source, it's
         // likely that they really were.
         //addRule("FsimToEinh", "1: Fsim(X,Y) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Einh(X,Z)");
         //If a borrowing relation between two forms is possible and they are quite similar, this makes a borrowing likely.
         //addRule("FsimToEloa", "2: Fsim(X,Y) & Xloa(X,Y) -> Eloa(X,Y)");
-        // If two forms are similar and inherited from different sources, those source
-        // words should be similar to one another too.
-        addRule(new FsimToFsimRule(this, 1.0));
 
         // If a word is more similar to a word in a contact language than to its
         // reconstructed ancestor, that makes it more likely to be a loan:
@@ -109,10 +167,6 @@ public class EtymologyProblem extends PslProblem {
 
         //An inherited form should be more similar to its immediate ancestor than to any other word.
         //addRule("EinhToFsimRelation", "1: Einh(X,Y) & Fsim(X, Z) & X != Z & Y != Z -> Fsim(X,Y)");
-
-        //A borrowed form should be more similar to its donor than to any other word.
-        // TODO verbalization
-        addRule("EloaToFsimRelation", "1: Eloa(X,Y) & Fsim(X, Z) & Y != Z & X != Z -> Fsim(X,Y)");
 
         // Sister forms should be less similar than either is to their common parent
         // form:
@@ -128,14 +182,6 @@ public class EtymologyProblem extends PslProblem {
         // Every pair of sister languages in which a homologue set is reconstructed or
         // attested makes it more likely to have existed in the common parent language:
         //addRule("FhomReconstruction", "1: Fhom(X,H) & Fhom(Y,H) & Xinh(X,Z) & Xinh(Y,Z) & (X != Y) -> Fhom(Z,H)");
-        // Propagating evidence along unary branches, with negative evidence being weaker
-        addRule(new FhomChildToParentRule(this, 0.6));
-        addRule(new FhomParentToChildRule(this, 0.2));
-        // If both parent and child share the same homologue set, that provides some evidence of inheritance
-        addRule(new FhomToEinhRule(this, 0.4));
-        // If there is a doubt about the reconstructability of a homologue set in the parent, an available
-        // loanword etymology becomes much more likely
-        addRule(new FhomToEloaRule(this, 1.0));
 
         // -------------------
 
