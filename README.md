@@ -14,13 +14,11 @@ The most important classes are:
 - [EtymologyRagFilter](https://github.com/verenablaschke/etinen-etymology/blob/master/src/main/java/de/tuebingen/sfs/eie/components/etymology/filter/EtymologyRagFilter.java):
   determines which of the inferred results are relevant enough to be should be shown to the user in the Rule Atom
   Graph (RAG)
-- [`talk/rule`](https://github.com/verenablaschke/etinen-etymology/tree/master/src/main/java/de/tuebingen/sfs/eie/components/etymology/talk/rule)
+- The package [`talk/rule`](https://github.com/verenablaschke/etinen-etymology/tree/master/src/main/java/de/tuebingen/sfs/eie/components/etymology/talk/rule)
   contains classes for the PSL rules used in EtymologyProblem that can also generate explanations for the inference
   outcome. (The relevant talking predicate classes are
   in [jdellert/etinen-shared/.../talk/pred](https://github.com/jdellert/etinen-shared/tree/master/src/main/java/de/tuebingen/sfs/eie/shared/talk/pred)
   .)
-
-The code for the etymology component is currently slightly outdated, after several major changes to the `etinen-shared` module.
 
 # Predicates
 
