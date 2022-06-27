@@ -22,7 +22,7 @@ import de.tuebingen.sfs.psl.engine.AtomTemplate;
 import de.tuebingen.sfs.psl.engine.InferenceResult;
 import de.tuebingen.sfs.psl.engine.PslProblem;
 import de.tuebingen.sfs.psl.engine.RuleAtomGraph;
-import de.tuebingen.sfs.psl.talk.TalkingRuleOrConstraint;
+import de.tuebingen.sfs.psl.talk.rule.TalkingRuleOrConstraint;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
 import org.linqs.psl.model.rule.GroundRule;
 
