@@ -12,4 +12,6 @@ module de.tuebingen.sfs.eie.components.etymology {
     requires de.tuebingen.sfs.cldfjava;
     requires psl.core;
     requires de.tuebingen.sfs.eie.shared;
+    requires org.apache.logging.log4j;
+    requires org.apache.logging.log4j.core;
 }

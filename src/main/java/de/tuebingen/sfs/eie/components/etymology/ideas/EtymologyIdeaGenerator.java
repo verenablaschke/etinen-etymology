@@ -29,11 +29,12 @@ import de.tuebingen.sfs.psl.engine.IdeaGenerator;
 import de.tuebingen.sfs.psl.util.data.Multimap;
 import de.tuebingen.sfs.psl.util.data.Multimap.CollectionType;
 import de.tuebingen.sfs.psl.util.log.InferenceLogger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class EtymologyIdeaGenerator extends IdeaGenerator {
 
-    public static boolean PRINT_LOG = true;
-
+    private static final Logger systemLogger = LogManager.getLogger();
     public static final int CTRL_ARG = -3;
 
     private EtymologicalTheory theory;
@@ -47,7 +48,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         logger.displayln("...Creating EtymologyIdeaGenerator.");
         logger.displayln("...Working with the following idea generation configuration:");
         config = (EtymologyProblemConfig) problem.getConfig();
-        if (PRINT_LOG) {
+        if (systemLogger.isTraceEnabled()) {
             config.logSettings();
         }
         logger.displayln("Finished setting up the Etymology Idea Generator.");
@@ -69,11 +70,9 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 // TODO if this is a modern form w/o homologue set: warn user
                 homPegs.add(peg);
             }
-            if (PRINT_LOG) {
-                System.err.println(
-                        formId + " " + theory.normalize(formId) + " -- " + objectStore.getLangForForm(formId) +
-                                " -- peg: " + peg);
-            }
+            systemLogger.trace(
+                    formId + " " + theory.normalize(formId) + " -- " + objectStore.getLangForForm(formId) +
+                            " -- peg: " + peg);
         }
 
         // Are there any languages missing?
@@ -135,13 +134,11 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                         for (Form contactForm : langsToForms.get(contact)) {
                             pslProblem.addObservation("Xloa", 1.0, form.toString(), contactForm.toString());
                             pslProblem.addTarget("Eloa", form.toString(), contactForm.toString());
-                            if (PRINT_LOG) {
-                                System.err.println(
-                                        "Observation: Xloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() +
-                                                ") 1.0");
-                                System.err.println(
-                                        "Target: Eloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() + ")");
-                            }
+                            systemLogger.trace(
+                                    "Observation: Xloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() +
+                                            ") 1.0");
+                            systemLogger.trace(
+                                    "Target: Eloa(" + form.prettyPrint() + ", " + contactForm.prettyPrint() + ")");
                         }
                     }
                 }
@@ -150,19 +147,17 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 if (parent == null || parent.equals(LanguageTree.root)) {
                     continue;
                 }
-                if (PRINT_LOG) System.err.println(
+                systemLogger.trace(
                         lang + " <- " + parent + " " + langsToForms.containsKey(parent) + " " + langsToForms.keySet());
                 if (langsToForms.containsKey(parent)) {
                     for (Form parentForm : langsToForms.get(parent)) {
                         pslProblem.addObservation("Xinh", 1.0, form.toString(), parentForm.toString());
                         pslProblem.addTarget("Einh", form.toString(), parentForm.toString());
-                        if (PRINT_LOG) {
-                            System.err.println(
-                                    "Observation: Xinh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() +
-                                            ") 1.0");
-                            System.err.println(
-                                    "Target: Einh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() + ")");
-                        }
+                        systemLogger.trace(
+                                "Observation: Xinh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() +
+                                        ") 1.0");
+                        systemLogger.trace(
+                                "Target: Einh(" + form.prettyPrint() + ", " + parentForm.prettyPrint() + ")");
                     }
                 }
             }
@@ -207,28 +202,24 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                     // If at least one of the forms is unknown, we have to infer the similarity scores.
                     pslProblem.addTarget("Fsim", formI + "", formJ + "");
                     pslProblem.addTarget("Fsim", formJ + "", formI + "");
-                    if (PRINT_LOG) {
-                        System.err.println("Target: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() + ")");
-                        System.err.println("Target: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() + ")");
-                    }
+                    systemLogger.trace("Target: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() + ")");
+                    systemLogger.trace("Target: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() + ")");
                 } else {
                     double fSim = phonSim.similarity(formI.id, formJ.id);
                     pslProblem.addObservation("Fsim", fSim, formI + "", formJ + "");
                     pslProblem.addObservation("Fsim", fSim, formJ + "", formI + "");
                     ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", formI + "", formJ + "");
                     ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", formJ + "", formI + "");
-                    if (PRINT_LOG) {
-                        System.err.println("Observation: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() +
-                                ") %.2f".formatted(fSim));
-                        System.err.println("Observation: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() +
-                                ") %.2f".formatted(fSim));
-                    }
+                    systemLogger.trace("Observation: Fsim(" + formI.prettyPrint() + ", " + formJ.prettyPrint() +
+                            ") %.2f".formatted(fSim));
+                    systemLogger.trace("Observation: Fsim(" + formJ.prettyPrint() + ", " + formI.prettyPrint() +
+                            ") %.2f".formatted(fSim));
                 }
             }
         }
         addAtomsForSingleForm(objectStore, allForms.get(nForms - 1), homPegs);
 
-        if (PRINT_LOG) {
+        if (systemLogger.isTraceEnabled()) {
             super.pslProblem.printAtomsToConsole();
         }
     }
@@ -240,10 +231,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         int i = 0;
         for (Collection<String> relatedLangs : familyAncestorToLangs.values()) {
             String branchLca = phylo.lowestCommonAncestor(new ArrayList<>(relatedLangs));
-            if (PRINT_LOG) {
-                System.err.println("Branch under " + branchLca);
-                System.err.println("- given: " + relatedLangs);
-            }
+            systemLogger.trace("Branch under " + branchLca);
+            systemLogger.trace("- given: " + relatedLangs);
             Set<String> newLangs = addMissingLangsForBranch(phylo, branchLca, relatedLangs, langsMissing, langsGiven);
             curLcas[i] = branchLca;
             families[i] = new ArrayList<>(relatedLangs);
@@ -254,19 +243,13 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         String[] contactAncestors = phylo.oldestContactLanguages(families, curLcas);
         for (i = 0; i < contactAncestors.length; i++) {
             if (contactAncestors[i] == null) {
-                if (PRINT_LOG) {
-                    System.err.println("No relevant contact links involving the ancestors of " + curLcas[i]);
-                }
+                systemLogger.trace("No relevant contact links involving the ancestors of " + curLcas[i]);
                 continue;
             }
-            if (PRINT_LOG) {
-                System.err.println("Adding ancestors of " + curLcas[i]);
-            }
+            systemLogger.trace("Adding ancestors of " + curLcas[i]);
             for (String anc : phylo.pathToRoot(curLcas[i])) {
                 langsMissing.add(anc);
-                if (PRINT_LOG) {
-                    System.err.println("- " + anc);
-                }
+                systemLogger.trace("- " + anc);
                 if (contactAncestors[i].equals(anc)) {
                     break;
                 }
@@ -285,8 +268,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 if (langsGiven.contains(ancLang)) {
                     continue;
                 }
-                if (PRINT_LOG && !langsMissing.contains(ancLang)) {
-                    System.err.println("- adding " + ancLang + " (> " + inputLang + ")");
+                if (!langsMissing.contains(ancLang)) {
+                    systemLogger.trace("- adding " + ancLang + " (> " + inputLang + ")");
                 }
                 langsMissing.add(ancLang);
                 langsMissingInBranch.add(ancLang);
@@ -301,9 +284,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
     private void addAtomsForSingleForm(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
         pslProblem.addObservation("Fsim", 1.0, form.toString(), form.toString());
         ((EtymologyProblem) pslProblem).addFixedAtom("Fsim", form.toString(), form.toString());
-        if (PRINT_LOG) {
-            System.err.println("Fsim: Xloa(" + form.prettyPrint() + ", " + form.prettyPrint() + ") 1.0");
-        }
+        systemLogger.trace("Fsim: Xloa(" + form.prettyPrint() + ", " + form.prettyPrint() + ") 1.0");
 
         addHomsetInfo(objectStore, form, homPegs);
 
@@ -311,9 +292,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
         pslProblem.addObservation("Eloa", 0.0, form.toString(), CTRL_ARG + "");
         ((EtymologyProblem) pslProblem).addFixedAtom("Eloa", form.toString(), CTRL_ARG + "");
         ((EtymologyProblem) pslProblem).addHiddenAtom("Eloa", form.toString(), CTRL_ARG + "");
-        if (PRINT_LOG) {
-            System.err.println("Observation: Eloa(" + form.prettyPrint() + ", CTRL_ARG) 0.0");
-        }
+        systemLogger.trace("Observation: Eloa(" + form.prettyPrint() + ", CTRL_ARG) 0.0");
     }
 
     private void addHomsetInfo(IndexedObjectStore objectStore, Form form, Set<Integer> homPegs) {
@@ -326,9 +305,7 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
             // Unknown homologue set -> infer set membership.
             for (int homPeg : homPegs) {
                 pslProblem.addTarget("Fhom", form.toString(), homPeg + "");
-                if (PRINT_LOG) {
-                    System.err.println("Target: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ")");
-                }
+                systemLogger.trace("Target: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ")");
             }
             return;
         }
@@ -342,10 +319,8 @@ public class EtymologyIdeaGenerator extends IdeaGenerator {
                 pslProblem.addObservation("Fhom", 0.0, form.toString(), homPeg + "");
             }
             ((EtymologyProblem) pslProblem).addFixedAtom("Fhom", form.toString(), homPeg + "");
-            if (PRINT_LOG) {
-                System.err.println(
+            systemLogger.trace(
                         "Observation: Fhom(" + form.prettyPrint() + ", " + theory.normalize(homPeg) + ") 1.0");
-            }
         }
     }
 
